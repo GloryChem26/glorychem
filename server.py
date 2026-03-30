@@ -1,40 +1,46 @@
 """
-GloryChem — Python Web Server with Socket.IO (Gevent version)
-Run: python server.py
-Deploy: gunicorn -k gevent -w 1 server:app
+GloryChem — Python Web Server with Socket.IO (Eventlet version)
+Run locally:  python server.py
+Deploy Render: gunicorn -k eventlet -w 1 --bind 0.0.0.0:$PORT server:app
 """
-from gevent import monkey
-monkey.patch_all()
-# ⚠️ Monkey-patch must happen before any other imports (including Flask)
+import eventlet
+eventlet.monkey_patch()
+# ⚠️ Monkey-patch must happen before any other imports
+
 from supabase import create_client, Client
-import os
-import gevent
-
-
 import os
 import uuid
 import json
 import random
+import math
 from pathlib import Path
 from flask import Flask, send_from_directory, send_file, request
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from flask_cors import CORS
 
+# ══════════════════════════════════════
+#   APP SETUP
+# ══════════════════════════════════════
 app = Flask(__name__, static_folder=".", static_url_path="")
 CORS(app)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'glorychem-secret-2025')
+
 socketio = SocketIO(
     app,
     cors_allowed_origins="*",
-    async_mode='gevent',          # changed from 'eventlet'
+    async_mode='eventlet',
     ping_timeout=60,
     ping_interval=25,
     max_http_buffer_size=1_000_000,
+    logger=False,
+    engineio_logger=False,
 )
 
-
-SUPABASE_URL = "https://cmrbsiuzrpsglynnfund.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNtcmJzaXV6cnBzZ2x5bm5mdW5kIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDg0ODY3MywiZXhwIjoyMDkwNDI0NjczfQ.plgqzEWW505FqZegHzCklxO-JKXFsXhjegfdrbvU-7E"  # ⚠️ dùng SERVICE ROLE (không phải anon)
+# ══════════════════════════════════════
+#   SUPABASE
+# ══════════════════════════════════════
+SUPABASE_URL = os.environ.get('SUPABASE_URL', "https://cmrbsiuzrpsglynnfund.supabase.co")
+SUPABASE_KEY = os.environ.get('SUPABASE_KEY', "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNtcmJzaXV6cnBzZ2x5bm5mdW5kIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDg0ODY3MywiZXhwIjoyMDkwNDI0NjczfQ.plgqzEWW505FqZegHzCklxO-JKXFsXhjegfdrbvU-7E")
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
@@ -45,7 +51,7 @@ queued_players  = []   # list of (sid, user_data)
 game_rooms      = {}   # room_id -> RoomState dict
 online_users    = {}   # sid -> user_data
 sid_to_uid      = {}   # sid -> userId
-uid_to_sid      = {}   # userId -> sid  (for invite targeting)
+uid_to_sid      = {}   # userId -> sid
 pending_invites = {}   # room_id -> invite metadata
 
 
@@ -83,11 +89,9 @@ def cancel_timer(room, key):
     h = room.pop(key, None)
     if h:
         try:
-            h.kill()          # gevent's Greenlet.kill()
+            h.cancel()   # eventlet GreenThread cancel
         except Exception:
             pass
-
-
 
 
 def calc_elo(elo1, elo2, score1, score2, k=32):
@@ -98,7 +102,6 @@ def calc_elo(elo1, elo2, score1, score2, k=32):
     else:
         s1 = s2 = 0.5
 
-    import math
     e1 = 1 / (1 + 10 ** ((elo2 - elo1) / 400))
     e2 = 1 / (1 + 10 ** ((elo1 - elo2) / 400))
 
@@ -106,7 +109,6 @@ def calc_elo(elo1, elo2, score1, score2, k=32):
     new2 = int(elo2 + k * (s2 - e2))
 
     return new1, new2
-
 
 
 def end_battle_and_update(room_id):
@@ -152,13 +154,13 @@ def end_battle_and_update(room_id):
 
     upd1 = {
         "elo": max(100, new1),
-        "wins": (p1_db.get('wins', 0) + 1) if win1 else p1_db.get('wins', 0),
+        "wins":   (p1_db.get('wins', 0) + 1) if win1 else p1_db.get('wins', 0),
         "losses": (p1_db.get('losses', 0) + 1) if win2 else p1_db.get('losses', 0),
     }
 
     upd2 = {
         "elo": max(100, new2),
-        "wins": (p2_db.get('wins', 0) + 1) if win2 else p2_db.get('wins', 0),
+        "wins":   (p2_db.get('wins', 0) + 1) if win2 else p2_db.get('wins', 0),
         "losses": (p2_db.get('losses', 0) + 1) if win1 else p2_db.get('losses', 0),
     }
 
@@ -182,10 +184,7 @@ def end_battle_and_update(room_id):
     }, room=room_id)
 
     # 🧹 Cleanup room
-    del game_rooms[room_id]
-
-
-
+    game_rooms.pop(room_id, None)
 
 
 # ══════════════════════════════════════
@@ -307,7 +306,6 @@ def handle_join_queue(data=None):
     queued_players.append((sid, user))
 
     if len(queued_players) >= 2:
-        # Sort by ELO, match p1 with closest ELO partner
         queued_players.sort(key=lambda x: x[1].get('elo', 1200))
         p1_sid, p1_data = queued_players.pop(0)
         p1_elo = p1_data.get('elo', 1200)
@@ -489,20 +487,17 @@ def handle_battle_action(data):
     if room.get('question_finished', False):
         return
     if room['player_correct'].get(sid, False):
-        # Người này đã trả lời đúng rồi, không cho gửi lại
         return
 
     q_idx = room['current_question']
     q = room['questions'][q_idx]
     ans = data.get('answer')
 
-    # Xác định đúng/sai
     if q['type'] == 'mcq':
         correct = (ans is not None and int(ans) == int(q['correct']))
     else:
         correct = (str(ans).strip().lower() == str(q['correct']).strip().lower())
 
-    # Gửi phản hồi ngay cho người trả lời
     emit('answer_result', {
         'correct': correct,
         'explanation': q.get('exp', ''),
@@ -511,16 +506,13 @@ def handle_battle_action(data):
     })
 
     if correct:
-        # Nếu chưa được cộng điểm thì cộng
         if not room['player_correct'].get(sid, False):
             room['scores'][sid] = room['scores'].get(sid, 0) + 1
             room['player_correct'][sid] = True
 
-        # Đánh dấu câu đã kết thúc
         room['question_finished'] = True
         cancel_timer(room, '_q_timer')
 
-        # Gửi cập nhật điểm cho cả phòng
         socketio.emit('battle_update', {
             'playerAnsweredUserId': room['players'][sid]['user'].get('userId'),
             'correct': True,
@@ -528,11 +520,9 @@ def handle_battle_action(data):
         }, room=room_id)
 
         # Sau 1 giây chuyển sang câu tiếp theo
-        gevent.spawn_later(1.0, _next_question, room_id)
+        eventlet.spawn_after(1.0, _next_question, room_id)
         return
 
-    # Nếu sai: chỉ gửi kết quả cho người đó, không thay đổi điểm, không kết thúc câu
-    # Có thể gửi battle_update cho cả phòng để cập nhật điểm (không đổi)
     socketio.emit('battle_update', {
         'playerAnsweredUserId': room['players'][sid]['user'].get('userId'),
         'correct': False,
@@ -560,17 +550,18 @@ def _setup_room(room_id, sid1, u1, sid2, u2):
             sid1: {'user': u1, 'joined': False},
             sid2: {'user': u2, 'joined': False},
         },
-        'state':            'lobby',
-        'lobby_timeout':    30,
-        'battle_timeout':   30,
-        'questions':        [],
-        'scores':           {sid1: 0, sid2: 0},
-        'current_question': 0,
-        'player_correct':   {},          # sid -> bool (đã đúng chưa)
-        'question_finished': False,      # câu hỏi đã kết thúc (do ai đó đúng)
-        'player_topics':    {},
-        'player_ready':     {},
+        'state':             'lobby',
+        'lobby_timeout':     30,
+        'battle_timeout':    30,
+        'questions':         [],
+        'scores':            {sid1: 0, sid2: 0},
+        'current_question':  0,
+        'player_correct':    {},
+        'question_finished': False,
+        'player_topics':     {},
+        'player_ready':      {},
     }
+
 
 def _start_lobby(room_id):
     room = game_rooms.get(room_id)
@@ -585,7 +576,7 @@ def _start_lobby(room_id):
         if r and r['state'] == 'lobby':
             _finalize_and_start_battle(room_id)
 
-    room['_lobby_timer'] = gevent.spawn_later(room['lobby_timeout'], _on_timeout)
+    room['_lobby_timer'] = eventlet.spawn_after(room['lobby_timeout'], _on_timeout)
 
 
 def _finalize_and_start_battle(room_id):
@@ -608,6 +599,7 @@ def _finalize_and_start_battle(room_id):
 
     _send_current_question(room_id)
 
+
 def _send_current_question(room_id):
     room = game_rooms.get(room_id)
     if not room or room['state'] != 'battle':
@@ -619,7 +611,7 @@ def _send_current_question(room_id):
         return
 
     room['question_finished'] = False
-    room['player_correct'] = {}          # reset trạng thái đúng của từng người
+    room['player_correct'] = {}
 
     q = room['questions'][q_idx]
     socketio.emit('battle_question', {
@@ -633,10 +625,10 @@ def _send_current_question(room_id):
         r = game_rooms.get(room_id)
         if r and r['state'] == 'battle' and r['current_question'] == q_idx and not r['question_finished']:
             r['question_finished'] = True
-            # Gửi thông báo hết giờ? Có thể để client tự xử lý
             _next_question(room_id)
 
-    room['_q_timer'] = gevent.spawn_later(room['battle_timeout'], _on_q_timeout)
+    room['_q_timer'] = eventlet.spawn_after(room['battle_timeout'], _on_q_timeout)
+
 
 def _next_question(room_id):
     room = game_rooms.get(room_id)
@@ -645,22 +637,15 @@ def _next_question(room_id):
 
     room['current_question'] += 1
 
-    # 🔥 HẾT CÂU HỎI → KẾT THÚC TRẬN
     if room['current_question'] >= len(room['questions']):
         print(f"🏁 Battle finished: {room_id}")
-
-        # tránh gọi 2 lần
         if room.get('ended'):
             return
         room['ended'] = True
-
         end_battle_and_update(room_id)
         return
 
-    # ✅ GIỮ NGUYÊN LOGIC CŨ
     _send_current_question(room_id)
-
-    
 
 
 def _end_battle(room_id):
@@ -698,7 +683,7 @@ def _end_battle(room_id):
         'elo_change':   elo_change,
     }, room=room_id)
 
-    gevent.spawn_later(10, lambda: game_rooms.pop(room_id, None))
+    eventlet.spawn_after(10, lambda: game_rooms.pop(room_id, None))
 
 
 def _build_questions(topics, num_questions=10):
@@ -769,7 +754,7 @@ QUESTION_BANK = {
     ],
     'equilib': [
         {'type':'mcq','q':'Nguyên lý Le Chatelier phát biểu về:','opts':['Tốc độ phản ứng','Chiều dịch chuyển cân bằng khi bị tác động','Năng lượng hoạt hóa','Trật tự phản ứng'],'correct':1,'exp':'Le Chatelier: khi cân bằng bị phá vỡ, hệ tự điều chỉnh để chống lại sự thay đổi đó'},
-        {'type':'mcq','q':'Tăng nồng độ chất phản ứng sẽ làm cân bằng:','opts':['Dịch chuyển sang trái','Dịch chuyển sang phải','Không thay đổi','Phụ thuộc nhiệt độ'],'correct':1,'exp':'Tăng nồng độ chất đầu → cân bằng chuyển sang phải (tạo thêm sản phẩm)'},
+        {'type':'mcq','q':'Tăng nồng độ chất phản ứng sẽ làm cân bằng:','opts':['Dịch chuyển sang trái','Dịch chuyển sang phải','Không đổi','Phụ thuộc nhiệt độ'],'correct':1,'exp':'Tăng nồng độ chất đầu → cân bằng chuyển sang phải (tạo thêm sản phẩm)'},
     ],
 }
 

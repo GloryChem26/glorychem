@@ -973,6 +973,7 @@ let AR = {
   cooldownInterval: null,
 };
 
+
 // ── HELPERS ──
 function showArena(step) {
   ['ar-searching','ar-lobby','ar-battle','ar-result'].forEach(id=>{
