@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GloryChem — Đấu Trường Hóa Học</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&family=Lexend:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="/style.css">
+
+</head>
+<body>
+
+<canvas id="pc"></canvas>
+
+<!-- ═══ NAV ═══ -->
+<nav>
+  <div class="logo" onclick="gp('home')">
+    <div class="lmark">⚗️</div>
+    <span class="ltext">Glory<span>Chem</span></span>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#" id="nl-home" class="active" onclick="gp('home');return false">Trang Chủ</a></li>
+    <li><a href="#" id="nl-challenge" onclick="gp('challenge');return false">Thách Đấu</a></li>
+    <li><a href="#" onclick="return false">Bảng Xếp Hạng</a></li>
+    <li><a href="#" onclick="return false">Bài Học</a></li>
+  </ul>
+  <div class="nav-r" id="nav-r">
+    <button class="btn btn-ghost" onclick="openM('login')">Đăng Nhập</button>
+    <button class="btn btn-teal"  onclick="openM('register')">Đăng Ký</button>
+  </div>
+</nav>
+
+<!-- ═══ HOME ═══ -->
+<div id="page-home" class="page active">
+
+  <!-- Floating formula decorations -->
+  <span class="formula-deco" style="top:18%;left:4%">H₂SO₄ + 2NaOH →</span>
+  <span class="formula-deco" style="top:35%;right:3%">CH₃COOH ⇌ CH₃COO⁻ + H⁺</span>
+  <span class="formula-deco" style="top:72%;left:6%">Fe₂O₃ + 3CO → 2Fe + 3CO₂</span>
+  <span class="formula-deco" style="top:55%;right:5%">C₆H₁₂O₆ + 6O₂ → 6CO₂ + 6H₂O</span>
+  <span class="formula-deco" style="top:82%;right:8%">Zn + 2HCl → ZnCl₂ + H₂↑</span>
+
+  <section class="hero">
+
+    <!-- ─── LOGGED OUT HERO ─── -->
+    <div id="hero-logged-out">
+      <div class="pill"><span class="dot"></span> Nền tảng học Hóa học thế hệ mới</div>
+      <h1 class="h1">GloryChem<br><em>Đấu Trường</em> Hóa Học</h1>
+      <p class="hsub">Đối đầu trực tiếp với học sinh toàn quốc, trả lời câu hỏi THPT theo thời gian thực và leo bảng xếp hạng qua từng trận chiến.</p>
+      <div class="hbtns">
+        <button class="btn btn-teal btn-xl" onclick="openM('register')">🚀 Bắt Đầu Miễn Phí</button>
+        <button class="btn btn-ghost btn-xl" onclick="gp('challenge')">⚔️ Xem Thách Đấu</button>
+      </div>
+      <div class="el-row">
+        <div class="ec"><span class="sym">H</span><div><div class="nm">Hydro</div><div class="zz">Z=1</div></div></div>
+        <div class="ec"><span class="sym">O</span><div><div class="nm">Oxy</div><div class="zz">Z=8</div></div></div>
+        <div class="ec"><span class="sym">C</span><div><div class="nm">Carbon</div><div class="zz">Z=6</div></div></div>
+        <div class="ec"><span class="sym">Na</span><div><div class="nm">Natri</div><div class="zz">Z=11</div></div></div>
+        <div class="ec"><span class="sym">Fe</span><div><div class="nm">Sắt</div><div class="zz">Z=26</div></div></div>
+        <div class="ec"><span class="sym">Cu</span><div><div class="nm">Đồng</div><div class="zz">Z=29</div></div></div>
+      </div>
+    </div>
+
+    <!-- ─── LOGGED IN HERO ─── -->
+    <div id="hero-logged-in">
+      <div class="welcome-banner" id="wb" style="display:block">
+        <div class="wb-avatar" id="wb-av">?</div>
+        <div class="wb-name" id="wb-name">Chào mừng trở lại!</div>
+        <div class="wb-sub" id="wb-sub">Tiếp tục hành trình chinh phục Hóa học</div>
+        <div class="wb-stats">
+          <div class="wb-stat"><div class="wb-stat-val">1200</div><div class="wb-stat-lbl">ELO Rating</div></div>
+          <div class="wb-stat"><div class="wb-stat-val">0</div><div class="wb-stat-lbl">Trận thắng</div></div>
+          <div class="wb-stat"><div class="wb-stat-val">Electron</div><div class="wb-stat-lbl">Cấp bậc</div></div>
+        </div>
+      </div>
+      <div class="hbtns" style="animation:fadeUp .55s .1s ease both">
+        <button class="btn btn-teal btn-xl" onclick="gp('challenge')">⚔️ Vào Đấu Trường</button>
+        <button class="btn btn-ghost btn-xl" onclick="return false">📊 Xem Thống Kê</button>
+      </div>
+      <div class="el-row">
+        <div class="ec"><span class="sym">H</span><div><div class="nm">Hydro</div><div class="zz">Z=1</div></div></div>
+        <div class="ec"><span class="sym">O</span><div><div class="nm">Oxy</div><div class="zz">Z=8</div></div></div>
+        <div class="ec"><span class="sym">C</span><div><div class="nm">Carbon</div><div class="zz">Z=6</div></div></div>
+        <div class="ec"><span class="sym">Na</span><div><div class="nm">Natri</div><div class="zz">Z=11</div></div></div>
+        <div class="ec"><span class="sym">Fe</span><div><div class="nm">Sắt</div><div class="zz">Z=26</div></div></div>
+        <div class="ec"><span class="sym">Cu</span><div><div class="nm">Đồng</div><div class="zz">Z=29</div></div></div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="sc"><span class="sv">2,847</span><div class="sl">Người chơi</div></div>
+      <div class="sc"><span class="sv">150+</span><div class="sl">Câu hỏi</div></div>
+      <div class="sc"><span class="sv">12</span><div class="sl">Chủ đề</div></div>
+      <div class="sc"><span class="sv">98%</span><div class="sl">Hài lòng</div></div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="sec-header">
+      <div class="slabel">✦ Tính năng</div>
+      <h2 class="sh2">Tại Sao Chọn GloryChem?</h2>
+      <p class="ssub">Kết hợp khoa học giáo dục với cạnh tranh lành mạnh — cách học hiệu quả nhất cho học sinh THPT.</p>
+    </div>
+    <div class="fg3">
+      <div class="fc ct"><div class="fc-stripe"></div><div class="fi t">⚔️</div><div class="ftitle">Đấu Trực Tiếp 1v1</div><div class="fbody">Đối đầu thời gian thực với học sinh cùng trình độ. Áp lực thi đấu giúp ghi nhớ nhanh và lâu hơn gấp nhiều lần so với học thông thường.</div></div>
+      <div class="fc cb"><div class="fc-stripe"></div><div class="fi b">📚</div><div class="ftitle">Bám Sát Chương Trình</div><div class="fbody">Câu hỏi biên soạn đúng chương trình THPT — Hóa đại cương, Vô cơ, Hữu cơ. Bao gồm câu định tính và bài toán tính toán.</div></div>
+      <div class="fc ca"><div class="fc-stripe"></div><div class="fi a">📊</div><div class="ftitle">Theo Dõi Tiến Độ</div><div class="fbody">Dashboard cá nhân hiển thị điểm mạnh/yếu, lịch sử trận đấu, ELO rating và thống kê chi tiết theo từng chủ đề hóa học.</div></div>
+      <div class="fc cr"><div class="fc-stripe"></div><div class="fi r">🏆</div><div class="ftitle">Hệ Thống ELO & Rank</div><div class="fbody">Rating ELO công bằng, bảng xếp hạng toàn quốc. Leo rank từ Electron → Nguyên Tử → Phân Tử → Nhà Hóa Học → Giáo Sư.</div></div>
+    </div>
+  </section>
+
+  <section class="sec" style="padding-top:2rem">
+    <div class="sec-header">
+      <div class="slabel">🔬 Khám phá</div>
+      <h2 class="sh2">Hóa Học Thú Vị</h2>
+      <p class="ssub">Những điều kỳ diệu của Hóa học mà bạn có thể chưa biết.</p>
+    </div>
+    <div class="fg2">
+      <div class="fct"><span class="badge t">Nguyên tố</span><p class="ftxt"><strong>Vàng (Au)</strong> là kim loại quý duy nhất có màu vàng tự nhiên. Toàn bộ lượng vàng từng khai thác trên Trái Đất chỉ lấp đầy được khoảng <strong>3.5 bể bơi Olympic</strong>.</p></div>
+      <div class="fct"><span class="badge b">Phân tử</span><p class="ftxt">Nước <strong>H₂O</strong> là chất duy nhất tồn tại tự nhiên ở cả 3 trạng thái trên bề mặt Trái Đất. Góc liên kết H–O–H là <strong>104.5°</strong> tạo nên tính phân cực đặc biệt.</p></div>
+      <div class="fct"><span class="badge a">Hữu cơ</span><p class="ftxt"><strong>Carbon (C)</strong> tạo ra nhiều hợp chất hơn bất kỳ nguyên tố nào — hơn <strong>10 triệu hợp chất</strong> đã biết, là nền tảng toàn bộ hóa học hữu cơ và sự sống.</p></div>
+      <div class="fct"><span class="badge p">Lịch sử</span><p class="ftxt"><strong>Mendeleev</strong> lập bảng tuần hoàn năm 1869 và dự đoán chính xác sự tồn tại của các nguyên tố chưa phát hiện như <strong>Gallium</strong> và <strong>Germanium</strong>.</p></div>
+      <div class="fct"><span class="badge g">Kỳ lạ</span><p class="ftxt"><strong>Helium (He)</strong> được phát hiện trên Mặt Trời trước khi tìm thấy trên Trái Đất. Tên "Helium" từ "Helios" — thần Mặt Trời của Hy Lạp cổ đại.</p></div>
+      <div class="fct"><span class="badge r">Cấu trúc</span><p class="ftxt">Kim cương và than chì đều là <strong>Carbon nguyên chất (C)</strong> nhưng cấu trúc tinh thể hoàn toàn khác — một cái cứng nhất tự nhiên, một cái đen và mềm.</p></div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ═══ CHALLENGE ═══ -->
+<div id="page-challenge" class="page">
+  <div class="ch-head">
+    <div class="slabel" style="justify-content:center;display:flex">⚔️ Đấu Trường</div>
+    <h1>Thách Đấu</h1>
+    <p>Tìm đối thủ và chứng minh kiến thức Hóa học của bạn</p>
+  </div>
+
+  <!-- LOGGED OUT -->
+  <div id="s-out" class="lock">
+    <div class="lock-vis">🔐</div>
+    <h2>Cần Đăng Nhập</h2>
+    <p>Bạn cần có tài khoản để tham gia thách đấu, theo dõi điểm số và leo bảng xếp hạng toàn quốc.</p>
+    <div class="lock-btns">
+      <button class="btn btn-teal btn-lg" onclick="openM('login')">🔑 Đăng Nhập</button>
+      <button class="btn btn-ot btn-lg"   onclick="openM('register')">✨ Đăng Ký Miễn Phí</button>
+    </div>
+    <div class="lock-preview">
+      <div style="background:var(--bg-white);border:1px solid var(--border);border-radius:14px;padding:1.15rem;margin-bottom:.7rem;text-align:left"><div style="font-weight:700;margin-bottom:4px;font-family:var(--font-h)">⚡ Tốc Chiến 1v1</div><div style="font-size:.8rem;color:var(--text-3)">Ghép đôi ngẫu nhiên theo ELO</div></div>
+      <div style="background:var(--bg-white);border:1px solid var(--border);border-radius:14px;padding:1.15rem;text-align:left"><div style="font-weight:700;margin-bottom:4px;font-family:var(--font-h)">👥 Thách Đấu Bạn Bè</div><div style="font-size:.8rem;color:var(--text-3)">Tạo phòng riêng và mời bạn bè</div></div>
+    </div>
+  </div>
+
+  <!-- LOGGED IN — ARENA HUB -->
+  <div id="s-in" class="arena" style="display:none">
+    <div class="pbar">
+      <div class="pav" id="pav">?</div>
+      <div style="flex:1">
+        <div class="pname" id="pname">Đang tải...</div>
+        <div class="pmeta" id="pmeta">@username · Electron</div>
+      </div>
+      <div class="pelo">
+        <div class="peloval" id="peloval">1200</div>
+        <div class="pelolbl">ELO Rating</div>
+      </div>
+    </div>
+
+    <!-- Mode selection cards -->
+    <div class="mgrid">
+      <div class="mc" onclick="startQuickMatch()">
+        <span class="mc-icon">⚡</span>
+        <div class="mt">Tốc Chiến Ngẫu Nhiên</div>
+        <div class="md">Ghép đôi tự động · Chọn chủ đề · 60 giây kịch tính</div>
+      </div>
+      <div class="mc" onclick="openFriendArena()">
+        <span class="mc-icon">👥</span>
+        <div class="mt">Thách Đấu Bạn Bè</div>
+        <div class="md">Tìm username · Mời đấu · Phòng riêng</div>
+      </div>
+      <div class="mc" style="opacity:.5;cursor:not-allowed">
+        <span class="mc-icon">🏆</span>
+        <div class="mt">Giải Đấu</div>
+        <div class="md">Sắp ra mắt...</div>
+      </div>
+      <div class="mc" style="opacity:.5;cursor:not-allowed">
+        <span class="mc-icon">📊</span>
+        <div class="mt">Thống Kê</div>
+        <div class="md">Sắp ra mắt...</div>
+      </div>
+    </div>
+
+    <div class="hist-card">
+      <div class="hist-label">// Lịch sử gần đây</div>
+      <div id="hist-list"><div class="hist-empty">Chưa có trận đấu nào. Hãy chiến thôi! ⚔️</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     ĐẤU TRƯỜNG — FULL SCREEN OVERLAY
+════════════════════════════════════════ -->
+<div id="arena-overlay" style="display:none;position:fixed;inset:0;z-index:500;background:var(--bg);overflow-y:auto">
+
+  <!-- ── BƯỚC 1: ĐANG TÌM ĐỐI THỦ ── -->
+  <div id="ar-searching" style="display:none;min-height:100vh;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem">
+    <div style="font-size:4rem;margin-bottom:1rem;animation:float 2s ease-in-out infinite">⚔️</div>
+    <div style="font-family:var(--font-h);font-size:1.6rem;font-weight:800;margin-bottom:.5rem">Đang tìm đối thủ...</div>
+    <div style="color:var(--text-3);font-size:.9rem;margin-bottom:2rem" id="ar-search-sub">Đang ghép đôi theo ELO của bạn</div>
+    <div class="search-pulse"><div class="sp-ring"></div><div class="sp-ring sp2"></div><div class="sp-ring sp3"></div><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.8rem">🔬</div></div>
+    <div style="margin-top:2rem;color:var(--text-4);font-size:.82rem" id="ar-wait-time">Đã chờ: 0 giây</div>
+    <button onclick="cancelSearch()" style="margin-top:1.5rem;background:none;border:1.5px solid var(--border-2);border-radius:10px;padding:.6rem 1.4rem;cursor:pointer;font-family:var(--font-b);font-weight:600;color:var(--text-3);transition:all .2s" onmouseover="this.style.borderColor='var(--rose)';this.style.color='var(--rose)'" onmouseout="this.style.borderColor='var(--border-2)';this.style.color='var(--text-3)'">✕ Hủy tìm kiếm</button>
+  </div>
+
+  <!-- ── BƯỚC 2: PHÒNG CHỜ — CHỌN CHỦ ĐỀ ── -->
+  <div id="ar-lobby" style="display:none;min-height:100vh;padding:2rem 1rem">
+    <div style="max-width:780px;margin:0 auto">
+      <!-- Header với 2 player -->
+      <div style="text-align:center;margin-bottom:1.5rem">
+        <div style="font-family:var(--font-h);font-size:1.1rem;font-weight:800;color:var(--text-3);letter-spacing:.05em;text-transform:uppercase;font-size:.75rem;margin-bottom:.75rem">⚔️ PHÒNG CHỜ</div>
+        <div id="lobby-timer-bar" style="display:flex;align-items:center;justify-content:center;gap:.5rem;margin-bottom:1.5rem">
+          <span style="font-size:.82rem;color:var(--text-3)">Thời gian chọn:</span>
+          <span id="lobby-countdown" style="font-family:var(--font-m);font-weight:800;font-size:1.2rem;color:var(--teal)">30</span>
+          <span style="font-size:.82rem;color:var(--text-3)">giây</span>
+        </div>
+      </div>
+
+      <!-- Hai player đối mặt -->
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:1rem;align-items:start;margin-bottom:2rem">
+        <!-- Player trái (mình) -->
+        <div class="lobby-player-card" id="lp-me">
+          <div class="lpc-av" id="lp-me-av">?</div>
+          <div class="lpc-name" id="lp-me-name">Bạn</div>
+          <div class="lpc-elo" id="lp-me-elo">ELO: 1200</div>
+          <div class="lpc-rec" id="lp-me-rec">— — —</div>
+          <div id="lp-me-ready" class="lpc-status wait">⏳ Đang chọn...</div>
+        </div>
+        <!-- VS -->
+        <div style="display:flex;flex-direction:column;align-items:center;padding-top:2rem;gap:.5rem">
+          <div style="font-family:var(--font-h);font-size:1.8rem;font-weight:900;color:var(--rose);letter-spacing:-2px;text-shadow:0 2px 8px rgba(225,29,72,.25)">VS</div>
+          <div style="width:1px;height:80px;background:linear-gradient(to bottom,var(--rose),transparent)"></div>
+        </div>
+        <!-- Player phải (đối thủ) -->
+        <div class="lobby-player-card" id="lp-opp" style="text-align:right">
+          <div class="lpc-av" id="lp-opp-av" style="margin-left:auto">?</div>
+          <div class="lpc-name" id="lp-opp-name">Đối thủ</div>
+          <div class="lpc-elo" id="lp-opp-elo">ELO: 1200</div>
+          <div class="lpc-rec" id="lp-opp-rec">— — —</div>
+          <div id="lp-opp-ready" class="lpc-status wait">⏳ Đang chọn...</div>
+        </div>
+      </div>
+
+      <!-- Chọn chủ đề -->
+      <div style="background:var(--bg-white);border:1px solid var(--border);border-radius:var(--rl);padding:1.5rem;box-shadow:var(--shadow)">
+        <div style="font-family:var(--font-h);font-weight:800;font-size:1rem;margin-bottom:.4rem">📚 Chọn 3 chủ đề yêu thích</div>
+        <div style="font-size:.82rem;color:var(--text-3);margin-bottom:1.2rem">Hệ thống sẽ chọn ngẫu nhiên 1 chủ đề từ pool của cả 2</div>
+        <div id="topic-grid" class="topic-grid"></div>
+        <div style="margin-top:1.2rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
+          <div style="font-size:.82rem;color:var(--text-3)">Đã chọn: <strong id="topic-count">0</strong>/3</div>
+          <button id="btn-ready" onclick="setReady()" style="
+            flex:1;min-width:160px;padding:.75rem 1.5rem;
+            background:linear-gradient(135deg,var(--teal),#0891b2);
+            color:#fff;font-family:var(--font-h);font-weight:800;font-size:.9rem;
+            border:none;border-radius:11px;cursor:pointer;transition:all .2s;
+            box-shadow:0 3px 12px rgba(13,148,136,.3);
+          ">⚔️ Sẵn Sàng Chiến!</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── BƯỚC 3: ĐẤU TRƯỜNG ── -->
+  <div id="ar-battle" style="display:none;min-height:100vh;padding:1rem">
+    <div style="max-width:720px;margin:0 auto">
+
+      <!-- Scoreboard -->
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:.75rem;align-items:center;margin-bottom:1rem">
+        <div class="battle-score-card" id="bs-me">
+          <div class="bsc-av" id="bs-me-av">?</div>
+          <div class="bsc-name" id="bs-me-name">Bạn</div>
+          <div class="bsc-score" id="bs-me-score">0</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-family:var(--font-m);font-size:2rem;font-weight:800;color:var(--rose)" id="battle-timer">60</div>
+          <div style="font-size:.65rem;color:var(--text-4);letter-spacing:1px">GIÂY</div>
+          <div style="margin-top:.5rem;font-size:.7rem;font-weight:700;color:var(--text-3)" id="battle-topic-label">Chủ đề</div>
+        </div>
+        <div class="battle-score-card right" id="bs-opp">
+          <div class="bsc-av" id="bs-opp-av">?</div>
+          <div class="bsc-name" id="bs-opp-name">Đối thủ</div>
+          <div class="bsc-score" id="bs-opp-score">0</div>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div style="background:var(--border);border-radius:100px;height:5px;margin-bottom:1.2rem;overflow:hidden">
+        <div id="battle-progress" style="height:100%;background:linear-gradient(90deg,var(--teal),#0891b2);border-radius:100px;transition:width 1s linear;width:100%"></div>
+      </div>
+
+      <!-- Câu hỏi -->
+      <div id="battle-q-wrap" style="background:var(--bg-white);border:1px solid var(--border);border-radius:var(--rl);padding:1.75rem;box-shadow:var(--shadow);margin-bottom:1rem;min-height:180px">
+        <div style="display:flex;gap:.6rem;align-items:center;margin-bottom:1rem">
+          <span id="battle-q-num" style="font-family:var(--font-m);font-size:.7rem;color:var(--text-4)">Câu 1/10</span>
+          <span id="battle-q-type" class="q-type-badge"></span>
+          <span id="battle-q-topic" style="font-size:.7rem;color:var(--teal);font-weight:700;margin-left:auto"></span>
+        </div>
+        <div id="battle-q-text" style="font-family:var(--font-h);font-size:1.05rem;font-weight:700;line-height:1.6;margin-bottom:1.2rem">Đang tải câu hỏi...</div>
+        <!-- Trắc nghiệm -->
+        <div id="battle-mcq" style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem"></div>
+        <!-- Điền số -->
+        <div id="battle-input" style="display:none">
+          <div style="display:flex;gap:.6rem">
+            <input id="battle-ans-inp" type="text" placeholder="Nhập đáp án số..." style="flex:1;padding:.75rem 1rem;border:2px solid var(--border-2);border-radius:11px;font-family:var(--font-m);font-size:1rem;font-weight:700;outline:none;transition:border .2s" onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--border-2)'" onkeydown="if(event.key==='Enter')submitAns()">
+            <button id="submit-ans-btn" onclick="submitAns()" style="padding:.75rem 1.4rem;background:linear-gradient(135deg,var(--teal),#0891b2);color:#fff;border:none;border-radius:11px;font-family:var(--font-h);font-weight:800;cursor:pointer;white-space:nowrap">Trả lời ↵</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feedback flash -->
+      <div id="battle-feedback" style="display:none;text-align:center;padding:.75rem;border-radius:11px;font-weight:700;font-size:.9rem;margin-bottom:.75rem"></div>
+
+      <!-- Opp action indicator -->
+      <div id="opp-answered" style="display:none;text-align:center;font-size:.8rem;color:var(--text-4);margin-bottom:.5rem">
+        <span id="opp-name-ind"></span> đã trả lời câu này ⚡
+      </div>
+      <div id="cooldown-indicator" style="display:none; text-align:center; margin-top:0.5rem; font-size:0.8rem; color:var(--rose); font-weight:bold">
+        ⏳ Đóng băng: <span id="cooldown-seconds">3</span>s
+      </div>
+    </div>
+  </div>
+
+  <!-- ── BƯỚC 4: KẾT QUẢ ── -->
+  <div id="ar-result" style="display:none;min-height:100vh;display:none;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center">
+    <div id="result-emoji" style="font-size:5rem;margin-bottom:1rem;animation:float 2s ease-in-out infinite"></div>
+    <div id="result-title" style="font-family:var(--font-h);font-size:2rem;font-weight:900;margin-bottom:.4rem"></div>
+    <div id="result-sub" style="color:var(--text-3);margin-bottom:1.5rem;font-size:.9rem"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;max-width:420px;width:100%;margin-bottom:1.5rem">
+      <div class="result-stat-card">
+        <div class="rsc-val" id="rs-me-score">0</div>
+        <div class="rsc-lbl" id="rs-me-name">Bạn</div>
+      </div>
+      <div class="result-stat-card">
+        <div class="rsc-val" id="rs-opp-score">0</div>
+        <div class="rsc-lbl" id="rs-opp-name">Đối thủ</div>
+      </div>
+    </div>
+    <div id="result-elo-change" style="font-size:.9rem;margin-bottom:1.5rem;padding:.6rem 1.2rem;border-radius:100px;font-weight:700"></div>
+    <div style="display:flex;gap:.8rem;flex-wrap:wrap;justify-content:center">
+      <button onclick="startQuickMatch()" style="padding:.75rem 1.6rem;background:linear-gradient(135deg,var(--teal),#0891b2);color:#fff;border:none;border-radius:12px;font-family:var(--font-h);font-weight:800;cursor:pointer;font-size:.9rem;box-shadow:0 4px 14px rgba(13,148,136,.35)">⚡ Tìm Trận Mới</button>
+      <button onclick="closeArena()" style="padding:.75rem 1.6rem;background:transparent;color:var(--text-2);border:1.5px solid var(--border-2);border-radius:12px;font-family:var(--font-b);font-weight:700;cursor:pointer;font-size:.9rem">← Về Đấu Trường</button>
+    </div>
+  </div>
+
+
+  <!-- Overlay đóng băng -->
+  <div id="cooldown-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.75); backdrop-filter:blur(8px); z-index:1000; display:flex; align-items:center; justify-content:center; flex-direction:column;">
+    <div style="position:relative; width:120px; height:120px;">
+      <svg viewBox="0 0 100 100" style="width:100%; height:100%; transform:rotate(-90deg);">
+        <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="6"/>
+        <circle id="cooldown-circle" cx="50" cy="50" r="45" fill="none" stroke="var(--teal)" stroke-width="6" stroke-linecap="round" stroke-dasharray="282.6" stroke-dashoffset="0" style="transition:stroke-dashoffset 1s linear;"/>
+      </svg>
+      <div id="cooldown-seconds-big" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:2rem; font-weight:800; color:white; font-family:var(--font-m);">3</div>
+    </div>
+    <div style="color:white; margin-top:1rem; font-weight:600; font-size:0.9rem;">Đang đóng băng...</div>
+  </div>
+  
+</div>
+
+<!-- ════════════════════════════════════
+     FRIEND ARENA MODAL
+════════════════════════════════════ -->
+<div class="overlay" id="ov-friend" style="display:none;align-items:center;justify-content:center">
+  <div class="modal" style="max-width:500px;max-height:90vh;overflow-y:auto">
+    <button class="mcl" onclick="closeFriendArena()">✕</button>
+    <div class="mtop" style="border-bottom:none;padding-bottom:0">
+      <div class="mlogo">
+        <div class="mk">👥</div>
+        <div class="mn">Glory<span>Chem</span></div>
+        <div class="ms">Thách Đấu Bạn Bè</div>
+      </div>
+    </div>
+    <div class="mbody" style="padding-top:.75rem">
+      <!-- Search box -->
+      <div style="position:relative;margin-bottom:1rem">
+        <span style="position:absolute;left:.9rem;top:50%;transform:translateY(-50%);font-size:.9rem">🔍</span>
+        <input id="friend-search" type="text" placeholder="Tìm tên đăng nhập..." oninput="searchFriends(this.value)"
+          style="width:100%;padding:.7rem 1rem .7rem 2.4rem;border:2px solid var(--border-2);border-radius:11px;font-family:var(--font-b);font-size:.88rem;outline:none;transition:border .2s;background:var(--bg-soft)"
+          onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--border-2)'">
+      </div>
+
+      <!-- Online players list -->
+      <div style="font-family:var(--font-m);font-size:.65rem;color:var(--text-4);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:.65rem">🟢 Đang Online</div>
+      <div id="online-list" style="display:flex;flex-direction:column;gap:.5rem;margin-bottom:1rem;max-height:280px;overflow-y:auto"></div>
+
+      <!-- Selected player action -->
+      <div id="friend-selected" style="display:none;padding:1rem;background:linear-gradient(135deg,rgba(204,251,241,.5),rgba(219,234,254,.4));border:1px solid rgba(13,148,136,.2);border-radius:13px;text-align:center">
+        <div style="font-size:.78rem;color:var(--text-3);margin-bottom:.5rem">Đã chọn đối thủ</div>
+        <div style="font-family:var(--font-h);font-weight:800;font-size:1rem;margin-bottom:.25rem" id="fs-name"></div>
+        <div style="font-size:.78rem;color:var(--teal);font-weight:700;margin-bottom:.85rem" id="fs-elo"></div>
+        <div style="display:flex;gap:.6rem;justify-content:center">
+          <button onclick="sendInvite()" style="padding:.65rem 1.5rem;background:linear-gradient(135deg,var(--teal),#0891b2);color:#fff;border:none;border-radius:10px;font-family:var(--font-h);font-weight:800;cursor:pointer;font-size:.875rem;box-shadow:0 3px 12px rgba(13,148,136,.3)">⚔️ Mời Thi Đấu</button>
+          <button onclick="clearFriendSelected()" style="padding:.65rem 1rem;background:transparent;border:1.5px solid var(--border-2);border-radius:10px;cursor:pointer;color:var(--text-3);font-family:var(--font-b);font-weight:600">Hủy</button>
+        </div>
+      </div>
+
+      <!-- Waiting for acceptance -->
+      <div id="friend-waiting" style="display:none;text-align:center;padding:1.2rem">
+        <div style="font-size:2rem;margin-bottom:.6rem;animation:float 2s ease-in-out infinite">📨</div>
+        <div style="font-family:var(--font-h);font-weight:800;margin-bottom:.4rem">Đã gửi lời mời!</div>
+        <div style="font-size:.82rem;color:var(--text-3);margin-bottom:1rem">Đang chờ <strong id="fw-name"></strong> chấp nhận...</div>
+        <div class="search-pulse" style="width:60px;height:60px;margin:0 auto 1rem"><div class="sp-ring" style="width:60px;height:60px"></div><div class="sp-ring sp2" style="width:60px;height:60px"></div><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.4rem">⏳</div></div>
+        <button onclick="cancelInvite()" style="background:none;border:1.5px solid var(--border-2);border-radius:9px;padding:.5rem 1.2rem;cursor:pointer;font-family:var(--font-b);font-weight:600;color:var(--text-3)">Hủy lời mời</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- INVITE RECEIVED MODAL -->
+<div class="overlay" id="ov-invite" style="display:none;align-items:center;justify-content:center">
+  <div class="modal" style="max-width:380px;text-align:center">
+    <div style="padding:2rem 1.5rem">
+      <div style="font-size:3rem;margin-bottom:.85rem;animation:float 2s ease-in-out infinite">⚔️</div>
+      <div style="font-family:var(--font-h);font-weight:800;font-size:1.2rem;margin-bottom:.4rem">Lời Mời Thách Đấu!</div>
+      <div style="font-size:.88rem;color:var(--text-3);margin-bottom:.3rem"><strong id="inv-from-name"></strong> muốn thách đấu bạn</div>
+      <div style="font-size:.8rem;color:var(--teal);font-weight:700;margin-bottom:1.5rem" id="inv-from-elo"></div>
+      <div style="display:flex;gap:.75rem;justify-content:center">
+        <button onclick="acceptInvite()" style="flex:1;padding:.8rem;background:linear-gradient(135deg,var(--teal),#0891b2);color:#fff;border:none;border-radius:11px;font-family:var(--font-h);font-weight:800;cursor:pointer;font-size:.9rem;box-shadow:0 4px 14px rgba(13,148,136,.3)">✅ Chấp Nhận</button>
+        <button onclick="rejectInvite()" style="flex:1;padding:.8rem;background:var(--rose-lt);color:var(--rose);border:1.5px solid rgba(225,29,72,.2);border-radius:11px;font-family:var(--font-b);font-weight:700;cursor:pointer">❌ Từ Chối</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PROFILE PAGE ═══ -->
+<div id="page-profile" class="page">
+  <div class="profile-wrap">
+
+    <!-- Header card -->
+    <div class="profile-header">
+      <div class="ph-avatar" id="ph-av">?</div>
+      <div class="ph-info">
+        <div class="ph-name" id="ph-name">Đang tải...</div>
+        <div class="ph-un" id="ph-un">@username</div>
+        <div class="ph-badge">⚡ Electron</div>
+      </div>
+    </div>
+
+    <!-- Tab switcher -->
+    <div class="ptabs">
+      <button class="ptab active" id="pt-info" onclick="swPTab('info')">👤 Thông Tin Cá Nhân</button>
+      <button class="ptab" id="pt-sec"  onclick="swPTab('sec')">🔒 Bảo Mật</button>
+    </div>
+
+    <!-- ── TAB: THÔNG TIN CÁ NHÂN ── -->
+    <div class="pcard active" id="pc-info">
+      <div class="pcard-title">Thông Tin Cá Nhân</div>
+      <div class="pcard-sub">Cập nhật thông tin hồ sơ của bạn</div>
+      <div class="pf-abox" id="info-alert"></div>
+
+      <div class="pf-grid">
+        <div class="pf">
+          <label>Họ và Tên</label>
+          <input class="pinp" type="text" id="p-fullname" placeholder="Nguyễn Văn A" autocomplete="name">
+        </div>
+        <div class="pf">
+          <label>Tên đăng nhập</label>
+          <input class="pinp" type="text" id="p-username" placeholder="chemmaster" autocomplete="username">
+          <div class="pf-hint">Chỉ chứa chữ, số, dấu gạch dưới (_)</div>
+        </div>
+      </div>
+
+      <div class="pf">
+        <label>Email</label>
+        <input class="pinp" type="email" id="p-email" disabled>
+        <div class="pf-hint">Email không thể thay đổi sau khi đăng ký</div>
+      </div>
+
+      <div class="pf">
+        <label>Ngày sinh</label>
+        <input class="pinp" type="date" id="p-dob">
+      </div>
+
+      <div class="p-actions">
+        <button class="psave" id="p-save-info" onclick="saveInfo()">
+          <span id="p-save-info-txt">💾 Lưu thay đổi</span>
+        </button>
+        <button class="pcancel" onclick="loadProfileFields()">↺ Hoàn tác</button>
+      </div>
+    </div>
+
+    <!-- ── TAB: BẢO MẬT ── -->
+    <div class="pcard" id="pc-sec">
+      <div class="pcard-title">Đổi Mật Khẩu</div>
+      <div class="pcard-sub">Để bảo mật tài khoản, hãy dùng mật khẩu mạnh và không chia sẻ với ai</div>
+      <div class="pf-abox" id="sec-alert"></div>
+
+      <div class="sec-warn">
+        <span class="sec-warn-icon">⚠️</span>
+        <div>
+          <span>Sau khi đổi mật khẩu, bạn sẽ cần đăng nhập lại trên tất cả thiết bị.</span>
+          <br><br>
+          <button class="sec-fp-link" type="button" onclick="openForgotFromProfile()">🔑 Không nhớ mật khẩu hiện tại? Gửi email đặt lại</button>
+        </div>
+      </div>
+
+      <div class="pf">
+        <label>Mật khẩu hiện tại</label>
+        <div class="piw">
+          <input class="pinp" type="password" id="p-pw-cur" placeholder="••••••••" autocomplete="current-password">
+          <button class="peyeb" type="button" onclick="peye('p-pw-cur',this)">👁</button>
+        </div>
+      </div>
+
+      <div class="pcard-divider"></div>
+
+      <div class="pf-grid">
+        <div class="pf">
+          <label>Mật khẩu mới</label>
+          <div class="piw">
+            <input class="pinp" type="password" id="p-pw-new" placeholder="Tối thiểu 8 ký tự" oninput="ppws(this.value)" autocomplete="new-password">
+            <button class="peyeb" type="button" onclick="peye('p-pw-new',this)">👁</button>
+          </div>
+          <div class="ppws"><div class="pps" id="pp1"></div><div class="pps" id="pp2"></div><div class="pps" id="pp3"></div><div class="pps" id="pp4"></div></div>
+        </div>
+        <div class="pf">
+          <label>Xác nhận mật khẩu mới</label>
+          <div class="piw">
+            <input class="pinp" type="password" id="p-pw-cf" placeholder="Nhập lại mật khẩu mới" autocomplete="new-password">
+            <button class="peyeb" type="button" onclick="peye('p-pw-cf',this)">👁</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-actions">
+        <button class="psave" id="p-save-pw" onclick="savePw()">
+          <span id="p-save-pw-txt">🔒 Đổi Mật Khẩu</span>
+        </button>
+        <button class="pcancel" onclick="clearPwForm()">✕ Hủy</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ AUTH MODAL ═══ -->
+<div class="overlay" id="ov">
+  <div class="modal" id="mo" role="dialog" aria-modal="true" aria-label="Đăng nhập / Đăng ký">
+    <button class="mcl" id="mcl" type="button" aria-label="Đóng">✕</button>
+    <div class="mtop">
+      <div class="mlogo">
+        <div class="mk">⚗️</div>
+        <div class="mn">Glory<span>Chem</span></div>
+        <div class="ms">Đấu Trường Hóa Học THPT</div>
+      </div>
+      <div class="mtabs">
+        <button class="mt-tab active" id="tl" type="button" onclick="swTab('login')">Đăng Nhập</button>
+        <button class="mt-tab"        id="tr" type="button" onclick="swTab('register')">Đăng Ký</button>
+      </div>
+    </div>
+
+    <div class="mbody">
+      <!-- LOGIN FORM -->
+      <div id="fl">
+        <div class="abox" id="al"></div>
+        <div class="fg">
+          <label>Email hoặc Tên đăng nhập</label>
+          <div class="iw"><span class="ii">👤</span><input class="finp" type="text" id="li" placeholder="email@example.com hoặc username" autocomplete="username"></div>
+        </div>
+        <div class="fg">
+          <label>Mật Khẩu</label>
+          <div class="iw"><span class="ii">🔒</span><input class="finp" type="password" id="lp" placeholder="••••••••" autocomplete="current-password"><button class="eyeb" type="button" onclick="eye('lp',this)">👁</button></div>
+        </div>
+        <a class="fgl" href="#" onclick="swTab('forgot');return false">Quên mật khẩu?</a>
+        <button class="asub" id="bli" type="button" onclick="doLogin()">
+          <span class="bt">Đăng Nhập →</span>
+          <span class="bl" style="display:none"><span class="spin">↻</span> Đang xử lý...</span>
+        </button>
+        <div class="divdr"><div class="dl"></div><div class="dt">chưa có tài khoản?</div><div class="dl"></div></div>
+        <div class="swl"><a href="#" onclick="swTab('register');return false">Đăng ký ngay →</a></div>
+      </div>
+
+      <!-- FORGOT PASSWORD FORM -->
+      <div id="ffp">
+        <button class="fp-back" type="button" onclick="swTab('login')">← Quay lại đăng nhập</button>
+        <div class="fp-title">🔑 Quên mật khẩu?</div>
+        <div class="fp-sub">Nhập email đã đăng ký. Chúng tôi sẽ gửi link đặt lại mật khẩu cho bạn.</div>
+        <div class="abox" id="afp"></div>
+        <div class="fp-success" id="fp-ok">
+          <div class="fp-icon">📧</div>
+          <h3>Email đã được gửi!</h3>
+          <p>Kiểm tra hộp thư của bạn và nhấn vào link trong email để đặt lại mật khẩu.<br><br>Không thấy email? Hãy kiểm tra thư mục Spam.</p>
+        </div>
+        <div id="fp-form-body">
+          <div class="fg">
+            <label>Email đã đăng ký</label>
+            <div class="iw"><span class="ii">✉️</span><input class="finp" type="email" id="fpe" placeholder="email@example.com" autocomplete="email"></div>
+          </div>
+          <button class="asub" id="bfp" type="button" onclick="doForgotPw()">
+            <span class="bt">Gửi Link Đặt Lại →</span>
+            <span class="bl" style="display:none"><span class="spin">↻</span> Đang gửi...</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- REGISTER FORM -->
+      <div id="fr" style="display:none">
+        <div class="abox" id="ar"></div>
+        <div class="frow">
+          <div class="fg"><label>Họ và Tên</label><div class="iw"><span class="ii">📝</span><input class="finp" type="text" id="rn" placeholder="Nguyễn Văn A" autocomplete="name"></div></div>
+          <div class="fg"><label>Tên đăng nhập</label><div class="iw"><span class="ii">@</span><input class="finp" type="text" id="ru" placeholder="chemmaster" autocomplete="username"></div></div>
+        </div>
+        <div class="fg"><label>Email</label><div class="iw"><span class="ii">✉️</span><input class="finp" type="email" id="re" placeholder="email@example.com" autocomplete="email"></div></div>
+        <div class="fg">
+          <label>Mật Khẩu</label>
+          <div class="iw"><span class="ii">🔒</span><input class="finp" type="password" id="rp" placeholder="Tối thiểu 8 ký tự" oninput="pws(this.value)" autocomplete="new-password"><button class="eyeb" type="button" onclick="eye('rp',this)">👁</button></div>
+          <div class="pws"><div class="ps" id="s1"></div><div class="ps" id="s2"></div><div class="ps" id="s3"></div><div class="ps" id="s4"></div></div>
+        </div>
+        <div class="fg">
+          <label>Xác Nhận Mật Khẩu</label>
+          <div class="iw"><span class="ii">🔑</span><input class="finp" type="password" id="rc" placeholder="Nhập lại mật khẩu" autocomplete="new-password"><button class="eyeb" type="button" onclick="eye('rc',this)">👁</button></div>
+          <div class="ferr" id="ecf">Mật khẩu không khớp</div>
+        </div>
+        <button class="asub" id="brg" type="button" onclick="doReg()">
+          <span class="bt">Tạo Tài Khoản ✨</span>
+          <span class="bl" style="display:none"><span class="spin">↻</span> Đang tạo...</span>
+        </button>
+        <div class="divdr"><div class="dl"></div><div class="dt">đã có tài khoản?</div><div class="dl"></div></div>
+        <div class="swl"><a href="#" onclick="swTab('login');return false">← Quay lại đăng nhập</a></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PROFILE FORGOT PASSWORD MODAL (dành cho user đã đăng nhập) ═══ -->
+<div class="overlay" id="ov-pfp" style="display:none;align-items:center;justify-content:center">
+  <div class="modal" id="mo-pfp" role="dialog" aria-modal="true" style="max-width:440px">
+    <button class="mcl" type="button" aria-label="Đóng" onclick="closePFP()">✕</button>
+    <div class="mtop" style="border-bottom:none;padding-bottom:0">
+      <div class="mlogo">
+        <div class="mk">📧</div>
+        <div class="mn">Glory<span>Chem</span></div>
+        <div class="ms">Đặt lại mật khẩu qua email</div>
+      </div>
+    </div>
+    <div class="mbody" style="padding-top:.5rem">
+
+      <!-- Trạng thái mặc định: xác nhận gửi -->
+      <div id="pfp-body">
+        <div style="
+          background:linear-gradient(135deg,rgba(204,251,241,.6),rgba(219,234,254,.6));
+          border:1px solid rgba(13,148,136,.15);
+          border-radius:13px;padding:1.1rem 1.2rem;margin-bottom:1.3rem;
+          display:flex;gap:.85rem;align-items:flex-start;
+        ">
+          <span style="font-size:1.35rem;flex-shrink:0;margin-top:.05rem">💡</span>
+          <div style="font-size:.83rem;color:var(--text-2);line-height:1.68;letter-spacing:-.01em">
+            Chúng tôi sẽ gửi <strong>link đặt lại mật khẩu</strong> đến email của bạn.<br>
+            Sau khi click vào link, bạn có thể tạo mật khẩu mới mà không cần nhớ mật khẩu cũ.
+          </div>
+        </div>
+
+        <!-- Email hiển thị (read-only) -->
+        <div class="fg" style="margin-bottom:1.1rem">
+          <label style="font-size:.8rem;font-weight:700;color:var(--text-3);display:block;margin-bottom:.45rem">Email nhận link đặt lại</label>
+          <div style="
+            display:flex;align-items:center;gap:.65rem;
+            background:var(--bg-soft);border:1.5px solid var(--border);
+            border-radius:11px;padding:.7rem 1rem;
+          ">
+            <span style="font-size:1rem">✉️</span>
+            <span id="pfp-email-display" style="font-weight:700;color:var(--text);font-size:.9rem;letter-spacing:-.01em"></span>
+            <span style="margin-left:auto;font-size:.7rem;font-weight:700;
+              background:var(--teal-lt);color:var(--teal-dark);
+              padding:.18rem .55rem;border-radius:100px;letter-spacing:.01em">ĐÃ XÁC NHẬN</span>
+          </div>
+        </div>
+
+        <div class="abox" id="a-pfp"></div>
+
+        <button class="asub" id="b-pfp" type="button" onclick="doSendProfileReset()">
+          <span class="bt">📧 Gửi Link Đặt Lại Mật Khẩu →</span>
+          <span class="bl" style="display:none"><span class="spin">↻</span> Đang gửi...</span>
+        </button>
+
+        <div style="text-align:center;margin-top:.9rem">
+          <button type="button" onclick="closePFP()" style="
+            background:none;border:none;cursor:pointer;
+            font-size:.81rem;color:var(--text-4);font-family:var(--font-b);
+            transition:color .15s;
+          " onmouseover="this.style.color='var(--text-3)'" onmouseout="this.style.color='var(--text-4)'">
+            Hủy bỏ
+          </button>
+        </div>
+      </div>
+
+      <!-- Trạng thái thành công -->
+      <div id="pfp-success" style="display:none;text-align:center;padding:1rem 0 .5rem">
+        <div style="
+          width:72px;height:72px;border-radius:50%;margin:0 auto 1.1rem;
+          background:linear-gradient(135deg,var(--green-lt),rgba(204,251,241,.8));
+          border:2px solid rgba(22,163,74,.2);
+          display:flex;align-items:center;justify-content:center;font-size:2rem;
+          animation:float 3s ease-in-out infinite;
+        ">📬</div>
+        <div style="font-family:var(--font-h);font-weight:800;font-size:1.15rem;color:var(--green);margin-bottom:.55rem;letter-spacing:-.03em">
+          Email đã được gửi!
+        </div>
+        <div style="font-size:.84rem;color:var(--text-3);line-height:1.75;margin-bottom:.6rem">
+          Hãy kiểm tra hộp thư tại<br>
+          <strong id="pfp-sent-email" style="color:var(--text-2)"></strong>
+        </div>
+        <div style="
+          background:var(--amber-lt);border:1px solid rgba(217,119,6,.18);
+          border-radius:10px;padding:.75rem 1rem;
+          font-size:.79rem;color:#92400e;line-height:1.6;margin-bottom:1.4rem;
+          text-align:left;display:flex;gap:.65rem;align-items:flex-start;
+        ">
+          <span style="flex-shrink:0">⚠️</span>
+          <span>Link chỉ có hiệu lực <strong>1 giờ</strong>. Không thấy email? Kiểm tra thư mục <strong>Spam</strong> hoặc <strong>Junk</strong>.</span>
+        </div>
+        <button class="asub" type="button" onclick="closePFP()" style="background:linear-gradient(135deg,var(--teal),#0891b2)">
+          Đã hiểu, đóng lại ✓
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══ RESET PASSWORD MODAL (từ email link) ═══ -->
+<div class="overlay" id="ov-reset" style="display:none;align-items:center;justify-content:center">
+  <div class="modal" id="mo-reset" role="dialog" aria-modal="true" aria-label="Đặt mật khẩu mới" style="max-width:420px">
+    <div class="mtop" style="border-bottom:none;padding-bottom:0">
+      <div class="mlogo">
+        <div class="mk">🔑</div>
+        <div class="mn">Glory<span>Chem</span></div>
+        <div class="ms" id="reset-subtitle">Đặt mật khẩu mới cho tài khoản</div>
+      </div>
+    </div>
+    <div class="mbody">
+      <!-- Form đặt mật khẩu mới -->
+      <div id="reset-form-body">
+        <div class="abox" id="a-reset"></div>
+        <div class="fg">
+          <label>Mật khẩu mới</label>
+          <div class="iw">
+            <span class="ii">🔒</span>
+            <input class="finp" type="password" id="reset-pw" placeholder="Tối thiểu 8 ký tự" oninput="pws(this.value)" autocomplete="new-password">
+            <button class="eyeb" type="button" onclick="eye('reset-pw',this)">👁</button>
+          </div>
+          <div class="pws"><div class="ps" id="rs1"></div><div class="ps" id="rs2"></div><div class="ps" id="rs3"></div><div class="ps" id="rs4"></div></div>
+        </div>
+        <div class="fg">
+          <label>Xác nhận mật khẩu mới</label>
+          <div class="iw">
+            <span class="ii">🔑</span>
+            <input class="finp" type="password" id="reset-pw-cf" placeholder="Nhập lại mật khẩu mới" autocomplete="new-password">
+            <button class="eyeb" type="button" onclick="eye('reset-pw-cf',this)">👁</button>
+          </div>
+        </div>
+        <button class="asub" id="b-reset" type="button" onclick="doResetPw()">
+          <span class="bt">🔒 Đặt Mật Khẩu Mới →</span>
+          <span class="bl" style="display:none"><span class="spin">↻</span> Đang lưu...</span>
+        </button>
+      </div>
+      <!-- Trạng thái thành công -->
+      <div id="reset-success" style="display:none;text-align:center;padding:1.5rem 0">
+        <div style="font-size:2.8rem;margin-bottom:.85rem">✅</div>
+        <div style="font-family:var(--font-h);font-weight:800;font-size:1.1rem;color:var(--green);margin-bottom:.5rem">Đặt mật khẩu thành công!</div>
+        <div style="font-size:.84rem;color:var(--text-3);line-height:1.7;margin-bottom:1.4rem">Mật khẩu của bạn đã được cập nhật.<br>Hãy đăng nhập lại để tiếp tục.</div>
+        <button class="asub" type="button" onclick="closeResetModal();openM('login')">Đăng Nhập →</button>
+      </div>
+      <!-- Trạng thái link hết hạn / lỗi -->
+      <div id="reset-expired" style="display:none;text-align:center;padding:1rem 0">
+        <div style="font-size:2.4rem;margin-bottom:.85rem">⏰</div>
+        <div style="font-family:var(--font-h);font-weight:800;font-size:1rem;color:var(--rose);margin-bottom:.5rem">Link đã hết hạn!</div>
+        <div style="font-size:.84rem;color:var(--text-3);line-height:1.7;margin-bottom:1.4rem">Link đặt lại mật khẩu chỉ có hiệu lực trong <strong>1 giờ</strong>.<br>Vui lòng yêu cầu gửi lại email.</div>
+        <div class="fg">
+          <div class="iw"><span class="ii">✉️</span><input class="finp" type="email" id="reset-email-retry" placeholder="Nhập lại email của bạn" autocomplete="email"></div>
+        </div>
+        <div class="abox" id="a-reset-retry" style="margin-top:.5rem"></div>
+        <button class="asub" id="b-reset-retry" type="button" onclick="doResendReset()" style="margin-top:.75rem">
+          <span class="bt">📧 Gửi Lại Email →</span>
+          <span class="bl" style="display:none"><span class="spin">↻</span> Đang gửi...</span>
+        </button>
+        <div style="margin-top:1rem"><a href="#" style="font-size:.81rem;color:var(--text-3)" onclick="closeResetModal();return false">← Quay lại trang chủ</a></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tw" id="tw"></div>
+<script src="/script.js"></script>
+
+</body>
+</html>
