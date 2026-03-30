@@ -1,4 +1,3 @@
-
 // ══ SUPABASE ══
 const SURL = 'https://cmrbsiuzrpsglynnfund.supabase.co';
 const SKEY = 'sb_publishable_-4uRGeYYYeJAvSMKnwZr5Q_LOSAr_dZ';
@@ -21,10 +20,10 @@ async function init() {
 
   try {
     const { data: { session } } = await sb.auth.getSession();
-    if (session) { U = session.user; await loadP(); renderIn(); }
+    if (session) { U = session.user; await loadP(); renderIn(); initSocket(); }
     sb.auth.onAuthStateChange(async (ev, s) => {
       if (ev === 'SIGNED_IN' && s) {
-        U = s.user; await loadP(); renderIn(); closeM();
+        U = s.user; await loadP(); renderIn(); initSocket(); closeM();
         toast('ok','✅ Đăng nhập thành công!');
         subscribeProfileRealtime()
       }
@@ -129,7 +128,7 @@ async function handleEmailRedirect() {
 function _initNormalSession(skipSignInToast = false) {
   sb.auth.onAuthStateChange(async (ev, s) => {
     if (ev === 'SIGNED_IN' && s && !skipSignInToast) {
-      U = s.user; await loadP(); renderIn(); closeM();
+      U = s.user; await loadP(); renderIn(); initSocket(); closeM();
       toast('ok','✅ Đăng nhập thành công!');
     }
     else if (ev === 'SIGNED_OUT') { U = null; renderOut(); }
@@ -343,192 +342,21 @@ function renderIn() {
 
   // Subscribe to friend invites
   subscribeToInvites();
-      // ... existing code ...
-    if (socket && socket.connected) {
-        socket.disconnect();
-    }
-    socket = io();
-    socket.on('connect', () => {
-        // Send presence info
-        socket.emit('presence:join', {
-            userId: U.id,
-            full_name: U.profile?.full_name || U.email?.split('@')[0],
-            username: U.profile?.username || '',
-            elo: U.profile?.elo || 1200,
-            wins: U.profile?.wins || 0,
-            losses: U.profile?.losses || 0,
-        });
+  // Cập nhật presence info nếu socket đã kết nối
+  if (socket && socket.connected) {
+    socket.emit('presence:join', {
+      userId: U.id,
+      full_name: U.profile?.full_name || U.email?.split('@')[0],
+      username: U.profile?.username || '',
+      elo: U.profile?.elo || 1200,
+      wins: U.profile?.wins || 0,
+      losses: U.profile?.losses || 0,
     });
-    // Listen for presence updates
-    socket.on('presence_list', (users) => {
-      ONLINE_USERS = {};
-      users.forEach(u => ONLINE_USERS[u.userId] = u);
-      updateOnlineCount();
-      refreshOnlineUI();
-    });
-    socket.on('answer_result', (data) => {
-      const fb = G('battle-feedback');
-      fb.classList.add('battle-feedback-animate');
-      setTimeout(() => fb.classList.remove('battle-feedback-animate'), 400);
-
-      if (data.correct) {
-        G('cooldown-overlay').style.display = 'none';
-        fb.textContent = `✅ Chính xác! ${data.explanation || ''}`;
-        fb.style.background = 'var(--green-lt)';
-        fb.style.color = 'var(--green)';
-        AR.questionFinished = true;
-        AR.waitingResponse = false;
-        disableBattleInputs(true);   // vô hiệu hóa vĩnh viễn cho câu này
-        if (AR.cooldownTimer) clearTimeout(AR.cooldownTimer);
-        AR.answerCooldown = false;
-        G('cooldown-indicator').style.display = 'none';
-      } else {
-        fb.textContent = `❌ Sai rồi!`;
-        fb.style.background = 'var(--rose-lt)';
-        fb.style.color = 'var(--rose)';
-
-        if (!AR.questionFinished) {
-          AR.waitingResponse = false;
-          AR.answerCooldown = true;
-          disableBattleInputs(true);   // vô hiệu hóa tạm thời
-
-          if (AR.cooldownInterval) clearInterval(AR.cooldownInterval);
-
-          showCooldownOverlay(3, () => {
-            if (!AR.questionFinished) {
-              AR.answerCooldown = false;
-              disableBattleInputs(false); // kích hoạt lại
-              const fb = G('battle-feedback');
-              fb.textContent = `⌛ Hết thời gian chờ, bạn có thể trả lời lại.`;
-              fb.style.background = 'var(--amber-lt)';
-              fb.style.color = 'var(--amber)';
-              fb.style.display = 'block';
-              setTimeout(() => {
-                if (fb.style.display === 'block') fb.style.display = 'none';
-              }, 2000);
-            }
-            AR.cooldownInterval = null;
-          });
-        }
-      }
-      fb.style.display = 'block';
-      setTimeout(() => {
-        if (fb.style.display === 'block' && !fb.textContent.includes('Hết thời gian chờ')) {
-          fb.style.display = 'none';
-        }
-      }, 2000);
-    });
-    socket.on('presence_update', (users) => {
-      ONLINE_USERS = {};
-      users.forEach(u => ONLINE_USERS[u.userId] = u);
-      updateOnlineCount();
-      refreshOnlineUI();
-    });
-
-    // Listen for match found
-    socket.on('match_found', (data) => {
-      // data: { roomId, role, opponent: { userId, full_name, username, elo, wins, losses } }
-      G('ov-friend').classList.remove('open');
-      G('friend-waiting').style.display = 'none';
-      G('friend-selected').style.display = 'none';
-      G('ov-invite').classList.remove('open');
-      clearTimeout(AR.waitTimer);
-      currentRoomId = data.roomId;
-      AR.roomId = data.roomId;
-      AR.role = data.role;
-      AR.oppId = data.opponent.userId;
-      AR.oppProfile = data.opponent;
-
-      // Tham gia phòng qua socket (để server biết)
-      socket.emit('join_room', { roomId: data.roomId });
-      const overlay = document.getElementById('cooldown-overlay');
-      if (overlay) overlay.style.display = 'none';   // ← thêm dòng này
-      if (AR.waitTimer) clearInterval(AR.waitTimer);   // ← thêm dòng này
-      // Chuyển sang giao diện phòng chờ (lobby)
-      enterLobby();
-    });
-    // Lobby events
-    socket.on('lobby_start', (data) => {
-      AR.lobbySec = data.timeout;
-      startLobbyCountdown(data.timeout);
-    });
-    socket.on('lobby_update', (data) => {
-      // data.playerReady[userId] = true/false
-      const oppId = AR.oppId;
-      AR.oppReady = data.playerReady[oppId] || false;
-      updateOppReadyUI(); // cập nhật giao diện
-      if (AR.ready && AR.oppReady) {
-        // Cả hai đã sẵn sàng, server sẽ tự động chuyển sang battle
-        // (không cần làm gì thêm, server sẽ gửi battle_question)
-      }
-    });
-    // Battle events
-    socket.on('battle_question', (data) => {
-      renderBattleQuestion(data);
-    });
-    socket.on('battle_update', (data) => {
-      // Cập nhật điểm số từ server
-      const myId = U.id;
-      const oppId = AR.oppId;
-      AR.myScore = data.scores[myId] || 0;
-      AR.oppScore = data.scores[oppId] || 0;
-      updateBattleScore();
-
-      // Nếu đối thủ trả lời đúng và mình chưa trả lời
-      if (data.correct && data.playerAnsweredUserId !== U.id) {
-
-        AR.questionFinished = true;
-        disableBattleInputs(true);
-        if (AR.cooldownTimer) {
-          clearTimeout(AR.cooldownTimer);
-          AR.cooldownTimer = null;
-        }
-        AR.answerCooldown = false;
-        G('cooldown-indicator').style.display = 'none';
-
-        G('battle-feedback').textContent = `⚡ Đối thủ đã trả lời đúng!`;
-        G('battle-feedback').style.display = 'block';
-        setTimeout(() => {
-          if (G('battle-feedback').style.display === 'block')
-            G('battle-feedback').style.display = 'none';
-        }, 2000);
-        if (AR.cooldownInterval) clearInterval(AR.cooldownInterval);
-        G('cooldown-overlay').style.display = 'none';
-      }
-    });
-    socket.on('battle_result', (data) => {
-        console.log('🔍 battle_result received:', data);
-        endBattle(data);
-    });
-    socket.on('disconnect', () => {
-      toast('err', 'Mất kết nối đến máy chủ');
-      closeArena();
-    });
-
-    socket.on('opponent_left', () => {
-      toast('err', 'Đối thủ đã thoát trận');
-      closeArena();
-    });
-
-
-    // Invite events
-    socket.on('invite_received', (data) => {
-      // data: { roomId, from: { userId, full_name, username, elo, wins, losses } }
-      AR.inviteFrom = data.from;
-      AR.inviteRoomId = data.roomId;
-      G('inv-from-name').innerText = data.from.full_name;
-      G('inv-from-elo').innerHTML = `⚡ ELO: ${data.from.elo}`;
-      G('ov-invite').classList.add('open');
-    });
-    // Error handling
-    socket.on('error', (err) => {
-      toast('err', err.msg || 'Có lỗi xảy ra');
-    });
-
+  }
 }
 
 function renderOut() {
-  if (socket) socket.disconnect();
+  if (socket) { socket.disconnect(); socket = null; }
   leaveGlobalPresence();
   G('nav-r').innerHTML = `
     <button class="btn btn-ghost" onclick="openM('login')">Đăng Nhập</button>
@@ -699,9 +527,11 @@ function gp(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   G('page-' + id).classList.add('active');
   document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
-  const m = {home:'nl-home', challenge:'nl-challenge'};
+  const m = {home:'nl-home', challenge:'nl-challenge', leaderboard:'nl-leaderboard'};
   if (m[id]) G(m[id])?.classList.add('active');
 
+  // Load leaderboard khi chuyển tab
+  if (id === 'leaderboard') { loadLeaderboard(); }
   // Nếu chuyển về trang chủ và đã đăng nhập, làm mới dữ liệu
   if (id === 'home' && U) {
     renderIn();
@@ -1640,8 +1470,6 @@ function addToHistory(entry) {
 // ══════════════════════════════════════════════════════
 let PRESENCE_CH = null;
 let ONLINE_USERS = {}; // { userId: presenceData }
-let socket = null;
-let currentRoomId = null;
 let onlineUsers = {};           // key = userId, value = user data
 
 let FA = { selectedUser: null }; // cho mời bạn bè
@@ -1694,23 +1522,6 @@ function joinGlobalPresence() {
 
 
 
-function initSocket() {
-  if (socket && socket.connected) socket.disconnect();
-  socket = io();
-
-  socket.on('connect', () => {
-    console.log('Socket connected');
-    // Gửi thông tin người dùng lên server
-    socket.emit('presence:join', {
-      userId: U.id,
-      full_name: U.profile?.full_name || U.email.split('@')[0],
-      username: U.profile?.username || '',
-      elo: U.profile?.elo || 1200,
-      wins: U.profile?.wins || 0,
-      losses: U.profile?.losses || 0
-    });
-  });
-}
 
 
 
@@ -2075,4 +1886,337 @@ async function rejectInvite() {
   resize(); setup(); draw();
 })();
 
+// ══════════════════════════════════════
+//   SOCKET INIT — chỉ gọi 1 lần
+// ══════════════════════════════════════
+let socket = null;
+let currentRoomId = null;
+
+function initSocket() {
+  if (socket && socket.connected) return; // Đã kết nối rồi, không init lại
+  if (socket) socket.disconnect();
+
+  socket = io();
+
+  socket.on('connect', () => {
+    if (!U) return;
+    socket.emit('presence:join', {
+      userId: U.id,
+      full_name: U.profile?.full_name || U.email?.split('@')[0],
+      username: U.profile?.username || '',
+      elo: U.profile?.elo || 1200,
+      wins: U.profile?.wins || 0,
+      losses: U.profile?.losses || 0,
+    });
+  });
+
+  socket.on('presence_list', (users) => {
+    ONLINE_USERS = {};
+    users.forEach(u => ONLINE_USERS[u.userId] = u);
+    updateOnlineCount();
+    refreshOnlineUI();
+  });
+
+  socket.on('presence_update', (users) => {
+    ONLINE_USERS = {};
+    users.forEach(u => ONLINE_USERS[u.userId] = u);
+    updateOnlineCount();
+    refreshOnlineUI();
+  });
+
+  socket.on('answer_result', (data) => {
+    const fb = G('battle-feedback');
+    fb.classList.add('battle-feedback-animate');
+    setTimeout(() => fb.classList.remove('battle-feedback-animate'), 400);
+
+    if (data.correct) {
+      G('cooldown-overlay').style.display = 'none';
+      fb.textContent = `✅ Chính xác! ${data.explanation || ''}`;
+      fb.style.background = 'var(--green-lt)';
+      fb.style.color = 'var(--green)';
+      AR.questionFinished = true;
+      AR.waitingResponse = false;
+      disableBattleInputs(true);
+      if (AR.cooldownTimer) clearTimeout(AR.cooldownTimer);
+      AR.answerCooldown = false;
+      G('cooldown-indicator').style.display = 'none';
+    } else {
+      fb.textContent = `❌ Sai rồi!`;
+      fb.style.background = 'var(--rose-lt)';
+      fb.style.color = 'var(--rose)';
+
+      if (!AR.questionFinished) {
+        AR.waitingResponse = false;
+        AR.answerCooldown = true;
+        disableBattleInputs(true);
+        if (AR.cooldownInterval) clearInterval(AR.cooldownInterval);
+
+        showCooldownOverlay(3, () => {
+          if (!AR.questionFinished) {
+            AR.answerCooldown = false;
+            disableBattleInputs(false);
+            const fb = G('battle-feedback');
+            fb.textContent = `⌛ Hết thời gian chờ, bạn có thể trả lời lại.`;
+            fb.style.background = 'var(--amber-lt)';
+            fb.style.color = 'var(--amber)';
+            fb.style.display = 'block';
+            setTimeout(() => {
+              if (fb.style.display === 'block') fb.style.display = 'none';
+            }, 2000);
+          }
+          AR.cooldownInterval = null;
+        });
+      }
+    }
+    fb.style.display = 'block';
+    setTimeout(() => {
+      if (fb.style.display === 'block' && !fb.textContent.includes('Hết thời gian chờ')) {
+        fb.style.display = 'none';
+      }
+    }, 2000);
+  });
+
+  socket.on('match_found', async (data) => {
+    G('ov-friend').classList.remove('open');
+    G('friend-waiting').style.display = 'none';
+    G('friend-selected').style.display = 'none';
+    G('ov-invite').classList.remove('open');
+    clearTimeout(AR.waitTimer);
+    currentRoomId = data.roomId;
+    AR.roomId = data.roomId;
+    AR.role = data.role;
+    AR.oppId = data.opponent.userId;
+    AR.oppProfile = data.opponent;
+
+    // Gửi join_room NGAY LẬP TỨC trước khi enterLobby (async)
+    socket.emit('join_room', { roomId: data.roomId });
+
+    const overlay = document.getElementById('cooldown-overlay');
+    if (overlay) overlay.style.display = 'none';
+    if (AR.waitTimer) clearInterval(AR.waitTimer);
+    await enterLobby();
+  });
+
+  socket.on('lobby_start', (data) => {
+    AR.lobbySec = data.timeout;
+    startLobbyCountdown(data.timeout);
+  });
+
+  socket.on('lobby_update', (data) => {
+    const oppId = AR.oppId;
+    AR.oppReady = data.playerReady[oppId] || false;
+    updateOppReadyUI();
+  });
+
+  socket.on('battle_question', (data) => {
+    renderBattleQuestion(data);
+  });
+
+  socket.on('battle_update', (data) => {
+    const myId = U.id;
+    const oppId = AR.oppId;
+    AR.myScore = data.scores[myId] || 0;
+    AR.oppScore = data.scores[oppId] || 0;
+    updateBattleScore();
+
+    if (data.correct && data.playerAnsweredUserId !== U.id) {
+      AR.questionFinished = true;
+      disableBattleInputs(true);
+      if (AR.cooldownTimer) { clearTimeout(AR.cooldownTimer); AR.cooldownTimer = null; }
+      AR.answerCooldown = false;
+      G('cooldown-indicator').style.display = 'none';
+      G('battle-feedback').textContent = `⚡ Đối thủ đã trả lời đúng!`;
+      G('battle-feedback').style.display = 'block';
+      setTimeout(() => {
+        if (G('battle-feedback').style.display === 'block')
+          G('battle-feedback').style.display = 'none';
+      }, 2000);
+      if (AR.cooldownInterval) clearInterval(AR.cooldownInterval);
+      G('cooldown-overlay').style.display = 'none';
+    }
+  });
+
+  socket.on('battle_result', (data) => {
+    console.log('🔍 battle_result received:', data);
+    endBattle(data);
+  });
+
+  socket.on('opponent_left', () => {
+    toast('err', 'Đối thủ đã thoát trận');
+    closeArena();
+  });
+
+  socket.on('invite_received', (data) => {
+    AR.inviteFrom = data.from;
+    AR.inviteRoomId = data.roomId;
+    G('inv-from-name').innerText = data.from.full_name;
+    G('inv-from-elo').innerHTML = `⚡ ELO: ${data.from.elo}`;
+    G('ov-invite').classList.add('open');
+  });
+
+  socket.on('disconnect', () => {
+    toast('err', 'Mất kết nối đến máy chủ');
+    closeArena();
+  });
+
+  socket.on('error', (err) => {
+    toast('err', err.msg || 'Có lỗi xảy ra');
+  });
+}
+
 init();
+// ══════════════════════════════════════
+//   LEADERBOARD
+// ══════════════════════════════════════
+let LB = { filter: 'all', data: [], myRank: null };
+
+// Rank colors cho pill
+const RANK_COLORS = {
+  'Electron':    { bg: '#dbeafe', color: '#1d4ed8' },
+  'Nguyên Tử':  { bg: '#ede9fe', color: '#5b21b6' },
+  'Phân Tử':    { bg: '#ccfbf1', color: '#0f766e' },
+  'Nhà Hóa Học':{ bg: '#fef3c7', color: '#92400e' },
+  'Giáo Sư':    { bg: '#ffe4e6', color: '#9f1239' },
+};
+
+function lbSetFilter(f, btn) {
+  LB.filter = f;
+  document.querySelectorAll('.lb-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderLeaderboard(LB.data);
+}
+
+async function loadLeaderboard() {
+  if (!sb) return;
+  const listEl = G('lb-list');
+  listEl.innerHTML = '<div class="lb-loading"><div class="lb-spin">⚗️</div><div>Đang tải dữ liệu...</div></div>';
+
+  try {
+    const { data, error } = await sb
+      .from('profiles')
+      .select('id, full_name, username, elo, wins, losses')
+      .order('elo', { ascending: false })
+      .limit(100);
+
+    if (error) throw error;
+
+    LB.data = data || [];
+
+    // Podium top 3
+    renderPodium(LB.data);
+
+    // My rank
+    if (U) {
+      const myIdx = LB.data.findIndex(p => p.id === U.id);
+      LB.myRank = myIdx >= 0 ? myIdx + 1 : null;
+      renderMyRankCard(LB.data[myIdx] || null, LB.myRank);
+    } else {
+      G('lb-my-rank-card').style.display = 'none';
+    }
+
+    renderLeaderboard(LB.data);
+    G('lb-total-count').textContent = LB.data.length + ' người chơi';
+
+  } catch(e) {
+    listEl.innerHTML = '<div class="lb-empty">❌ Không thể tải dữ liệu. Vui lòng thử lại.</div>';
+    console.error('Leaderboard error:', e);
+  }
+}
+
+function renderPodium(data) {
+  const slots = [1, 2, 3];
+  slots.forEach(rank => {
+    const p = data[rank - 1];
+    const av = G(`lb-pod-av-${rank}`);
+    const nameEl = G(`lb-pod-name-${rank}`);
+    const eloEl = G(`lb-pod-elo-${rank}`);
+    if (!p) {
+      av.textContent = '?';
+      nameEl.textContent = '—';
+      eloEl.textContent = '—';
+      return;
+    }
+    const name = p.full_name || p.username || 'Ẩn danh';
+    av.textContent = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+    nameEl.textContent = name.split(' ').pop();
+    eloEl.textContent = (p.elo || 1200) + ' ELO';
+
+    // Gold tint for #1 avatar
+    if (rank === 1) av.style.background = 'linear-gradient(135deg,#d97706,#fbbf24)';
+    else if (rank === 2) av.style.background = 'linear-gradient(135deg,#64748b,#94a3b8)';
+    else av.style.background = 'linear-gradient(135deg,#92400e,#d97706)';
+  });
+}
+
+function renderMyRankCard(profile, rank) {
+  const card = G('lb-my-rank-card');
+  if (!profile || !rank) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+
+  const name = profile.full_name || profile.username || 'Bạn';
+  const un = profile.username || '';
+  const ini = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+  const elo = profile.elo || 1200;
+  const rankName = getRankFromElo(elo);
+
+  G('lb-my-badge').textContent = '#' + rank;
+  G('lb-my-av').textContent = ini;
+  G('lb-my-name').textContent = name;
+  G('lb-my-sub').textContent = (un ? '@' + un + ' · ' : '') + rankName;
+  G('lb-my-elo').textContent = elo;
+  G('lb-my-wins').textContent = profile.wins || 0;
+  G('lb-my-rank-label').textContent = rankName;
+}
+
+function renderLeaderboard(data) {
+  const listEl = G('lb-list');
+  if (!data || data.length === 0) {
+    listEl.innerHTML = '<div class="lb-empty">Chưa có người chơi nào 🌙</div>';
+    return;
+  }
+
+  let filtered = data;
+  // Filter tuần này: chỉ người có wins > 0 (proxy vì không có created_week)
+  if (LB.filter === 'week') {
+    filtered = data.filter(p => (p.wins || 0) > 0 || (p.losses || 0) > 0);
+  }
+
+  if (filtered.length === 0) {
+    listEl.innerHTML = '<div class="lb-empty">Chưa có trận đấu nào tuần này 📅</div>';
+    return;
+  }
+
+  const rows = filtered.map((p, i) => {
+    const rank = i + 1;
+    const name = p.full_name || p.username || 'Ẩn danh';
+    const un = p.username || '';
+    const ini = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+    const elo = p.elo || 1200;
+    const wins = p.wins || 0;
+    const losses = p.losses || 0;
+    const rankName = getRankFromElo(elo);
+    const rc = RANK_COLORS[rankName] || { bg: '#f1f5f9', color: '#475569' };
+    const isMe = U && p.id === U.id;
+    const topClass = rank === 1 ? 'lb-top1' : rank === 2 ? 'lb-top2' : rank === 3 ? 'lb-top3' : '';
+
+    const rankEmoji = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank;
+    const rankNumClass = rank <= 3 ? 'lb-rank-num top' : 'lb-rank-num';
+
+    return `<div class="lb-row ${topClass} ${isMe ? 'lb-me' : ''}" style="animation-delay:${i * 0.03}s">
+      <div class="${rankNumClass}">${rankEmoji}</div>
+      <div class="lb-player-info">
+        <div class="lb-av">${ini}</div>
+        <div>
+          <div class="lb-player-name">${name}${isMe ? ' <span style="font-size:.68rem;color:var(--teal);font-weight:900">● Bạn</span>' : ''}</div>
+          <div class="lb-player-un">${un ? '@' + un : ''}</div>
+        </div>
+      </div>
+      <div class="lb-elo-val">${elo}</div>
+      <div class="lb-wins-val">${wins}</div>
+      <div class="lb-losses-val">${losses}</div>
+      <div class="lb-rank-badge"><span class="lb-rank-pill" style="background:${rc.bg};color:${rc.color}">${rankName}</span></div>
+    </div>`;
+  }).join('');
+
+  listEl.innerHTML = rows;
+}

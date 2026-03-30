@@ -25,7 +25,7 @@
   <ul class="nav-links">
     <li><a href="#" id="nl-home" class="active" onclick="gp('home');return false">Trang Chủ</a></li>
     <li><a href="#" id="nl-challenge" onclick="gp('challenge');return false">Thách Đấu</a></li>
-    <li><a href="#" onclick="return false">Bảng Xếp Hạng</a></li>
+    <li><a href="#" id="nl-leaderboard" onclick="gp('leaderboard');return false">Bảng Xếp Hạng</a></li>
     <li><a href="#" onclick="return false">Bài Học</a></li>
   </ul>
   <div class="nav-r" id="nav-r">
@@ -129,6 +129,96 @@
     </div>
   </section>
 
+</div>
+
+<!-- ═══ LEADERBOARD ═══ -->
+<div id="page-leaderboard" class="page">
+  <div class="lb-head">
+    <div class="slabel" style="justify-content:center;display:flex">🏆 Bảng Xếp Hạng</div>
+    <h1>Top Chiến Binh</h1>
+    <p>Xếp hạng toàn bộ người chơi theo điểm ELO — cập nhật theo thời gian thực</p>
+  </div>
+
+  <!-- Podium top 3 -->
+  <div class="lb-podium" id="lb-podium">
+    <div class="lb-pod-slot lb-pod-2" id="lb-pod-2">
+      <div class="lb-pod-av" id="lb-pod-av-2">?</div>
+      <div class="lb-pod-crown">🥈</div>
+      <div class="lb-pod-name" id="lb-pod-name-2">—</div>
+      <div class="lb-pod-elo" id="lb-pod-elo-2">—</div>
+      <div class="lb-pod-bar" style="height:90px;background:linear-gradient(to top,#94a3b8,#cbd5e1)"><span class="lb-pod-rank">2</span></div>
+    </div>
+    <div class="lb-pod-slot lb-pod-1" id="lb-pod-1">
+      <div class="lb-pod-av" id="lb-pod-av-1">?</div>
+      <div class="lb-pod-crown">🥇</div>
+      <div class="lb-pod-name" id="lb-pod-name-1">—</div>
+      <div class="lb-pod-elo" id="lb-pod-elo-1">—</div>
+      <div class="lb-pod-bar" style="height:120px;background:linear-gradient(to top,#d97706,#fbbf24)"><span class="lb-pod-rank">1</span></div>
+    </div>
+    <div class="lb-pod-slot lb-pod-3" id="lb-pod-3">
+      <div class="lb-pod-av" id="lb-pod-av-3">?</div>
+      <div class="lb-pod-crown">🥉</div>
+      <div class="lb-pod-name" id="lb-pod-name-3">—</div>
+      <div class="lb-pod-elo" id="lb-pod-elo-3">—</div>
+      <div class="lb-pod-bar" style="height:70px;background:linear-gradient(to top,#92400e,#d97706,#fcd34d)"><span class="lb-pod-rank">3</span></div>
+    </div>
+  </div>
+
+  <!-- My rank card (chỉ hiện khi đã login) -->
+  <div id="lb-my-rank-card" style="display:none">
+    <div class="lb-my-card">
+      <div class="lb-my-left">
+        <div class="lb-my-badge" id="lb-my-badge">#—</div>
+        <div class="lb-my-av" id="lb-my-av">?</div>
+        <div>
+          <div class="lb-my-name" id="lb-my-name">Bạn</div>
+          <div class="lb-my-sub" id="lb-my-sub">@username · Electron</div>
+        </div>
+      </div>
+      <div class="lb-my-right">
+        <div class="lb-my-stat">
+          <div class="lb-my-stat-val" id="lb-my-elo">—</div>
+          <div class="lb-my-stat-lbl">ELO</div>
+        </div>
+        <div class="lb-my-stat">
+          <div class="lb-my-stat-val" id="lb-my-wins">—</div>
+          <div class="lb-my-stat-lbl">Thắng</div>
+        </div>
+        <div class="lb-my-stat">
+          <div class="lb-my-stat-val" id="lb-my-rank-label">—</div>
+          <div class="lb-my-stat-lbl">Cấp bậc</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="lb-filter-bar">
+    <button class="lb-filter-btn active" id="lbf-all" onclick="lbSetFilter(\'all\',this)">🌐 Tất Cả</button>
+    <button class="lb-filter-btn" id="lbf-week" onclick="lbSetFilter(\'week\',this)">📅 Tuần Này</button>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:.5rem">
+      <span id="lb-total-count" style="font-size:.78rem;color:var(--text-4)"></span>
+      <button onclick="loadLeaderboard()" class="lb-refresh-btn" title="Làm mới">↻</button>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="lb-table-wrap">
+    <div class="lb-table-header">
+      <span style="width:52px;text-align:center">#</span>
+      <span style="flex:1">Người chơi</span>
+      <span style="width:90px;text-align:center">ELO</span>
+      <span style="width:70px;text-align:center">Thắng</span>
+      <span style="width:70px;text-align:center">Thua</span>
+      <span style="width:90px;text-align:center">Cấp bậc</span>
+    </div>
+    <div id="lb-list">
+      <div class="lb-loading">
+        <div class="lb-spin">⚗️</div>
+        <div>Đang tải dữ liệu...</div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ═══ CHALLENGE ═══ -->
