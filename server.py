@@ -36,9 +36,7 @@ socketio = SocketIO(
     engineio_logger=False,
 )
 
-# ASGI wrapper cho Uvicorn
-from engineio.async_drivers.asgi import ASGIApp
-asgi_app = ASGIApp(socketio, app)
+# Gunicorn threading mode — không cần ASGI wrapper
 
 # ══════════════════════════════════════
 #   SUPABASE
