@@ -7,6 +7,29 @@ try { sb = createClient(SURL, SKEY); console.log('✅ GloryChem connected'); }
 catch (e) { console.warn('Supabase:', e.message); }
 let U = null;
 
+// ── THEME TOGGLE ──
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const newTheme = isDark ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', newTheme);
+  localStorage.setItem('glorychem-theme', newTheme);
+  updateThemeIcon(newTheme);
+}
+
+function updateThemeIcon(theme) {
+  const btn = document.getElementById('theme-toggle');
+  if (!btn) return;
+  const sun = btn.querySelector('.icon-sun');
+  const moon = btn.querySelector('.icon-moon');
+  if (theme === 'dark') {
+    if (sun) sun.style.display = 'none';
+    if (moon) moon.style.display = 'inline';
+  } else {
+    if (sun) sun.style.display = 'inline';
+    if (moon) moon.style.display = 'none';
+  }
+}
+
 let currentLobbyRoomId = null;
 let currentLobbyRoom = null;
 let lobbyRoomsList = [];
@@ -43,6 +66,9 @@ function closeCreateRoomForm() {
   document.body.style.overflow = '';
 }
 document.addEventListener('DOMContentLoaded', () => {
+  const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+  updateThemeIcon(currentTheme);
+
   const ov = document.getElementById('ov-create-room');
   if (ov) ov.addEventListener('click', e => { if (e.target === ov) closeCreateRoomForm(); });
   const ovLobby = document.getElementById('ov-lobby');
@@ -415,8 +441,25 @@ async function doReg() {
 }
 
 async function doLogout() {
-  if (!sb) return; await sb.auth.signOut(); toast('ok', '👋 Đã đăng xuất');
+  if (!sb) return;
+
+  try {
+    await sb.auth.signOut();
+
+    toast('ok', '👋 Đã đăng xuất');
+
+    // Delay nhẹ để user thấy toast (optional)
+    setTimeout(() => {
+      window.location.href = '/'; // về trang chủ
+      // hoặc: location.reload();
+    }, 800);
+
+  } catch (e) {
+    console.error('Logout error:', e);
+    toast('err', '❌ Lỗi khi đăng xuất');
+  }
 }
+
 async function loadP(retries = 3) {
   if (!sb || !U) return;
   for (let attempt = 1; attempt <= retries; attempt++) {
@@ -607,7 +650,6 @@ function renderIn() {
       <div class="dmenu">
         <a href="#" onclick="openProfile();return false">👤 Hồ Sơ</a>
         <a href="#">📊 Thống Kê</a>
-        <a href="#">⚙️ Cài Đặt</a>
         <button class="lo" onclick="doLogout()">🚪 Đăng Xuất</button>
       </div>
     </div>`;
@@ -1935,23 +1977,29 @@ function joinGlobalPresence() {
       Object.values(state).forEach(presences => {
         const p = presences[0];
         if (p && p.userId && p.userId !== U.id) {
+          // Lấy status từ list cũ nếu có (ưu tiên Socket.io status)
           if (ONLINE_USERS[p.userId] && ONLINE_USERS[p.userId].status) {
             p.status = ONLINE_USERS[p.userId].status;
           }
           NEW_USERS[p.userId] = p;
         }
       });
-      ONLINE_USERS = NEW_USERS;
+      // Thay vì overwrite hoàn toàn, chúng ta chỉ thay các user từ sync
+      // Nhưng sync của Supabase là full state, nên ta gán NEW_USERS
+      // Tuy nhiên cần cẩn thận không để mất status nếu Socket.io vừa update
+      ONLINE_USERS = NEW_USERS; 
       updateOnlineCount();
       refreshOnlineUI();
     })
     .on('presence', { event: 'join' }, ({ newPresences }) => {
       newPresences.forEach(p => {
         if (p.userId && p.userId !== U.id) {
-          if (ONLINE_USERS[p.userId] && ONLINE_USERS[p.userId].status) {
-            p.status = ONLINE_USERS[p.userId].status;
+          // Merge với data cũ: giữ lại status nếu Supabase join ko có status
+          const existing = ONLINE_USERS[p.userId] || {};
+          ONLINE_USERS[p.userId] = { ...existing, ...p };
+          if (existing.status && !p.status) {
+            ONLINE_USERS[p.userId].status = existing.status;
           }
-          ONLINE_USERS[p.userId] = p;
         }
       });
       updateOnlineCount();
@@ -2395,11 +2443,10 @@ function initSocket() {
   });
 
   socket.on('presence_list', (users) => {
-    ONLINE_USERS = {};
+    // Không reset ONLINE_USERS = {} kẻo mất data từ Supabase
     users.forEach(u => {
       if (!u.userId) return;
       if (u.userId === U?.id) {
-        // Sync own stats if server has fresher data
         if (U && U.profile) {
           if (u.elo && u.elo !== U.profile.elo) U.profile.elo = u.elo;
           if (u.wins !== undefined && u.wins !== U.profile.wins) U.profile.wins = u.wins;
@@ -2407,18 +2454,22 @@ function initSocket() {
         }
         return;
       }
-      ONLINE_USERS[u.userId] = u;
+      // Merge: Socket.IO data (có status) luôn được ưu tiên
+      ONLINE_USERS[u.userId] = { ...(ONLINE_USERS[u.userId] || {}), ...u };
     });
     updateOnlineCount();
     refreshOnlineUI();
   });
 
   socket.on('presence_update', (users) => {
-    ONLINE_USERS = {};
+    // Giữ lại list hiện tại, chỉ update những user có trong payload
+    // Những ai không có trong payload Socket.IO presence_update (full list server) 
+    // thì vẫn giữ lại data Supabase nhưng reset status (vì server bảo họ ko còn trong room nào)
+    const socketUserIds = new Set(users.map(u => u.userId).filter(id => id));
+
     users.forEach(u => {
       if (!u.userId) return;
       if (u.userId === U?.id) {
-        // Sync own stats if server has fresher data
         if (U && U.profile) {
           if (u.elo && u.elo !== U.profile.elo) U.profile.elo = u.elo;
           if (u.wins !== undefined && u.wins !== U.profile.wins) U.profile.wins = u.wins;
@@ -2426,8 +2477,19 @@ function initSocket() {
         }
         return;
       }
-      ONLINE_USERS[u.userId] = u;
+      ONLINE_USERS[u.userId] = { ...(ONLINE_USERS[u.userId] || {}), ...u };
     });
+
+    // Những user có trong ONLINE_USERS nhưng KHÔNG có trong list Socket.io vừa gửi
+    // nghĩa là họ không online trên socket (hoặc vừa disconnect). 
+    // Ta xóa status của họ.
+    Object.keys(ONLINE_USERS).forEach(uid => {
+      if (!socketUserIds.has(uid)) {
+        if (ONLINE_USERS[uid].status) delete ONLINE_USERS[uid].status;
+        // Nếu muốn gỡ hẳn khỏi list khi họ cũng ko có trên Supabase thì làm ở leave event
+      }
+    });
+
     updateOnlineCount();
     refreshOnlineUI();
   });
@@ -3063,6 +3125,10 @@ function renderPodium(data) {
   });
 }
 
+
+
+
+
 function renderMyRankCard(profile, rank) {
   const card = G('lb-my-rank-card');
   if (!profile || !rank) { card.style.display = 'none'; return; }
@@ -3138,3 +3204,4 @@ function renderLeaderboard(data) {
 
   listEl.innerHTML = rows;
 }
+

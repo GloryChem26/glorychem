@@ -66,12 +66,25 @@ _state_lock = threading.Lock()
 #   HELPERS
 # ══════════════════════════════════════
 def get_user_status(sid):
+    uid = sid_to_uid.get(sid)
+    if not uid: return "free"
+    # Kiểm tra game rooms
     for r in game_rooms.values():
         if sid in r["players"]:
             return "battle"
+        # Dự phòng: kiểm tra theo userId nếu sid đã thay đổi nhưng chưa kịp update room
+        for psid, pdata in r["players"].items():
+            if pdata.get("user", {}).get("userId") == uid:
+                return "battle"
+            
+    # Kiểm tra lobby rooms
     for r in lobby_rooms.values():
         if sid in r["players"]:
             return "lobby"
+        # Dự phòng: kiểm tra theo userId
+        for psid, puser in r["players"].items():
+            if puser.get("userId") == uid:
+                return "lobby"
     return "free"
 
 def get_presence_payload():
@@ -761,6 +774,29 @@ def handle_presence_join(data):
     online_users[sid] = entry
     sid_to_uid[sid]   = uid
     uid_to_sid[uid]   = sid
+
+    # ✅ FIX: Chuyển membership phòng nếu user đang trong phòng (tránh bị reset status khi reconnect)
+    if old_sid and old_sid != sid:
+        # Lobby rooms
+        for rid, room in lobby_rooms.items():
+            if old_sid in room["players"]:
+                room["players"][sid] = room["players"].pop(old_sid)
+                join_room(rid, sid=sid)
+                if room["host_sid"] == old_sid:
+                    room["host_sid"] = sid
+                # Cập nhật ready_players if exists
+                if "ready_players" in room and old_sid in room["ready_players"]:
+                    room["ready_players"].remove(old_sid)
+                    room["ready_players"].append(sid)
+        
+        # Game rooms
+        for rid, room in game_rooms.items():
+            if old_sid in room["players"]:
+                room["players"][sid] = room["players"].pop(old_sid)
+                join_room(rid, sid=sid)
+                # Cập nhật scores
+                if old_sid in room.get("scores", {}):
+                    room["scores"][sid] = room["scores"].pop(old_sid)
 
     emit("presence_list", get_presence_payload())
     broadcast_presence()

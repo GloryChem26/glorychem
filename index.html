@@ -13,7 +13,14 @@
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="/style.css">
-
+  <script>
+    (function () {
+      const storedTheme = localStorage.getItem('glorychem-theme');
+      if (storedTheme === 'dark' || (!storedTheme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
 </head>
 
 <body>
@@ -32,9 +39,15 @@
       <li><a href="#" id="nl-leaderboard" onclick="gp('leaderboard');return false">Bảng Xếp Hạng</a></li>
       <li><a href="#" onclick="return false">Bài Học</a></li>
     </ul>
-    <div class="nav-r" id="nav-r">
-      <button class="btn btn-ghost" onclick="openM('login')">Đăng Nhập</button>
-      <button class="btn btn-teal" onclick="openM('register')">Đăng Ký</button>
+    <div class="nav-r-wrapper">
+      <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+        <span class="icon-sun">☀️</span>
+        <span class="icon-moon" style="display:none">🌙</span>
+      </button>
+      <div class="nav-r" id="nav-r">
+        <button class="btn btn-ghost" onclick="openM('login')">Đăng Nhập</button>
+        <button class="btn btn-teal" onclick="openM('register')">Đăng Ký</button>
+      </div>
     </div>
   </nav>
 
@@ -1360,7 +1373,7 @@
     </button>
     <button class="bn-item" id="bn-leaderboard" onclick="gp('leaderboard')">
       <span class="bn-icon">🏆</span>
-      <span class="bn-label">BXH</span>
+      <span class="bn-label">Xếp Hạng</span>
     </button>
     <button class="bn-item" id="bn-lesson" onclick="return false">
       <span class="bn-icon">📚</span>
