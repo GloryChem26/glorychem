@@ -7,6 +7,136 @@ try { sb = createClient(SURL, SKEY); console.log('✅ GloryChem connected'); }
 catch(e) { console.warn('Supabase:', e.message); }
 let U = null;
 
+let currentLobbyRoomId = null;
+let currentLobbyRoom = null;
+let lobbyRoomsList = [];
+let _pendingJoinRoomId = null; // for password prompt flow
+
+// ── Escape HTML to prevent XSS ──
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Lấy danh sách phòng ──
+function loadLobbyRooms() {
+    if (!socket || !socket.connected) {
+        // retry once socket is ready
+        setTimeout(() => loadLobbyRooms(), 500);
+        return;
+    }
+    socket.emit('list_lobby_rooms');
+}
+
+// ── Mở overlay tạo phòng ──
+function openCreateRoomForm() {
+    const name = (U?.profile?.full_name || U?.email?.split('@')[0] || 'Bạn');
+    const inp = document.getElementById('cr-name');
+    if (inp) inp.value = `Phòng của ${name}`;
+    selectRoomType('public');
+    clrA('a-create-room');
+    document.getElementById('ov-create-room').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+function closeCreateRoomForm() {
+    document.getElementById('ov-create-room').classList.remove('open');
+    document.body.style.overflow = '';
+}
+document.addEventListener('DOMContentLoaded', () => {
+    const ov = document.getElementById('ov-create-room');
+    if (ov) ov.addEventListener('click', e => { if (e.target === ov) closeCreateRoomForm(); });
+    const ovLobby = document.getElementById('ov-lobby');
+    if (ovLobby) ovLobby.addEventListener('click', e => { if (e.target === ovLobby) closeLobbyRooms(); });
+    const ovDetail = document.getElementById('ov-lobby-detail');
+    if (ovDetail) ovDetail.addEventListener('click', e => { if (e.target === ovDetail) leaveLobbyRoom(); });
+    const ovPw = document.getElementById('ov-room-password');
+    if (ovPw) ovPw.addEventListener('click', e => { if (e.target === ovPw) closeRoomPasswordModal(); });
+});
+
+function selectRoomType(type) {
+    document.getElementById('cr-opt-public').classList.toggle('selected', type === 'public');
+    document.getElementById('cr-opt-private').classList.toggle('selected', type === 'private');
+    document.getElementById('cr-pw-wrap').style.display = type === 'private' ? 'block' : 'none';
+}
+
+function submitCreateRoom() {
+    const name = (document.getElementById('cr-name')?.value || '').trim();
+    const isPrivate = document.getElementById('cr-opt-private').classList.contains('selected');
+    const password = document.getElementById('cr-password')?.value || '';
+    clrA('a-create-room');
+
+    if (!name) { alrt('a-create-room','err','⚠️ Vui lòng nhập tên phòng'); return; }
+    if (isPrivate && !password) { alrt('a-create-room','err','⚠️ Vui lòng nhập mật khẩu cho phòng riêng tư'); return; }
+    if (!socket || !socket.connected) { alrt('a-create-room','err','❌ Chưa kết nối máy chủ'); return; }
+
+    const btn = document.getElementById('b-create-room');
+    btn.disabled = true;
+    btn.querySelector('.bt').style.display = 'none';
+    btn.querySelector('.bl').style.display = 'inline-flex';
+
+    socket.emit('create_lobby_room', { name, isPrivate, password });
+    // Button will be re-enabled on server response or timeout
+    setTimeout(() => {
+        btn.disabled = false;
+        btn.querySelector('.bt').style.display = 'inline';
+        btn.querySelector('.bl').style.display = 'none';
+    }, 3000);
+}
+
+// ── Tham gia phòng ──
+function joinLobbyRoom(roomId, password = null) {
+    if (!socket || !socket.connected) return;
+    socket.emit('join_lobby_room', { roomId, password });
+}
+
+// ── Password prompt for private rooms ──
+function openRoomPasswordModal(roomId) {
+    _pendingJoinRoomId = roomId;
+    clrA('a-room-pw');
+    document.getElementById('rp-password').value = '';
+    document.getElementById('ov-room-password').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => document.getElementById('rp-password')?.focus(), 150);
+}
+function closeRoomPasswordModal() {
+    _pendingJoinRoomId = null;
+    document.getElementById('ov-room-password').classList.remove('open');
+    document.body.style.overflow = '';
+}
+function submitRoomPassword() {
+    if (!_pendingJoinRoomId) return;
+    const pw = document.getElementById('rp-password')?.value || '';
+    if (!pw) { alrt('a-room-pw','err','⚠️ Vui lòng nhập mật khẩu'); return; }
+    joinLobbyRoom(_pendingJoinRoomId, pw);
+    closeRoomPasswordModal();
+}
+
+// ── Rời phòng ──
+function leaveLobbyRoom() {
+    if (currentLobbyRoomId) {
+        socket.emit('leave_lobby_room', { roomId: currentLobbyRoomId });
+    }
+    currentLobbyRoomId = null;
+    currentLobbyRoom = null;
+    document.getElementById('ov-lobby-detail').classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+// ── Bắt đầu trận trong phòng ──
+function startLobbyBattle() {
+    if (!currentLobbyRoomId) return;
+    socket.emit('start_lobby_battle', { roomId: currentLobbyRoomId });
+}
+
+// ── Mời bạn bè vào phòng hiện tại ──
+function inviteToCurrentRoom() {
+    // Đóng lobby-detail trước để tránh z-index overlap
+    document.getElementById('ov-lobby-detail').classList.remove('open');
+    FA.inviteRoomId = currentLobbyRoomId;
+    openFriendArena();
+}
+
+
 // ── INIT ──
 async function init() {
   if (!sb) return;
@@ -34,7 +164,12 @@ async function init() {
 
 async function subscribeProfileRealtime() {
   if (!sb || !U) return;
+  // Remove existing channel if any to avoid duplicates
+  if (U._profileChannel) {
+    try { sb.removeChannel(U._profileChannel); } catch(e) {}
+  }
   const channel = sb.channel(`profile:${U.id}`);
+  U._profileChannel = channel;
   channel
     .on('postgres_changes', {
       event: 'UPDATE',
@@ -42,16 +177,23 @@ async function subscribeProfileRealtime() {
       table: 'profiles',
       filter: `id=eq.${U.id}`
     }, async (payload) => {
-      // Cập nhật profile local
-      U.profile = payload.new;
-      // Làm mới UI
+      if (!payload.new) return;
+      // Merge new fields into U.profile
+      U.profile = { ...(U.profile || {}), ...payload.new };
+      // Refresh UI
       renderIn();
-      // Nếu đang ở trang challenge, cũng cập nhật các thành phần liên quan
       if (G('page-challenge').classList.contains('active')) {
-        // Cập nhật thêm phần challenge nếu cần
         G('peloval').textContent = U.profile?.elo || 1200;
-        // ...
       }
+      // Push fresh stats to socket presence so other clients see correct ELO
+      if (socket && socket.connected) {
+        socket.emit('presence:update', {
+          elo:    U.profile.elo    || 1200,
+          wins:   U.profile.wins   || 0,
+          losses: U.profile.losses || 0,
+        });
+      }
+      console.log(`🔄 Profile realtime update: ELO=${U.profile.elo} W=${U.profile.wins} L=${U.profile.losses}`);
     })
     .subscribe();
 }
@@ -275,9 +417,23 @@ async function doReg() {
 async function doLogout() {
   if (!sb) return; await sb.auth.signOut(); toast('ok','👋 Đã đăng xuất');
 }
-async function loadP() {
-  if (!sb||!U) return;
-  try { const { data } = await sb.from('profiles').select('*').eq('id', U.id).single(); if (data) U.profile = data; } catch(e) {}
+async function loadP(retries = 3) {
+  if (!sb || !U) return;
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const { data, error } = await sb.from('profiles').select('*').eq('id', U.id).single();
+      if (error) throw error;
+      if (data) {
+        U.profile = data;
+        console.log(`✅ Profile loaded (attempt ${attempt}): ELO=${data.elo} W=${data.wins} L=${data.losses}`);
+        return;
+      }
+    } catch(e) {
+      console.warn(`⚠️ loadP attempt ${attempt}/${retries} failed:`, e.message);
+      if (attempt < retries) await new Promise(r => setTimeout(r, 600 * attempt));
+    }
+  }
+  console.error('❌ loadP: failed after all retries');
 }
 
 // ── AVATAR HELPERS ──
@@ -952,7 +1108,7 @@ const QUESTION_BANK = {
 // ══════════════════════════════════════════════════════
 let AR = {
   roomId: null, channel: null, presenceChannel: null,
-  role: null,     // 'host' | 'guest'
+  role: null,
   oppId: null, oppProfile: null,
   selectedTopics: [], ready: false,
   oppReady: false, oppTopics: [],
@@ -960,15 +1116,20 @@ let AR = {
   questions: [], qIndex: 0,
   myScore: 0, oppScore: 0,
   battleTimer: null, battleSec: 60,
-  answered: false,   // đã trả lời câu hiện tại chưa
+  answered: false,
   oppAnswered: false,
   waitTimer: null, waitSec: 0,
   inviteFrom: null, inviteRoomId: null,
-  waitingResponse: false,   // đang chờ phản hồi từ server
-  questionFinished: false,  // câu hỏi đã kết thúc (do ai đó đúng hoặc hết giờ)
-  answerCooldown: false,    // whether player is currently frozen
-  cooldownTimer: null,      // setTimeout handle for unfreeze
+  waitingResponse: false,
+  questionFinished: false,
+  answerCooldown: false,
+  cooldownTimer: null,
   cooldownInterval: null,
+  // FFA fields
+  isFFA: false,
+  ffaPlayers: [],
+  ffaScores: {},
+  myUserId: null,
 };
 
 
@@ -1030,7 +1191,11 @@ function cleanupRoom() {
     cooldownTimer: null,
     currentQuestion: null,
     currentIndex: 0,
-    totalQuestions: 0
+    totalQuestions: 0,
+    isFFA: false,
+    ffaPlayers: [],
+    ffaScores: {},
+    myUserId: null,
   };
   currentRoomId = null;
 
@@ -1188,24 +1353,48 @@ function enterLobby() {
   showArena('lobby');
   clearInterval(AR.waitTimer);
   const me = getMyInfo();
-  const opp = AR.oppProfile;
-  const oppName = opp?.full_name || opp?.username || 'Đối thủ';
-  const myAv = U?.profile?.avatar_url || '';
-  const oppAv = opp?.avatar_url || '';
 
-  // Render player cards
-  setAvEl(G('lp-me-av'), me.name, myAv);
-  G('lp-me-name').textContent = me.name;
-  G('lp-me-elo').textContent  = `ELO: ${me.elo}`;
-  G('lp-me-rec').textContent  = `${me.wins}W — ${me.losses}L`;
+  if (AR.isFFA && AR.ffaPlayers && AR.ffaPlayers.length > 0) {
+    // ── FFA mode: hiện grid tất cả players ──
+    G('lobby-2p-area').style.display = 'none';
+    const ffaArea = G('lobby-ffa-area');
+    ffaArea.style.display = 'block';
+    ffaArea.innerHTML = `
+      <div class="ffa-lobby-header">👥 ${AR.ffaPlayers.length} người tham chiến</div>
+      <div class="ffa-lobby-grid">
+        ${AR.ffaPlayers.map(p => {
+          const name = p.full_name || p.name || p.username || 'Người chơi';
+          const isMe = p.userId === AR.myUserId;
+          const ini = mkIni(name);
+          const av = p.avatar_url || '';
+          return `<div class="ffa-lobby-card${isMe ? ' me' : ''}">
+            <div class="lpc-av">${av ? `<img src="${av}" style="width:100%;height:100%;border-radius:50%;object-fit:cover" onerror="this.parentElement.textContent='${ini}'" alt="">` : ini}</div>
+            <div class="lpc-name" style="font-size:.82rem">${name.split(' ').pop()}${isMe ? ' <span style="color:var(--teal);font-size:.6rem">● Bạn</span>' : ''}</div>
+            <div class="lpc-elo">ELO: ${p.elo || 1200}</div>
+            <div id="lp-ready-${p.userId}" class="lpc-status wait">⏳ Chờ...</div>
+          </div>`;
+        }).join('')}
+      </div>`;
+  } else {
+    // ── 1v1 mode: hiện 2 player dạng cũ ──
+    G('lobby-2p-area').style.display = 'grid';
+    G('lobby-ffa-area').style.display = 'none';
+    const opp = AR.oppProfile;
+    const oppName = opp?.full_name || opp?.username || 'Đối thủ';
+    const myAv  = U?.profile?.avatar_url || '';
+    const oppAv = opp?.avatar_url || '';
+    setAvEl(G('lp-me-av'), me.name, myAv);
+    G('lp-me-name').textContent = me.name;
+    G('lp-me-elo').textContent  = `ELO: ${me.elo}`;
+    G('lp-me-rec').textContent  = `${me.wins}W — ${me.losses}L`;
+    setAvEl(G('lp-opp-av'), oppName, oppAv);
+    G('lp-opp-name').textContent = oppName;
+    G('lp-opp-elo').textContent  = `ELO: ${opp?.elo || 1200}`;
+    const oppWins = opp?.wins||0, oppLosses = opp?.losses||0;
+    G('lp-opp-rec').textContent  = `${oppWins}W — ${oppLosses}L`;
+  }
 
-  setAvEl(G('lp-opp-av'), oppName, oppAv);
-  G('lp-opp-name').textContent = oppName;
-  G('lp-opp-elo').textContent  = `ELO: ${opp?.elo || 1200}`;
-  const oppWins = opp?.wins||0, oppLosses = opp?.losses||0;
-  G('lp-opp-rec').textContent  = `${oppWins}W — ${oppLosses}L`;
-
-  // Render topic buttons
+  // Chọn chủ đề (giống nhau cho cả 2 mode)
   const tg = G('topic-grid');
   tg.innerHTML = '';
   TOPICS.forEach(tp => {
@@ -1221,10 +1410,6 @@ function enterLobby() {
   AR.ready = false;
   AR.oppReady = false;
   G('topic-count').textContent = '0';
-
-  showArena('lobby');
-
- 
   startLobbyCountdown(AR.lobbySec || 30);
 }
 
@@ -1262,11 +1447,17 @@ function toggleTopic(tid, btn) {
 }
 function setReady() {
   if (AR.selectedTopics.length === 0) {
-    // nếu chưa chọn, lấy 3 chủ đề ngẫu nhiên
     AR.selectedTopics = TOPICS.map(t => t.id).sort(() => Math.random() - 0.5).slice(0,3);
   }
   AR.ready = true;
-  updateMeReadyUI(); // hiển thị "Sẵn sàng"
+  if (AR.isFFA) {
+    const myReadyEl = G('lp-ready-' + (AR.myUserId || U?.id));
+    if (myReadyEl) { myReadyEl.textContent = '✅ Sẵn sàng!'; myReadyEl.className = 'lpc-status ready'; }
+    G('btn-ready').disabled = true;
+    G('btn-ready').style.opacity = '.6';
+  } else {
+    updateMeReadyUI();
+  }
   socket.emit('lobby_action', {
     roomId: currentRoomId,
     topics: AR.selectedTopics,
@@ -1283,13 +1474,18 @@ function autoReady() {
 }
 
 function handleLobbyAction(payload) {
-  if (payload.userId === U.id) return; // ignore self
+  if (payload.userId === U.id) return;
   if (payload.type === 'player_ready') {
-    AR.oppReady = true;
-    AR.oppTopics = payload.topics || [];
-    G('lp-opp-ready').textContent = '✅ Sẵn sàng!';
-    G('lp-opp-ready').className = 'lpc-status ready';
-    checkBothReady();
+    if (AR.isFFA) {
+      const readyEl = G('lp-ready-' + payload.userId);
+      if (readyEl) { readyEl.textContent = '✅ Sẵn sàng!'; readyEl.className = 'lpc-status ready'; }
+    } else {
+      AR.oppReady = true;
+      AR.oppTopics = payload.topics || [];
+      G('lp-opp-ready').textContent = '✅ Sẵn sàng!';
+      G('lp-opp-ready').className = 'lpc-status ready';
+      checkBothReady();
+    }
   }
 }
 
@@ -1317,16 +1513,23 @@ function startBattle(questionsJson) {
   AR.questions = qs;
   AR.qIndex = 0; AR.myScore = 0; AR.oppScore = 0;
 
-  // Init scoreboard
-  const me = getMyInfo();
-  const oppName = AR.oppProfile?.full_name || AR.oppProfile?.username || 'Đối thủ';
-  const myAv  = U?.profile?.avatar_url || '';
-  const oppAv = AR.oppProfile?.avatar_url || '';
-  setAvEl(G('bs-me-av'), me.name, myAv);
-  G('bs-me-name').textContent  = me.name;
-  setAvEl(G('bs-opp-av'), oppName, oppAv);
-  G('bs-opp-name').textContent = oppName;
-  updateBattleScore();
+  if (AR.isFFA) {
+    AR.ffaScores = {};
+    (AR.ffaPlayers || []).forEach(p => { AR.ffaScores[p.userId] = 0; });
+    G('battle-2p-scoreboard').style.display = 'none';
+    const ffaSb = G('ffa-scoreboard');
+    if (ffaSb) { ffaSb.style.display = 'flex'; renderFfaScoreboard(); }
+  } else {
+    const me = getMyInfo();
+    const oppName = AR.oppProfile?.full_name || AR.oppProfile?.username || 'Đối thủ';
+    const myAv  = U?.profile?.avatar_url || '';
+    const oppAv = AR.oppProfile?.avatar_url || '';
+    setAvEl(G('bs-me-av'), me.name, myAv);
+    G('bs-me-name').textContent  = me.name;
+    setAvEl(G('bs-opp-av'), oppName, oppAv);
+    G('bs-opp-name').textContent = oppName;
+    updateBattleScore();
+  }
 
   showArena('battle');
   startBattleTimer();
@@ -1369,14 +1572,22 @@ function renderBattleQuestion(data) {
 
   // Cập nhật thông tin người chơi (tên, avatar)
   const me = getMyInfo();
-  const oppName = AR.oppProfile?.full_name || AR.oppProfile?.username || 'Đối thủ';
-  const myAv  = U?.profile?.avatar_url || '';
-  const oppAv = AR.oppProfile?.avatar_url || '';
-  setAvEl(G('bs-me-av'), me.name, myAv);
-  G('bs-me-name').textContent = me.name;
-  setAvEl(G('bs-opp-av'), oppName, oppAv);
-  G('bs-opp-name').textContent = oppName;
-
+  if (AR.isFFA) {
+    G('battle-2p-scoreboard').style.display = 'none';
+    const ffaSb = G('ffa-scoreboard');
+    if (ffaSb) ffaSb.style.display = 'flex';
+  } else {
+    G('battle-2p-scoreboard').style.display = '';
+    const ffaSb = G('ffa-scoreboard');
+    if (ffaSb) ffaSb.style.display = 'none';
+    const oppName = AR.oppProfile?.full_name || AR.oppProfile?.username || 'Đối thủ';
+    const myAv  = U?.profile?.avatar_url || '';
+    const oppAv = AR.oppProfile?.avatar_url || '';
+    setAvEl(G('bs-me-av'), me.name, myAv);
+    G('bs-me-name').textContent = me.name;
+    setAvEl(G('bs-opp-av'), oppName, oppAv);
+    G('bs-opp-name').textContent = oppName;
+  }
   // Cập nhật điểm hiện tại (giữ nguyên từ trước)
   updateBattleScore();
 
@@ -1548,8 +1759,33 @@ function handleBattleAction(payload) {
 }
 
 function updateBattleScore() {
-  G('bs-me-score').textContent  = AR.myScore;
-  G('bs-opp-score').textContent = AR.oppScore;
+  if (AR.isFFA) {
+    renderFfaScoreboard();
+  } else {
+    G('bs-me-score').textContent  = AR.myScore;
+    G('bs-opp-score').textContent = AR.oppScore;
+  }
+}
+
+function renderFfaScoreboard() {
+  const sb = G('ffa-scoreboard');
+  if (!sb) return;
+  const players = [...(AR.ffaPlayers || [])];
+  players.sort((a, b) => (AR.ffaScores[b.userId] || 0) - (AR.ffaScores[a.userId] || 0));
+  const rankEmojis = ['🥇', '🥈', '🥉'];
+  sb.innerHTML = players.map((p, idx) => {
+    const score = AR.ffaScores[p.userId] || 0;
+    const isMe  = p.userId === (AR.myUserId || U?.id);
+    const name  = (p.full_name || p.name || p.username || 'Người chơi').split(' ').pop();
+    const ini   = mkIni(p.full_name || p.name || '?');
+    const rank  = rankEmojis[idx] || `${idx+1}.`;
+    return `<div class="ffa-sb-row${isMe ? ' me' : ''}">
+      <div class="ffa-sb-rank">${rank}</div>
+      <div class="ffa-sb-av">${ini}</div>
+      <div class="ffa-sb-name">${name}${isMe ? ' <span style="font-size:.6rem;color:var(--teal)">(Bạn)</span>' : ''}</div>
+      <div class="ffa-sb-score">${score}</div>
+    </div>`;
+  }).join('');
 }
 
 function nextQ() {
@@ -1565,59 +1801,93 @@ async function endBattle(data) {
   AR.answerCooldown = false;
 
   const me = getMyInfo();
-  const oppName = AR.oppProfile?.full_name || AR.oppProfile?.username || 'Đối thủ';
+  const isFfa = AR.isFFA || data?.mode === 'ffa';
 
-  // Lấy điểm từ data (ưu tiên dữ liệu server)
-  let scores = data?.scores;
-  if (!scores) {
-    scores = {};
-    scores[me.id] = AR.myScore;
-    scores[AR.oppId] = AR.oppScore;
-  }
+  if (isFfa) {
+    // ── Kết quả FFA ──
+    const scores     = data?.scores || AR.ffaScores || {};
+    const eloChanges = data?.elo_change || {};
+    const winnerUid  = data?.winnerUserId;
+    const myScore    = scores[me.id] || 0;
+    const myEloChange = eloChanges[me.id] || 0;
 
-  const myScore = scores[me.id] || 0;
-  const oppScore = scores[AR.oppId] || 0;
-  const win = myScore > oppScore;
-  const draw = myScore === oppScore;
+    const players = [...(AR.ffaPlayers || [])];
+    players.sort((a, b) => (scores[b.userId] || 0) - (scores[a.userId] || 0));
+    const myRank = players.findIndex(p => p.userId === me.id) + 1;
+    const rankEmojis = ['🏆', '🥈', '🥉'];
 
-  // Emoji kết quả
-  G('result-emoji').textContent = win ? '🏆' : draw ? '🤝' : '💪';
-  G('result-title').textContent = win ? 'Chiến Thắng!' : draw ? 'Hòa!' : 'Thất Bại!';
-  G('result-sub').textContent = win ? 'Xuất sắc!' : draw ? 'Màn trình diễn ngang tài ngang sức!' : 'Cố lên!';
-  G('rs-me-score').textContent = myScore;
-  G('rs-opp-score').textContent = oppScore;
-  G('rs-me-name').textContent = me.name;
-  G('rs-opp-name').textContent = oppName;
+    G('result-emoji').textContent = rankEmojis[myRank - 1] || '💪';
+    G('result-title').textContent = myRank === 1 ? 'Chiến Thắng!' : myRank === 2 ? 'Á Quân!' : myRank === 3 ? 'Hạng Ba!' : 'Tiếp Tục Cố!';
+    G('result-sub').textContent   = `Bạn xếp hạng #${myRank} trong số ${players.length} người chơi`;
 
-  // Lấy thay đổi ELO từ server (ưu tiên), fallback nếu không có
-  let eloChange = 0;
-  if (data?.elo_change && typeof data.elo_change === 'object') {
-    eloChange = data.elo_change[me.id] || 0;
+    // Ẩn bảng 2p, hiện FFA ranked list
+    const twoCard = G('result-2p-scores');
+    if (twoCard) twoCard.style.display = 'none';
+    const ffaList = G('ffa-result-list');
+    if (ffaList) {
+      ffaList.style.display = 'block';
+      ffaList.innerHTML = players.map((p, idx) => {
+        const pScore = scores[p.userId] || 0;
+        const pElo   = eloChanges[p.userId] || 0;
+        const isMe   = p.userId === me.id;
+        const name   = p.full_name || p.name || p.username || 'Người chơi';
+        const ini    = mkIni(name);
+        const badge  = rankEmojis[idx] || `#${idx+1}`;
+        return `<div class="ffa-result-row${isMe ? ' me' : ''}">
+          <div class="ffa-result-rank">${badge}</div>
+          <div class="ffa-result-av">${ini}</div>
+          <div class="ffa-result-info">
+            <div class="ffa-result-name">${name.split(' ').pop()}${isMe ? ' <span style="color:var(--teal);font-size:.6rem">● Bạn</span>' : ''}</div>
+            <div class="ffa-result-elo" style="color:${pElo>=0?'var(--green)':'var(--rose)'}">${pElo>=0?'+':''}${pElo} ELO</div>
+          </div>
+          <div class="ffa-result-score">${pScore}</div>
+        </div>`;
+      }).join('');
+    }
+
+    const eloEl = G('result-elo-change');
+    if (myEloChange > 0)      { eloEl.textContent = `📈 +${myEloChange} ELO`; eloEl.style.background='var(--green-lt)'; eloEl.style.color='var(--green)'; }
+    else if (myEloChange < 0) { eloEl.textContent = `📉 ${myEloChange} ELO`; eloEl.style.background='var(--rose-lt)';  eloEl.style.color='var(--rose)'; }
+    else                      { eloEl.textContent = `📊 ELO không đổi`;  eloEl.style.background='var(--amber-lt)'; eloEl.style.color='var(--amber)'; }
+
+    addToHistory({ win: myRank === 1, myScore, oppScore: scores[winnerUid] || 0, oppName: players[0]?.full_name || 'Người chơi', eloChange: myEloChange });
+
   } else {
-    eloChange = win ? 20 : draw ? 0 : -15;
-  }
+    // ── Kết quả 1v1 ──
+    let scores = data?.scores;
+    if (!scores) { scores = {}; scores[me.id] = AR.myScore; scores[AR.oppId] = AR.oppScore; }
+    const myScore  = scores[me.id] || 0;
+    const oppScore = scores[AR.oppId] || 0;
+    const win  = myScore > oppScore;
+    const draw = myScore === oppScore;
+    const oppName = AR.oppProfile?.full_name || AR.oppProfile?.username || 'Đối thủ';
 
-  // Hiển thị thay đổi ELO trên màn hình kết quả
-  const eloEl = G('result-elo-change');
-  if (eloChange > 0) {
-    eloEl.textContent = `📈 +${eloChange} ELO`;
-    eloEl.style.background = 'var(--green-lt)';
-    eloEl.style.color = 'var(--green)';
-  } else if (eloChange < 0) {
-    eloEl.textContent = `📉 ${eloChange} ELO`;
-    eloEl.style.background = 'var(--rose-lt)';
-    eloEl.style.color = 'var(--rose)';
-  } else {
-    eloEl.textContent = `📊 ELO không đổi`;
-    eloEl.style.background = 'var(--amber-lt)';
-    eloEl.style.color = 'var(--amber)';
+    G('result-emoji').textContent = win ? '🏆' : draw ? '🤝' : '💪';
+    G('result-title').textContent = win ? 'Chiến Thắng!' : draw ? 'Hòa!' : 'Thất Bại!';
+    G('result-sub').textContent   = win ? 'Xuất sắc!' : draw ? 'Màn trình diễn ngang tài ngang sức!' : 'Cố lên!';
+    G('rs-me-score').textContent  = myScore;
+    G('rs-opp-score').textContent = oppScore;
+    G('rs-me-name').textContent   = me.name;
+    G('rs-opp-name').textContent  = oppName;
+
+    const twoCard = G('result-2p-scores');
+    if (twoCard) twoCard.style.display = '';
+    const ffaList = G('ffa-result-list');
+    if (ffaList) ffaList.style.display = 'none';
+
+    let eloChange = 0;
+    if (data?.elo_change && typeof data.elo_change === 'object') eloChange = data.elo_change[me.id] || 0;
+    else eloChange = win ? 20 : draw ? 0 : -15;
+
+    const eloEl = G('result-elo-change');
+    if (eloChange > 0)      { eloEl.textContent = `📈 +${eloChange} ELO`; eloEl.style.background='var(--green-lt)'; eloEl.style.color='var(--green)'; }
+    else if (eloChange < 0) { eloEl.textContent = `📉 ${eloChange} ELO`; eloEl.style.background='var(--rose-lt)';  eloEl.style.color='var(--rose)'; }
+    else                    { eloEl.textContent = `📊 ELO không đổi`;  eloEl.style.background='var(--amber-lt)'; eloEl.style.color='var(--amber)'; }
+
+    addToHistory({ win, myScore, oppScore, oppName, eloChange });
   }
 
   showArena('result');
-
- 
-
-  addToHistory({ win, myScore, oppScore, oppName, eloChange });
   cleanupRoom();
 }
 
@@ -1646,7 +1916,7 @@ let PRESENCE_CH = null;
 let ONLINE_USERS = {}; // { userId: presenceData }
 let onlineUsers = {};           // key = userId, value = user data
 
-let FA = { selectedUser: null }; // cho mời bạn bè
+let FA = { selectedUser: null, inviteRoomId: null }; // cho mời bạn bè
 
 
 function joinGlobalPresence() {
@@ -1740,13 +2010,21 @@ function openFriendArena() {
   G('ov-friend').classList.add('open');
   document.body.style.overflow = 'hidden';
   FA.selectedUser = null;
-  refreshOnlineUI(); // render danh sách từ onlineUsers
+  G('friend-selected').style.display = 'none';
+  G('friend-waiting').style.display = 'none';
+  refreshOnlineUI();
 }
 
 function closeFriendArena() {
   G('ov-friend').classList.remove('open');
-  document.body.style.overflow = '';
   FA.selectedUser = null;
+  // Nếu mở từ lobby room → restore lobby detail modal
+  if (FA.inviteRoomId && currentLobbyRoomId) {
+    document.getElementById('ov-lobby-detail')?.classList.add('open');
+  } else {
+    document.body.style.overflow = '';
+  }
+  FA.inviteRoomId = null;
 }
 
 function renderOnlinePlayers(players, query='') {
@@ -1780,7 +2058,7 @@ function renderOnlinePlayers(players, query='') {
       <div class="online-dot" title="Online ngay bây giờ"></div>`;
       row.onclick = () => selectFriendPlayer({
         userId: p.userId,
-        full_name: p.name,
+        full_name: p.name || p.full_name || p.username || 'Người chơi',
         username: p.username,
         elo: p.elo,
         wins: p.wins || 0,
@@ -1806,10 +2084,9 @@ function selectFriend(player) {
 
 async function sendInvite() {
   if (!FA.selectedUser) return;
-  socket.emit('invite_friend', {
-    toUserId: FA.selectedUser.userId
-  });
-  // Chuyển sang trạng thái đang chờ chấp nhận
+  const payload = { toUserId: FA.selectedUser.userId };
+  if (FA.inviteRoomId) payload.roomId = FA.inviteRoomId;
+  socket.emit('invite_friend', payload);
   document.getElementById('friend-selected').style.display = 'none';
   document.getElementById('friend-waiting').style.display = 'block';
   document.getElementById('fw-name').innerText = FA.selectedUser.full_name;
@@ -2087,14 +2364,38 @@ function initSocket() {
 
   socket.on('presence_list', (users) => {
     ONLINE_USERS = {};
-    users.forEach(u => ONLINE_USERS[u.userId] = u);
+    users.forEach(u => {
+      if (!u.userId) return;
+      if (u.userId === U?.id) {
+        // Sync own stats if server has fresher data
+        if (U && U.profile) {
+          if (u.elo   && u.elo   !== U.profile.elo)    U.profile.elo    = u.elo;
+          if (u.wins  !== undefined && u.wins  !== U.profile.wins)   U.profile.wins   = u.wins;
+          if (u.losses!== undefined && u.losses!== U.profile.losses) U.profile.losses = u.losses;
+        }
+        return;
+      }
+      ONLINE_USERS[u.userId] = u;
+    });
     updateOnlineCount();
     refreshOnlineUI();
   });
 
   socket.on('presence_update', (users) => {
     ONLINE_USERS = {};
-    users.forEach(u => ONLINE_USERS[u.userId] = u);
+    users.forEach(u => {
+      if (!u.userId) return;
+      if (u.userId === U?.id) {
+        // Sync own stats if server has fresher data
+        if (U && U.profile) {
+          if (u.elo   && u.elo   !== U.profile.elo)    U.profile.elo    = u.elo;
+          if (u.wins  !== undefined && u.wins  !== U.profile.wins)   U.profile.wins   = u.wins;
+          if (u.losses!== undefined && u.losses!== U.profile.losses) U.profile.losses = u.losses;
+        }
+        return;
+      }
+      ONLINE_USERS[u.userId] = u;
+    });
     updateOnlineCount();
     refreshOnlineUI();
   });
@@ -2177,10 +2478,110 @@ function initSocket() {
     startLobbyCountdown(data.timeout);
   });
 
+
+  socket.on('lobby_rooms_list', (rooms) => {
+      lobbyRoomsList = rooms;
+      renderLobbyRoomsList(rooms);
+  });
+
+  socket.on('lobby_room_created', (data) => {
+      const btn = document.getElementById('b-create-room');
+      if (btn) {
+          btn.disabled = false;
+          btn.querySelector('.bt').style.display = 'inline';
+          btn.querySelector('.bl').style.display = 'none';
+      }
+      toast('ok', `✅ Đã tạo phòng "${data.room.name}"`);
+      currentLobbyRoomId = data.roomId;
+      showLobbyRoomDetails(data.room);
+  });
+
+  socket.on('lobby_room_joined', (data) => {
+      currentLobbyRoomId = data.roomId;
+      showLobbyRoomDetails(data.room);
+  });
+
+  socket.on('lobby_room_update', (data) => {
+      if (currentLobbyRoomId === data.roomId) {
+          currentLobbyRoom = data;
+          renderLobbyRoomPlayers(data.players, data.host_sid, data.ready_players || []);
+          const countEl = document.getElementById('lobby-player-count');
+          if (countEl) countEl.textContent = Object.keys(data.players || {}).length;
+      }
+  });
+
+  socket.on('lobby_battle_start', (data) => {
+      // Đóng các modal lobby khi bắt đầu trận đấu
+      document.getElementById('ov-lobby')?.classList.remove('open');
+      document.getElementById('ov-lobby-detail')?.classList.remove('open');
+      document.getElementById('ov-create-room')?.classList.remove('open');
+      document.body.style.overflow = '';
+      
+      currentRoomId = data.battleRoomId;
+      AR.roomId = data.battleRoomId;
+      AR.role = data.role;
+      if (data.mode === 'ffa') {
+        AR.isFFA = true;
+        AR.ffaPlayers = data.players || [];
+        AR.ffaScores = {};
+        AR.myUserId = data.myUserId;
+        const others = AR.ffaPlayers.filter(p => p.userId !== data.myUserId);
+        AR.oppId = others[0]?.userId || null;
+        AR.oppProfile = others[0] || null;
+      } else {
+        AR.isFFA = false;
+        AR.oppId = data.opponent.userId;
+        AR.oppProfile = data.opponent;
+      }
+      socket.emit('join_room', { roomId: data.battleRoomId });
+      const overlay = document.getElementById('cooldown-overlay');
+      if (overlay) overlay.style.display = 'none';
+      if (AR.waitTimer) clearInterval(AR.waitTimer);
+      enterLobby();
+  });
+
+  socket.on('lobby_battle_spectate', (data) => {
+      toast('info', 'Trận đấu đã bắt đầu! Bạn có thể xem...');
+      // Có thể hiển thị giao diện xem
+  });
+
+  socket.on('lobby_battle_ended', (data) => {
+      if (currentLobbyRoomId === data.roomId) {
+          toast('ok', '🏁 Trận đấu kết thúc, có thể bắt đầu trận mới');
+          socket.emit('list_lobby_rooms');
+          // Refresh room detail
+          joinLobbyRoom(currentLobbyRoomId);
+      }
+  });
+
+  socket.on('invite_received', (data) => {
+      // Cập nhật để hiển thị tên phòng
+      AR.inviteFrom = data.from;
+      AR.inviteRoomId = data.roomId;
+      G('inv-from-name').innerText = data.from.full_name;
+      G('inv-from-elo').innerHTML = `⚡ ELO: ${data.from.elo}`;
+      const roomWrap = G('inv-room-wrap');
+      const roomNameEl = G('inv-room-name');
+      if (data.roomName && roomNameEl) {
+          roomNameEl.innerText = data.roomName;
+          if (roomWrap) roomWrap.style.display = 'inline-block';
+      } else {
+          if (roomWrap) roomWrap.style.display = 'none';
+      }
+      G('ov-invite').classList.add('open');
+  });
+
   socket.on('lobby_update', (data) => {
-    const oppId = AR.oppId;
-    AR.oppReady = data.playerReady[oppId] || false;
-    updateOppReadyUI();
+    if (AR.isFFA) {
+      if (data.readyUserId) {
+        const el = G('lp-ready-' + data.readyUserId);
+        if (el) { el.textContent = '✅ Sẵn sàng!'; el.className = 'lpc-status ready'; }
+      }
+    } else {
+      const oppId = AR.oppId;
+      AR.oppReady = data.playerReady[oppId] || false;
+      updateOppReadyUI();
+    }
   });
 
   socket.on('battle_question', (data) => {
@@ -2189,10 +2590,13 @@ function initSocket() {
 
   socket.on('battle_update', (data) => {
     const myId = U.id;
-    const oppId = AR.oppId;
-    AR.myScore = data.scores[myId] || 0;
-    AR.oppScore = data.scores[oppId] || 0;
-    updateBattleScore();
+    if (AR.isFFA) {
+      if (data.scores) { AR.ffaScores = data.scores; renderFfaScoreboard(); }
+    } else {
+      AR.myScore = data.scores[myId] || 0;
+      AR.oppScore = data.scores[AR.oppId] || 0;
+      updateBattleScore();
+    }
 
     if (data.correct && data.playerAnsweredUserId !== U.id) {
       AR.questionFinished = true;
@@ -2200,7 +2604,14 @@ function initSocket() {
       if (AR.cooldownTimer) { clearTimeout(AR.cooldownTimer); AR.cooldownTimer = null; }
       AR.answerCooldown = false;
       G('cooldown-indicator').style.display = 'none';
-      G('battle-feedback').textContent = `⚡ Đối thủ đã trả lời đúng!`;
+      let answererName = 'Đối thủ';
+      if (AR.isFFA) {
+        const ans = AR.ffaPlayers?.find(p => p.userId === data.playerAnsweredUserId);
+        answererName = (ans?.full_name || ans?.name || 'Người chơi').split(' ').pop();
+      } else {
+        answererName = AR.oppProfile?.full_name?.split(' ').pop() || 'Đối thủ';
+      }
+      G('battle-feedback').textContent = `⚡ ${answererName} đã trả lời đúng!`;
       G('battle-feedback').style.display = 'block';
       setTimeout(() => {
         if (G('battle-feedback').style.display === 'block')
@@ -2211,22 +2622,19 @@ function initSocket() {
     }
   });
 
-  socket.on('battle_result', (data) => {
+  socket.on('battle_result', async (data) => {
     console.log('🔍 battle_result received:', data);
     endBattle(data);
+    // Reload profile from DB so UI reflects the updated ELO/wins/losses
+    if (U) {
+      await loadP();
+      renderIn();
+    }
   });
 
   socket.on('opponent_left', () => {
     toast('err', 'Đối thủ đã thoát trận');
     closeArena();
-  });
-
-  socket.on('invite_received', (data) => {
-    AR.inviteFrom = data.from;
-    AR.inviteRoomId = data.roomId;
-    G('inv-from-name').innerText = data.from.full_name;
-    G('inv-from-elo').innerHTML = `⚡ ELO: ${data.from.elo}`;
-    G('ov-invite').classList.add('open');
   });
 
   socket.on('disconnect', () => {
@@ -2240,6 +2648,169 @@ function initSocket() {
 }
 
 init();
+
+
+
+
+
+function renderLobbyRoomsList(rooms) {
+    const container = document.getElementById('lobby-rooms-list');
+    if (!container) return;
+    if (!rooms || !rooms.length) {
+        container.innerHTML = `
+          <div class="empty-rooms">
+            <div style="font-size:2.5rem;margin-bottom:.65rem">🏠</div>
+            <div style="font-weight:700;margin-bottom:.3rem;color:var(--text-3)">Chưa có phòng nào</div>
+            <div>Hãy tạo phòng mới để bắt đầu!</div>
+          </div>`;
+        return;
+    }
+    container.innerHTML = rooms.map(room => {
+        const isFull = room.player_count >= room.max_players;
+        return `
+          <div class="lobby-room-card">
+            <div class="lrc-icon">${room.is_private ? '🔒' : '🏠'}</div>
+            <div style="flex:1;min-width:0">
+              <div class="lrc-name">${escapeHtml(room.name)}</div>
+              <div class="lrc-meta">
+                <span class="${room.is_private ? 'lrc-badge private' : 'lrc-badge public'}">${room.is_private ? '🔒 Riêng tư' : '🌐 Công khai'}</span>
+                <span>👥 ${room.player_count}/${room.max_players}</span>
+                <span>👑 ${escapeHtml(room.host_name)}</span>
+              </div>
+            </div>
+            <button class="btn-join-room${isFull ? ' full' : ''}"
+              ${isFull ? 'disabled title="Phòng đã đầy"' : ''}
+              onclick="${room.is_private
+                ? `openRoomPasswordModal('${room.id}')`
+                : `joinLobbyRoom('${room.id}')`}">
+              ${isFull ? '🔴 Đầy' : '🚪 Vào'}
+            </button>
+          </div>`;
+    }).join('');
+}
+
+function showLobbyRoomDetails(room) {
+    const modal = document.getElementById('ov-lobby-detail');
+    if (!modal) return;
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    document.getElementById('ov-lobby')?.classList.remove('open');
+    document.getElementById('ov-create-room')?.classList.remove('open');
+    currentLobbyRoom = room;
+    currentLobbyRoomId = room.id || room.roomId || currentLobbyRoomId;
+    document.getElementById('lobby-room-name').textContent = room.name || 'Phòng';
+    const typeIcon = document.getElementById('lr-type-icon');
+    if (typeIcon) typeIcon.textContent = room.is_private ? '🔒' : '👥';
+    const privBadge = document.getElementById('lr-privacy-badge');
+    if (privBadge) privBadge.textContent = room.is_private ? '🔒 Riêng tư' : '🌐 Công khai';
+    const sharePw = document.getElementById('lr-share-pw');
+    if (sharePw) sharePw.style.display = room.is_private ? 'block' : 'none';
+    renderLobbyRoomPlayers(room.players, room.host_sid, room.ready_players || []);
+}
+
+function toggleLobbyReady() {
+    if (!currentLobbyRoomId || !socket) return;
+    socket.emit('toggle_lobby_ready', { roomId: currentLobbyRoomId });
+}
+
+function renderLobbyRoomPlayers(players, hostSid, readyPlayers = []) {
+    const container = document.getElementById('lobby-players-list');
+    const emptySlots = document.getElementById('lobby-empty-slots');
+    const countEl = document.getElementById('lobby-player-count');
+    const hostNameEl = document.getElementById('lr-host-name');
+    const youHostEl = document.getElementById('lr-you-host');
+    const hostActionsEl = document.getElementById('lr-host-actions');
+    const guestActionsEl = document.getElementById('lr-guest-actions');
+    const btnStart = document.getElementById('btn-start-lobby-battle');
+    const btnReady = document.getElementById('btn-lobby-ready');
+    if (!container) return;
+    const entries = Object.entries(players || {});
+    const count = entries.length;
+    const MAX = 5;
+    if (countEl) countEl.textContent = count;
+    const hostEntry = entries.find(([sid]) => sid === hostSid);
+    const hostUser = hostEntry ? hostEntry[1] : null;
+    if (hostNameEl) hostNameEl.textContent = hostUser ? (hostUser.full_name || hostUser.username || 'Chủ phòng') : 'Chủ phòng';
+    const isHost = socket && hostSid === socket.id;
+    
+    const allGuestsReady = entries.filter(([sid]) => sid !== hostSid).every(([sid]) => readyPlayers.includes(sid));
+    const canStart = count >= 2 && allGuestsReady;
+
+    if (youHostEl) youHostEl.style.display = isHost ? 'inline' : 'none';
+    if (hostActionsEl) hostActionsEl.style.display = isHost ? 'block' : 'none';
+    if (guestActionsEl) guestActionsEl.style.display = (!isHost && socket) ? 'block' : 'none';
+    
+    if (btnStart) {
+        if (canStart) {
+            btnStart.disabled = false;
+            btnStart.style.background = 'linear-gradient(135deg,var(--teal),#0891b2)';
+            btnStart.style.cursor = 'pointer';
+            btnStart.textContent = '⚔️ Bắt Đầu — Tất Cả Cùng Đấu!';
+        } else {
+            btnStart.disabled = true;
+            btnStart.style.background = 'var(--text-4)';
+            btnStart.style.cursor = 'not-allowed';
+            btnStart.textContent = count < 2 ? '⚠️ Cần ít nhất 2 người' : '⏳ Đang chờ người chơi sẵn sàng...';
+        }
+    }
+    
+    if (btnReady && socket) {
+        const isReady = readyPlayers.includes(socket.id);
+        if (isReady) {
+            btnReady.textContent = '✅ Đã Sẵn Sàng (Nhấn để hủy)';
+            btnReady.style.background = 'linear-gradient(135deg, #16a34a, #15803d)';
+        } else {
+            btnReady.textContent = '☑️ Sẵn Sàng';
+            btnReady.style.background = 'linear-gradient(135deg, #eab308, #ca8a04)';
+        }
+    }
+    
+    container.innerHTML = entries.map(([sid, p]) => {
+        const name = p.full_name || p.username || 'Người chơi';
+        const isH = sid === hostSid;
+        const isR = readyPlayers.includes(sid);
+        const ini = mkIni(name);
+        const isMe = U && p.userId === U.id;
+        const av = p.avatar_url
+            ? `<img src="${p.avatar_url}" alt="${ini}" class="av-img" onerror="this.parentElement.textContent='${ini}'" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`
+            : ini;
+            
+        let readyBadge = '';
+        if (!isH) {
+            if (isR) readyBadge = '<div style="position:absolute;bottom:-4px;right:-4px;background:#16a34a;color:#fff;font-size:.65rem;padding:2px 4px;border-radius:4px;font-weight:bold;z-index:2;line-height:1">✅</div>';
+            else readyBadge = '<div style="position:absolute;bottom:-4px;right:-4px;background:#eab308;color:#fff;font-size:.65rem;padding:2px 4px;border-radius:4px;font-weight:bold;z-index:2;line-height:1">⏳</div>';
+        }
+        
+        return `
+          <div class="lr-player-card${isH ? ' host' : ''}${isR && !isH ? ' ready' : ''}" style="position:relative">
+            ${isH ? '<div class="lr-host-crown">👑</div>' : ''}
+            <div class="lr-player-av" style="position:relative">${av}${readyBadge}</div>
+            <div class="lr-player-name">${escapeHtml(name)}${isMe ? ' <span style="color:var(--teal);font-size:.65rem">● Bạn</span>' : ''}</div>
+            <div class="lr-player-elo">⚡ ${p.elo || 1200}</div>
+          </div>`;
+    }).join('');
+    if (emptySlots) {
+        emptySlots.innerHTML = Array.from({length: Math.max(0, MAX - count)}).map(() => `
+          <div class="lr-empty-slot">
+            <div class="lr-empty-slot-av">👤</div>
+            <div>Chờ người...</div>
+          </div>`).join('');
+    }
+}
+
+function openLobbyRooms() {
+    if (!U) { openM('login'); return; }
+    document.getElementById('ov-lobby').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    loadLobbyRooms();
+}
+function closeLobbyRooms() {
+    document.getElementById('ov-lobby').classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+
+
 // ══════════════════════════════════════
 //   LEADERBOARD
 // ══════════════════════════════════════
