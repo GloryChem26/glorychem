@@ -763,17 +763,100 @@ nav{
 .bsc-score{font-family:var(--font-h);font-size:2.4rem;font-weight:900;color:var(--teal);line-height:1}
 
 /* MCQ answer buttons */
-.mcq-btn{
-  padding:.75rem 1rem;border:2px solid var(--border-2);border-radius:11px;
-  background:var(--bg-soft);cursor:pointer;text-align:left;width:100%;
-  font-family:var(--font-b);font-weight:600;font-size:.85rem;color:var(--text-2);
-  transition:all .18s;line-height:1.4;
+.mcq-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 1.25rem 1.5rem;
+  border: 2px solid var(--border-2);
+  border-radius: 16px;
+  background: var(--bg-white);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  font-family: var(--font-h);
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--text-2);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+  overflow: hidden;
 }
-.mcq-btn:hover:not(:disabled){border-color:var(--teal);background:var(--teal-lt);color:var(--teal-dark)}
-.mcq-btn.correct{border-color:var(--green);background:var(--green-lt);color:var(--green)}
-.mcq-btn.wrong{border-color:var(--rose);background:var(--rose-lt);color:var(--rose)}
-.mcq-btn.reveal{border-color:var(--green);background:var(--green-lt);color:var(--green)}
-.mcq-btn:disabled{cursor:not-allowed}
+
+.mcq-btn::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(135deg, rgba(13,148,136,0.1), rgba(13,148,136,0));
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.mcq-btn:hover:not(:disabled) {
+  border-color: var(--teal);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(13,148,136,0.15);
+  color: var(--teal-dark);
+}
+
+.mcq-btn:hover:not(:disabled)::before {
+  opacity: 1;
+}
+
+.mcq-btn.correct {
+  border-color: var(--green);
+  background: var(--green-lt);
+  color: var(--green);
+  box-shadow: 0 0 0 4px rgba(34,197,94,0.2);
+}
+
+.mcq-btn.wrong {
+  border-color: var(--rose);
+  background: var(--rose-lt);
+  color: var(--rose);
+  box-shadow: 0 0 0 4px rgba(225,29,72,0.2);
+}
+
+.mcq-btn.reveal {
+  border-color: var(--green);
+  background: var(--green-lt);
+  color: var(--green);
+}
+.mcq-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+.mcq-num-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: var(--bg-soft);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  color: var(--teal);
+  font-weight: 900;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.mcq-btn:hover:not(:disabled) .mcq-num-label {
+  background: var(--teal);
+  color: white;
+}
+.mcq-btn.correct .mcq-num-label { background: var(--green); color: white; }
+.mcq-btn.wrong .mcq-num-label { background: var(--rose); color: white; }
+.mcq-btn.reveal .mcq-num-label { background: var(--green); color: white; }
+
+.mcq-text-content {
+  flex: 1;
+  word-break: break-word;
+  line-height: 1.4;
+}
 
 /* Q type badge */
 .q-type-badge{font-size:.65rem;font-weight:700;padding:.18rem .55rem;border-radius:100px;font-family:var(--font-m);letter-spacing:.02em}

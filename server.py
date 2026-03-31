@@ -10,6 +10,7 @@ import os
 import uuid
 import random
 import threading
+import json
 
 from flask import Flask, send_file, send_from_directory, request
 from flask_cors import CORS
@@ -30,8 +31,8 @@ socketio = SocketIO(
     app,
     cors_allowed_origins="*",
     async_mode="threading",
-    ping_timeout=60,
-    ping_interval=25,
+    ping_timeout=120,
+    ping_interval=20,
     max_http_buffer_size=1_000_000,
     logger=False,
     engineio_logger=False,
@@ -64,8 +65,25 @@ _state_lock = threading.Lock()
 # ══════════════════════════════════════
 #   HELPERS
 # ══════════════════════════════════════
+def get_user_status(sid):
+    for r in game_rooms.values():
+        if sid in r["players"]:
+            return "battle"
+    for r in lobby_rooms.values():
+        if sid in r["players"]:
+            return "lobby"
+    return "free"
+
+def get_presence_payload():
+    payload = []
+    for sid, u in online_users.items():
+        cp = dict(u)
+        cp["status"] = get_user_status(sid)
+        payload.append(cp)
+    return payload
+
 def broadcast_presence():
-    socketio.emit("presence_update", list(online_users.values()))
+    socketio.emit("presence_update", get_presence_payload())
 
 
 def make_user_payload(u):
@@ -430,6 +448,48 @@ def handle_connect():
     print(f"[+] Connect: {request.sid}")
 
 
+@socketio.on("request_sync")
+def handle_request_sync():
+    """Client yêu cầu đồng bộ lại trạng thái sau khi reconnect."""
+    sid = request.sid
+    print(f"[sync] request_sync from {sid}")
+
+    # Gửi lại danh sách online users
+    emit("presence_list", get_presence_payload())
+
+    # Gửi lại danh sách lobby rooms đang chờ
+    rooms_info = []
+    for rid, room in lobby_rooms.items():
+        if room["state"] == "waiting":
+            rooms_info.append({
+                "id":           rid,
+                "name":         room["name"],
+                "player_count": len(room["players"]),
+                "max_players":  room["max_players"],
+                "host_name":    online_users.get(room["host_sid"], {}).get("full_name", "Chủ phòng"),
+                "is_private":   room["is_private"],
+            })
+    emit("lobby_rooms_list", rooms_info)
+
+    # Nếu sid này đang trong một game room đang battle, gửi lại câu hỏi hiện tại
+    for room_id, room in game_rooms.items():
+        if sid in room["players"] and room["state"] == "battle":
+            q_idx = room["current_question"]
+            if q_idx < len(room["questions"]):
+                q = {k: v for k, v in room["questions"][q_idx].items() if k not in ("correct", "exp")}
+                emit("battle_question", {
+                    "question": q,
+                    "index":    q_idx + 1,
+                    "total":    len(room["questions"]),
+                    "timeout":  room["battle_timeout"],
+                    "scores":   {
+                        room["players"][s]["user"].get("userId"): room["scores"].get(s, 0)
+                        for s in room["players"]
+                    },
+                })
+            break
+
+
 @socketio.on("disconnect")
 def handle_disconnect():
     sid = request.sid
@@ -501,6 +561,7 @@ def handle_create_lobby_room(data):
         "room":   _safe_room_payload(lobby_rooms[room_id]),
     })
     broadcast_lobby_rooms_list()
+    broadcast_presence()
     print(f"[LOBBY] Created '{name}' id={room_id[:8]} private={is_private}")
 
 
@@ -544,6 +605,7 @@ def handle_join_lobby_room(data):
         room=room_id,
     )
     broadcast_lobby_rooms_list()
+    broadcast_presence()
     print(f"[LOBBY] {user.get('full_name','?')} joined {room_id[:8]}")
 
 
@@ -574,6 +636,7 @@ def handle_leave_lobby_room(data):
         )
 
     broadcast_lobby_rooms_list()
+    broadcast_presence()
 
 
 @socketio.on("toggle_lobby_ready")
@@ -658,6 +721,7 @@ def handle_start_lobby_battle(data):
         }, room=p_sid)
 
     broadcast_lobby_rooms_list()
+    broadcast_presence()
     print(f"[LOBBY] FFA started {room_id[:8]}: {len(all_sids)} players")
 
 
@@ -698,7 +762,7 @@ def handle_presence_join(data):
     sid_to_uid[sid]   = uid
     uid_to_sid[uid]   = sid
 
-    emit("presence_list", list(online_users.values()))
+    emit("presence_list", get_presence_payload())
     broadcast_presence()
 
 
@@ -734,6 +798,15 @@ def handle_invite_friend(data):
         emit("error", {"msg": "Người chơi không còn online"}); return
     if to_sid == sid:
         emit("error", {"msg": "Không thể mời chính mình"}); return
+
+    # Check if target is busy
+    for r_id, r in lobby_rooms.items():
+        if to_sid in r["players"]:
+            emit("error", {"msg": "Người chơi này đang ở trong phòng khác"}); return
+            
+    for r_id, r in game_rooms.items():
+        if to_sid in r["players"]:
+            emit("error", {"msg": "Người chơi này đang tham gia trận đấu"}); return
 
     if room_id:
         # Mời vào lobby room cụ thể
@@ -804,6 +877,7 @@ def handle_invite_response(data):
             {"roomId": lr_id, "players": room["players"], "host_sid": room["host_sid"]},
             room=lr_id)
         broadcast_lobby_rooms_list()
+        broadcast_presence()
     else:
         # Direct 1v1
         from_user = online_users.get(from_sid)
@@ -946,6 +1020,7 @@ def _create_room_and_notify(sid1, u1, sid2, u2):
     _setup_room(room_id, sid1, u1, sid2, u2)
     socketio.emit("match_found", {"roomId": room_id, "role": "host", "opponent": make_user_payload(u2)}, room=sid1)
     socketio.emit("match_found", {"roomId": room_id, "role": "guest", "opponent": make_user_payload(u1)}, room=sid2)
+    broadcast_presence()
 
 
 def _setup_room(room_id, sid1, u1, sid2, u2):
@@ -1049,65 +1124,16 @@ def _build_questions(topics, num_questions=10):
 # ══════════════════════════════════════
 #   DATA — CHỦ ĐỀ & NGÂN HÀNG CÂU HỎI
 # ══════════════════════════════════════
-TOPICS = {
-    "acid-base": {"name": "Axit — Bazơ",      "icon": "⚗️"},
-    "redox":     {"name": "Oxi hóa khử",       "icon": "⚡"},
-    "electro":   {"name": "Điện hóa",          "icon": "🔋"},
-    "organic":   {"name": "Hóa hữu cơ",        "icon": "🌿"},
-    "periodic":  {"name": "Bảng tuần hoàn",    "icon": "📋"},
-    "solution":  {"name": "Dung dịch",         "icon": "💧"},
-    "thermo":    {"name": "Nhiệt hóa học",     "icon": "🔥"},
-    "equilib":   {"name": "Cân bằng hóa học", "icon": "⚖️"},
-}
+def load_questions_database():
+    try:
+        with open("questions.json", "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return data.get("TOPICS", {}), data.get("QUESTION_BANK", {})
+    except Exception as e:
+        print(f"[!] Lỗi khi tải questions.json: {e}")
+        return {}, {}
 
-QUESTION_BANK = {
-    "acid-base": [
-        {"type": "mcq", "q": "Dung dịch HCl 0.01M có pH bằng bao nhiêu?", "opts": ["pH = 1", "pH = 2", "pH = 3", "pH = 12"], "correct": 1, "exp": "[HCl]=0.01M → [H⁺]=0.01 → pH=2"},
-        {"type": "num", "q": "Tính pH của dung dịch NaOH 0.001M", "correct": "11", "exp": "pOH=3 → pH=11"},
-        {"type": "mcq", "q": "Chất nào sau đây là axit mạnh?", "opts": ["CH₃COOH", "HF", "HNO₃", "H₂CO₃"], "correct": 2, "exp": "HNO₃ phân li hoàn toàn"},
-        {"type": "num", "q": "Trộn 100ml HCl 0.2M với 100ml NaOH 0.1M. pH của dung dịch (làm tròn)?", "correct": "1", "exp": "dư HCl → [H+]=0.05M → pH≈1"},
-        {"type": "mcq", "q": "Ion nào làm dung dịch có môi trường bazơ?", "opts": ["NH₄⁺", "Al³⁺", "CO₃²⁻", "Fe³⁺"], "correct": 2, "exp": "CO₃²⁻ thủy phân tạo OH⁻"},
-        {"type": "mcq", "q": "pH máu người bình thường là?", "opts": ["6.8–7.0", "7.35–7.45", "7.8–8.0", "6.0–6.5"], "correct": 1, "exp": "pH máu: 7.35–7.45"},
-    ],
-    "redox": [
-        {"type": "mcq", "q": "Fe + CuSO₄ → FeSO₄ + Cu. Chất nào bị oxi hóa?", "opts": ["Fe", "CuSO₄", "FeSO₄", "Cu"], "correct": 0, "exp": "Fe → Fe²⁺ (mất e⁻)"},
-        {"type": "num", "q": "Số oxi hóa của Mn trong KMnO₄?", "correct": "7", "exp": "K(+1)+Mn(x)+4O(-2)=0 → x=+7"},
-        {"type": "mcq", "q": "Chất khử là chất:", "opts": ["Nhận electron", "Cho electron", "Nhận proton", "Cho proton"], "correct": 1, "exp": "Chất khử nhường electron"},
-        {"type": "num", "q": "Số oxi hóa của S trong H₂SO₄?", "correct": "6", "exp": "2(+1)+S+4(-2)=0 → S=+6"},
-        {"type": "mcq", "q": "Phản ứng nào là oxi hóa khử?", "opts": ["NaCl+AgNO₃", "CaCO₃ nhiệt phân", "Zn+H₂SO₄ loãng", "NaOH+HCl"], "correct": 2, "exp": "Zn→Zn²⁺+2e⁻"},
-    ],
-    "electro": [
-        {"type": "mcq", "q": "Suất điện động pin Daniell (Zn-Cu) chuẩn?", "opts": ["0.76V", "1.10V", "1.46V", "0.34V"], "correct": 1, "exp": "E°=E°Cu-E°Zn=0.34-(-0.76)=1.10V"},
-        {"type": "num", "q": "Anot (cực âm) trong pin? Nhập 1=anot, 2=catot", "correct": "1", "exp": "Cực âm=anot=oxi hóa"},
-        {"type": "mcq", "q": "Điện phân CuSO₄, tại catot xảy ra:", "opts": ["Cu²⁺+2e⁻→Cu", "Cu→Cu²⁺+2e⁻", "2H₂O→O₂+4H⁺+4e⁻", "SO₄²⁻ bị oxi hóa"], "correct": 0, "exp": "Catot: Cu²⁺+2e⁻→Cu"},
-    ],
-    "organic": [
-        {"type": "mcq", "q": "Công thức phân tử của metan?", "opts": ["C₂H₆", "CH₄", "C₃H₈", "C₂H₄"], "correct": 1, "exp": "Metan = CH₄"},
-        {"type": "num", "q": "Etilen (C₂H₄) có bao nhiêu liên kết đôi C=C?", "correct": "1", "exp": "CH₂=CH₂ → 1 liên kết đôi"},
-        {"type": "mcq", "q": "Phản ứng đặc trưng của ankan?", "opts": ["Cộng hợp", "Thế halogen", "Trùng hợp", "Tách nước"], "correct": 1, "exp": "Ankan → thế halogen"},
-        {"type": "mcq", "q": "Glucozơ (C₆H₁₂O₆) thuộc loại?", "opts": ["Lipit", "Protein", "Cacbohidrat", "Axit amin"], "correct": 2, "exp": "Glucozơ là monosaccarit"},
-        {"type": "num", "q": "Số nguyên tử C trong benzen (C₆H₆)?", "correct": "6", "exp": "C₆H₆ → 6 C"},
-    ],
-    "periodic": [
-        {"type": "num", "q": "Số proton của Fe (Z=26)?", "correct": "26", "exp": "Z=26 là Fe"},
-        {"type": "mcq", "q": "Nhóm IA còn gọi là:", "opts": ["Halogen", "Kim loại kiềm", "Kim loại kiềm thổ", "Khí hiếm"], "correct": 1, "exp": "Nhóm IA = kim loại kiềm"},
-        {"type": "num", "q": "Chu kì 2 có bao nhiêu nguyên tố?", "correct": "8", "exp": "Li→Ne = 8 nguyên tố"},
-        {"type": "mcq", "q": "Trong chu kì, tính kim loại biến đổi thế nào?", "opts": ["Tăng trái→phải", "Giảm trái→phải", "Không đổi", "Bất thường"], "correct": 1, "exp": "Giảm dần trái→phải"},
-    ],
-    "solution": [
-        {"type": "num", "q": "Độ tan NaCl trong 100g nước ở 20°C (g)?", "correct": "36", "exp": "NaCl ≈ 36g/100g nước"},
-        {"type": "mcq", "q": "Dung dịch bão hòa là:", "opts": ["Có thể hòa tan thêm", "Không thể hòa tan thêm", "Không có chất tan", "C=1M"], "correct": 1, "exp": "Đã đạt giới hạn hòa tan"},
-        {"type": "mcq", "q": "Nồng độ mol/L tính bằng:", "opts": ["m/V", "n/V(L)", "m/m_dm", "n/m"], "correct": 1, "exp": "C_M = n(mol)/V(lít)"},
-    ],
-    "thermo": [
-        {"type": "mcq", "q": "Phản ứng tỏa nhiệt có ΔH:", "opts": ["ΔH>0", "ΔH<0", "ΔH=0", "Không xác định"], "correct": 1, "exp": "Tỏa nhiệt: ΔH<0"},
-        {"type": "num", "q": "Đốt 12g C (ΔH=-394kJ/mol) sinh bao nhiêu kJ?", "correct": "394", "exp": "12g=1mol→394kJ"},
-    ],
-    "equilib": [
-        {"type": "mcq", "q": "Nguyên lý Le Chatelier về:", "opts": ["Tốc độ phản ứng", "Chiều dịch cân bằng khi bị tác động", "Năng lượng hoạt hóa", "Trật tự phản ứng"], "correct": 1, "exp": "Hệ tự điều chỉnh chống lại thay đổi"},
-        {"type": "mcq", "q": "Tăng nồng độ chất phản ứng → cân bằng:", "opts": ["Dịch trái", "Dịch phải", "Không đổi", "Phụ thuộc T"], "correct": 1, "exp": "Tăng chất đầu → dịch phải"},
-    ],
-}
+TOPICS, QUESTION_BANK = load_questions_database()
 
 
 if __name__ == "__main__":

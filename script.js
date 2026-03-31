@@ -4,7 +4,7 @@ const SKEY = 'sb_publishable_-4uRGeYYYeJAvSMKnwZr5Q_LOSAr_dZ';
 const { createClient } = supabase;
 let sb;
 try { sb = createClient(SURL, SKEY); console.log('✅ GloryChem connected'); }
-catch(e) { console.warn('Supabase:', e.message); }
+catch (e) { console.warn('Supabase:', e.message); }
 let U = null;
 
 let currentLobbyRoomId = null;
@@ -14,127 +14,121 @@ let _pendingJoinRoomId = null; // for password prompt flow
 
 // ── Escape HTML to prevent XSS ──
 function escapeHtml(str) {
-    if (!str) return '';
-    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  if (!str) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 // ── Lấy danh sách phòng ──
 function loadLobbyRooms() {
-    if (!socket || !socket.connected) {
-        // retry once socket is ready
-        setTimeout(() => loadLobbyRooms(), 500);
-        return;
-    }
-    socket.emit('list_lobby_rooms');
+  if (!socket || !socket.connected) {
+    // retry once socket is ready
+    setTimeout(() => loadLobbyRooms(), 500);
+    return;
+  }
+  socket.emit('list_lobby_rooms');
 }
 
 // ── Mở overlay tạo phòng ──
 function openCreateRoomForm() {
-    const name = (U?.profile?.full_name || U?.email?.split('@')[0] || 'Bạn');
-    const inp = document.getElementById('cr-name');
-    if (inp) inp.value = `Phòng của ${name}`;
-    selectRoomType('public');
-    clrA('a-create-room');
-    document.getElementById('ov-create-room').classList.add('open');
-    document.body.style.overflow = 'hidden';
+  const name = (U?.profile?.full_name || U?.email?.split('@')[0] || 'Bạn');
+  const inp = document.getElementById('cr-name');
+  if (inp) inp.value = `Phòng của ${name}`;
+  selectRoomType('public');
+  clrA('a-create-room');
+  document.getElementById('ov-create-room').classList.add('open');
+  document.body.style.overflow = 'hidden';
 }
 function closeCreateRoomForm() {
-    document.getElementById('ov-create-room').classList.remove('open');
-    document.body.style.overflow = '';
+  document.getElementById('ov-create-room').classList.remove('open');
+  document.body.style.overflow = '';
 }
 document.addEventListener('DOMContentLoaded', () => {
-    const ov = document.getElementById('ov-create-room');
-    if (ov) ov.addEventListener('click', e => { if (e.target === ov) closeCreateRoomForm(); });
-    const ovLobby = document.getElementById('ov-lobby');
-    if (ovLobby) ovLobby.addEventListener('click', e => { if (e.target === ovLobby) closeLobbyRooms(); });
-    const ovDetail = document.getElementById('ov-lobby-detail');
-    if (ovDetail) ovDetail.addEventListener('click', e => { if (e.target === ovDetail) leaveLobbyRoom(); });
-    const ovPw = document.getElementById('ov-room-password');
-    if (ovPw) ovPw.addEventListener('click', e => { if (e.target === ovPw) closeRoomPasswordModal(); });
+  const ov = document.getElementById('ov-create-room');
+  if (ov) ov.addEventListener('click', e => { if (e.target === ov) closeCreateRoomForm(); });
+  const ovLobby = document.getElementById('ov-lobby');
+  if (ovLobby) ovLobby.addEventListener('click', e => { if (e.target === ovLobby) closeLobbyRooms(); });
+  const ovDetail = document.getElementById('ov-lobby-detail');
+  if (ovDetail) ovDetail.addEventListener('click', e => { if (e.target === ovDetail) leaveLobbyRoom(); });
+  const ovPw = document.getElementById('ov-room-password');
+  if (ovPw) ovPw.addEventListener('click', e => { if (e.target === ovPw) closeRoomPasswordModal(); });
 });
 
 function selectRoomType(type) {
-    document.getElementById('cr-opt-public').classList.toggle('selected', type === 'public');
-    document.getElementById('cr-opt-private').classList.toggle('selected', type === 'private');
-    document.getElementById('cr-pw-wrap').style.display = type === 'private' ? 'block' : 'none';
+  document.getElementById('cr-opt-public').classList.toggle('selected', type === 'public');
+  document.getElementById('cr-opt-private').classList.toggle('selected', type === 'private');
+  document.getElementById('cr-pw-wrap').style.display = type === 'private' ? 'block' : 'none';
 }
 
 function submitCreateRoom() {
-    const name = (document.getElementById('cr-name')?.value || '').trim();
-    const isPrivate = document.getElementById('cr-opt-private').classList.contains('selected');
-    const password = document.getElementById('cr-password')?.value || '';
-    clrA('a-create-room');
+  const name = (document.getElementById('cr-name')?.value || '').trim();
+  const isPrivate = document.getElementById('cr-opt-private').classList.contains('selected');
+  const password = document.getElementById('cr-password')?.value || '';
+  clrA('a-create-room');
 
-    if (!name) { alrt('a-create-room','err','⚠️ Vui lòng nhập tên phòng'); return; }
-    if (isPrivate && !password) { alrt('a-create-room','err','⚠️ Vui lòng nhập mật khẩu cho phòng riêng tư'); return; }
-    if (!socket || !socket.connected) { alrt('a-create-room','err','❌ Chưa kết nối máy chủ'); return; }
+  if (!name) { alrt('a-create-room', 'err', '⚠️ Vui lòng nhập tên phòng'); return; }
+  if (isPrivate && !password) { alrt('a-create-room', 'err', '⚠️ Vui lòng nhập mật khẩu cho phòng riêng tư'); return; }
+  if (!socket || !socket.connected) { alrt('a-create-room', 'err', '❌ Chưa kết nối máy chủ'); return; }
 
-    const btn = document.getElementById('b-create-room');
-    btn.disabled = true;
-    btn.querySelector('.bt').style.display = 'none';
-    btn.querySelector('.bl').style.display = 'inline-flex';
+  const btn = document.getElementById('b-create-room');
+  btn.disabled = true;
+  btn.querySelector('.bt').style.display = 'none';
+  btn.querySelector('.bl').style.display = 'inline-flex';
 
-    socket.emit('create_lobby_room', { name, isPrivate, password });
-    // Button will be re-enabled on server response or timeout
-    setTimeout(() => {
-        btn.disabled = false;
-        btn.querySelector('.bt').style.display = 'inline';
-        btn.querySelector('.bl').style.display = 'none';
-    }, 3000);
+  socket.emit('create_lobby_room', { name, isPrivate, password });
+  // Button will be re-enabled on server response or timeout
+  setTimeout(() => {
+    btn.disabled = false;
+    btn.querySelector('.bt').style.display = 'inline';
+    btn.querySelector('.bl').style.display = 'none';
+  }, 3000);
 }
 
 // ── Tham gia phòng ──
 function joinLobbyRoom(roomId, password = null) {
-    if (!socket || !socket.connected) return;
-    socket.emit('join_lobby_room', { roomId, password });
+  if (!socket || !socket.connected) return;
+  socket.emit('join_lobby_room', { roomId, password });
 }
 
 // ── Password prompt for private rooms ──
 function openRoomPasswordModal(roomId) {
-    _pendingJoinRoomId = roomId;
-    clrA('a-room-pw');
-    document.getElementById('rp-password').value = '';
-    document.getElementById('ov-room-password').classList.add('open');
-    document.body.style.overflow = 'hidden';
-    setTimeout(() => document.getElementById('rp-password')?.focus(), 150);
+  _pendingJoinRoomId = roomId;
+  clrA('a-room-pw');
+  document.getElementById('rp-password').value = '';
+  document.getElementById('ov-room-password').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => document.getElementById('rp-password')?.focus(), 150);
 }
 function closeRoomPasswordModal() {
-    _pendingJoinRoomId = null;
-    document.getElementById('ov-room-password').classList.remove('open');
-    document.body.style.overflow = '';
+  _pendingJoinRoomId = null;
+  document.getElementById('ov-room-password').classList.remove('open');
+  document.body.style.overflow = '';
 }
 function submitRoomPassword() {
-    if (!_pendingJoinRoomId) return;
-    const pw = document.getElementById('rp-password')?.value || '';
-    if (!pw) { alrt('a-room-pw','err','⚠️ Vui lòng nhập mật khẩu'); return; }
-    joinLobbyRoom(_pendingJoinRoomId, pw);
-    closeRoomPasswordModal();
+  if (!_pendingJoinRoomId) return;
+  const pw = document.getElementById('rp-password')?.value || '';
+  if (!pw) { alrt('a-room-pw', 'err', '⚠️ Vui lòng nhập mật khẩu'); return; }
+  joinLobbyRoom(_pendingJoinRoomId, pw);
+  closeRoomPasswordModal();
 }
 
 // ── Rời phòng ──
 function leaveLobbyRoom() {
-    if (currentLobbyRoomId) {
-        socket.emit('leave_lobby_room', { roomId: currentLobbyRoomId });
-    }
-    currentLobbyRoomId = null;
-    currentLobbyRoom = null;
-    document.getElementById('ov-lobby-detail').classList.remove('open');
-    document.body.style.overflow = '';
+  if (currentLobbyRoomId) {
+    socket.emit('leave_lobby_room', { roomId: currentLobbyRoomId });
+  }
+  currentLobbyRoomId = null;
+  currentLobbyRoom = null;
+  document.getElementById('ov-lobby-detail').classList.remove('open');
+  document.body.style.overflow = '';
 }
 
 // ── Bắt đầu trận trong phòng ──
 function startLobbyBattle() {
-    if (!currentLobbyRoomId) return;
-    socket.emit('start_lobby_battle', { roomId: currentLobbyRoomId });
+  if (!currentLobbyRoomId) return;
+  socket.emit('start_lobby_battle', { roomId: currentLobbyRoomId });
 }
 
-// ── Mời bạn bè vào phòng hiện tại ──
-function inviteToCurrentRoom() {
-    // Đóng lobby-detail trước để tránh z-index overlap
-    document.getElementById('ov-lobby-detail').classList.remove('open');
-    FA.inviteRoomId = currentLobbyRoomId;
-    openFriendArena();
-}
+
 
 
 // ── INIT ──
@@ -154,19 +148,20 @@ async function init() {
     sb.auth.onAuthStateChange(async (ev, s) => {
       if (ev === 'SIGNED_IN' && s) {
         U = s.user; await loadP(); renderIn(); initSocket(); closeM();
-        toast('ok','✅ Đăng nhập thành công!');
+        toast('ok', '✅ Đăng nhập thành công!');
         subscribeProfileRealtime()
       }
       else if (ev === 'SIGNED_OUT') { U = null; renderOut(); }
     });
-  } catch(e) { console.error(e); }
+  } catch (e) { console.error(e); }
 }
 
 async function subscribeProfileRealtime() {
   if (!sb || !U) return;
-  // Remove existing channel if any to avoid duplicates
+  // Xóa channel cũ để tránh duplicate
   if (U._profileChannel) {
-    try { sb.removeChannel(U._profileChannel); } catch(e) {}
+    try { await sb.removeChannel(U._profileChannel); } catch (e) { }
+    U._profileChannel = null;
   }
   const channel = sb.channel(`profile:${U.id}`);
   U._profileChannel = channel;
@@ -178,36 +173,41 @@ async function subscribeProfileRealtime() {
       filter: `id=eq.${U.id}`
     }, async (payload) => {
       if (!payload.new) return;
-      // Merge new fields into U.profile
+      // Merge dữ liệu mới vào U.profile — không dùng mặc định cũ
       U.profile = { ...(U.profile || {}), ...payload.new };
-      // Refresh UI
       renderIn();
-      if (G('page-challenge').classList.contains('active')) {
-        G('peloval').textContent = U.profile?.elo || 1200;
+      if (G('page-challenge')?.classList.contains('active')) {
+        const eloEl = G('peloval');
+        if (eloEl) eloEl.textContent = U.profile?.elo || 1200;
       }
-      // Push fresh stats to socket presence so other clients see correct ELO
       if (socket && socket.connected) {
         socket.emit('presence:update', {
-          elo:    U.profile.elo    || 1200,
-          wins:   U.profile.wins   || 0,
+          elo: U.profile.elo || 1200,
+          wins: U.profile.wins || 0,
           losses: U.profile.losses || 0,
         });
       }
       console.log(`🔄 Profile realtime update: ELO=${U.profile.elo} W=${U.profile.wins} L=${U.profile.losses}`);
     })
-    .subscribe();
+    .subscribe((status, err) => {
+      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        console.warn('[Supabase] Profile channel error:', status, err);
+        // Thử reconnect sau 3 giây
+        setTimeout(() => subscribeProfileRealtime(), 3000);
+      }
+    });
 }
 
 // ── XỬ LÝ REDIRECT TỪ EMAIL LINK (PKCE + implicit) ──
 async function handleEmailRedirect() {
-  const qp   = new URLSearchParams(window.location.search);
+  const qp = new URLSearchParams(window.location.search);
   const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
 
   // Lấy các param có thể có
-  const code      = qp.get('code');           // PKCE flow (mặc định Supabase mới)
-  const errorQ    = qp.get('error') || hash.get('error');
-  const token     = hash.get('access_token'); // Implicit flow (cũ)
-  const type      = hash.get('type') || qp.get('type');
+  const code = qp.get('code');           // PKCE flow (mặc định Supabase mới)
+  const errorQ = qp.get('error') || hash.get('error');
+  const token = hash.get('access_token'); // Implicit flow (cũ)
+  const type = hash.get('type') || qp.get('type');
 
   // Dọn URL ngay lập tức để tránh loop khi reload
   history.replaceState(null, '', window.location.pathname);
@@ -233,7 +233,7 @@ async function handleEmailRedirect() {
       openResetModal('form');
       // Lắng nghe các sự kiện tiếp theo
       _initNormalSession(true);
-    } catch(e) {
+    } catch (e) {
       console.error('exchangeCodeForSession failed:', e);
       openResetModal('expired');
       _initNormalSession();
@@ -246,7 +246,7 @@ async function handleEmailRedirect() {
     console.log('Implicit recovery token detected');
     try {
       const { data, error } = await sb.auth.setSession({
-        access_token:  token,
+        access_token: token,
         refresh_token: hash.get('refresh_token') || '',
       });
       if (error) throw error;
@@ -255,7 +255,7 @@ async function handleEmailRedirect() {
       renderIn();
       openResetModal('form');
       _initNormalSession(true);
-    } catch(e) {
+    } catch (e) {
       console.error('setSession failed:', e);
       openResetModal('expired');
       _initNormalSession();
@@ -271,7 +271,7 @@ function _initNormalSession(skipSignInToast = false) {
   sb.auth.onAuthStateChange(async (ev, s) => {
     if (ev === 'SIGNED_IN' && s && !skipSignInToast) {
       U = s.user; await loadP(); renderIn(); initSocket(); closeM();
-      toast('ok','✅ Đăng nhập thành công!');
+      toast('ok', '✅ Đăng nhập thành công!');
     }
     else if (ev === 'SIGNED_OUT') { U = null; renderOut(); }
   });
@@ -283,9 +283,9 @@ function openResetModal(mode) {
   ov.classList.add('open');
   document.body.style.overflow = 'hidden';
 
-  G('reset-form-body').style.display  = mode === 'form'    ? 'block' : 'none';
-  G('reset-success').style.display    = mode === 'success' ? 'block' : 'none';
-  G('reset-expired').style.display    = mode === 'expired' ? 'block' : 'none';
+  G('reset-form-body').style.display = mode === 'form' ? 'block' : 'none';
+  G('reset-success').style.display = mode === 'success' ? 'block' : 'none';
+  G('reset-expired').style.display = mode === 'expired' ? 'block' : 'none';
 
   if (mode === 'form') {
     G('reset-subtitle').textContent = 'Đặt mật khẩu mới cho tài khoản';
@@ -293,7 +293,7 @@ function openResetModal(mode) {
     G('reset-pw-cf').value = '';
     clrA('a-reset');
     // Reset strength bars
-    ['rs1','rs2','rs3','rs4'].forEach(id => { G(id).className = 'ps'; });
+    ['rs1', 'rs2', 'rs3', 'rs4'].forEach(id => { G(id).className = 'ps'; });
   }
 }
 
@@ -303,7 +303,7 @@ function closeResetModal() {
 }
 
 // Click backdrop để đóng
-G('ov-reset').addEventListener('click', function(e) { if (e.target === this) closeResetModal(); });
+G('ov-reset').addEventListener('click', function (e) { if (e.target === this) closeResetModal(); });
 
 // ── ĐẶT MẬT KHẨU MỚI ──
 async function doResetPw() {
@@ -311,10 +311,10 @@ async function doResetPw() {
   const cf = G('reset-pw-cf').value;
   clrA('a-reset');
 
-  if (!pw || !cf) { alrt('a-reset','err','⚠️ Vui lòng điền đầy đủ thông tin'); return; }
-  if (pw.length < 8) { alrt('a-reset','err','⚠️ Mật khẩu phải ít nhất 8 ký tự'); return; }
-  if (pw !== cf)     { alrt('a-reset','err','⚠️ Mật khẩu xác nhận không khớp'); return; }
-  if (!sb)           { alrt('a-reset','err','⚠️ Supabase chưa cấu hình'); return; }
+  if (!pw || !cf) { alrt('a-reset', 'err', '⚠️ Vui lòng điền đầy đủ thông tin'); return; }
+  if (pw.length < 8) { alrt('a-reset', 'err', '⚠️ Mật khẩu phải ít nhất 8 ký tự'); return; }
+  if (pw !== cf) { alrt('a-reset', 'err', '⚠️ Mật khẩu xác nhận không khớp'); return; }
+  if (!sb) { alrt('a-reset', 'err', '⚠️ Supabase chưa cấu hình'); return; }
 
   const btn = G('b-reset'); btn.disabled = true;
   btn.querySelector('.bt').style.display = 'none';
@@ -323,9 +323,9 @@ async function doResetPw() {
     const { error } = await sb.auth.updateUser({ password: pw });
     if (error) throw error;
     openResetModal('success');
-    toast('ok','🔒 Mật khẩu mới đã được lưu!');
-  } catch(e) {
-    alrt('a-reset','err','❌ ' + (e.message || 'Lỗi không xác định'));
+    toast('ok', '🔒 Mật khẩu mới đã được lưu!');
+  } catch (e) {
+    alrt('a-reset', 'err', '❌ ' + (e.message || 'Lỗi không xác định'));
   } finally {
     btn.disabled = false;
     btn.querySelector('.bt').style.display = 'inline';
@@ -338,9 +338,9 @@ async function doResendReset() {
   const email = G('reset-email-retry').value.trim();
   clrA('a-reset-retry');
 
-  if (!email) { alrt('a-reset-retry','err','⚠️ Vui lòng nhập email'); return; }
-  if (!/\S+@\S+\.\S+/.test(email)) { alrt('a-reset-retry','err','⚠️ Email không hợp lệ'); return; }
-  if (!sb) { alrt('a-reset-retry','err','⚠️ Supabase chưa cấu hình'); return; }
+  if (!email) { alrt('a-reset-retry', 'err', '⚠️ Vui lòng nhập email'); return; }
+  if (!/\S+@\S+\.\S+/.test(email)) { alrt('a-reset-retry', 'err', '⚠️ Email không hợp lệ'); return; }
+  if (!sb) { alrt('a-reset-retry', 'err', '⚠️ Supabase chưa cấu hình'); return; }
 
   const btn = G('b-reset-retry'); btn.disabled = true;
   btn.querySelector('.bt').style.display = 'none';
@@ -350,10 +350,10 @@ async function doResendReset() {
       redirectTo: window.location.origin + window.location.pathname
     });
     if (error) throw error;
-    alrt('a-reset-retry','ok','✅ Email đã gửi! Vui lòng kiểm tra hộp thư.');
+    alrt('a-reset-retry', 'ok', '✅ Email đã gửi! Vui lòng kiểm tra hộp thư.');
     G('b-reset-retry').style.display = 'none';
-  } catch(e) {
-    alrt('a-reset-retry','err','❌ ' + (e.message || 'Lỗi không xác định'));
+  } catch (e) {
+    alrt('a-reset-retry', 'err', '❌ ' + (e.message || 'Lỗi không xác định'));
   } finally {
     btn.disabled = false;
     btn.querySelector('.bt').style.display = 'inline';
@@ -365,32 +365,32 @@ async function doResendReset() {
 async function doLogin() {
   const id = v('li'), pw = v('lp');
   clrA('al');
-  if (!id||!pw) { alrt('al','err','⚠️ Vui lòng điền đầy đủ thông tin'); return; }
-  if (!sb) { alrt('al','err','⚠️ Supabase chưa cấu hình'); return; }
+  if (!id || !pw) { alrt('al', 'err', '⚠️ Vui lòng điền đầy đủ thông tin'); return; }
+  if (!sb) { alrt('al', 'err', '⚠️ Supabase chưa cấu hình'); return; }
   ld('bli', true);
   try {
     let email = id;
     if (!id.includes('@')) {
       const { data: p } = await sb.from('profiles').select('email').eq('username', id).single();
-      if (!p) { alrt('al','err','❌ Không tìm thấy tài khoản'); return; }
+      if (!p) { alrt('al', 'err', '❌ Không tìm thấy tài khoản'); return; }
       email = p.email;
     }
     const { error } = await sb.auth.signInWithPassword({ email, password: pw });
     if (error) throw error;
-  } catch(e) {
-    alrt('al','err', e.message?.includes('Invalid') ? '❌ Email/mật khẩu không đúng' : '❌ ' + (e.message||'Lỗi không xác định'));
+  } catch (e) {
+    alrt('al', 'err', e.message?.includes('Invalid') ? '❌ Email/mật khẩu không đúng' : '❌ ' + (e.message || 'Lỗi không xác định'));
   } finally { ld('bli', false); }
 }
 
 // ── REGISTER ──
 async function doReg() {
-  const fn=v('rn'), un=v('ru'), em=v('re'), pw=v('rp'), cf=v('rc');
+  const fn = v('rn'), un = v('ru'), em = v('re'), pw = v('rp'), cf = v('rc');
   clrA('ar'); hide('ecf');
-  if (!fn||!un||!em||!pw||!cf) { alrt('ar','err','⚠️ Vui lòng điền đầy đủ thông tin'); return; }
+  if (!fn || !un || !em || !pw || !cf) { alrt('ar', 'err', '⚠️ Vui lòng điền đầy đủ thông tin'); return; }
   if (pw !== cf) { show('ecf'); return; }
-  if (pw.length < 8) { alrt('ar','err','⚠️ Mật khẩu phải ít nhất 8 ký tự'); return; }
-  if (!/^[a-zA-Z0-9_]+$/.test(un)) { alrt('ar','err','⚠️ Tên đăng nhập chỉ chứa chữ, số, dấu _'); return; }
-  if (!sb) { alrt('ar','err','⚠️ Supabase chưa cấu hình'); return; }
+  if (pw.length < 8) { alrt('ar', 'err', '⚠️ Mật khẩu phải ít nhất 8 ký tự'); return; }
+  if (!/^[a-zA-Z0-9_]+$/.test(un)) { alrt('ar', 'err', '⚠️ Tên đăng nhập chỉ chứa chữ, số, dấu _'); return; }
+  if (!sb) { alrt('ar', 'err', '⚠️ Supabase chưa cấu hình'); return; }
   ld('brg', true);
   try {
     // Đăng ký không cần xác thực email — đăng nhập luôn sau khi tạo tài khoản
@@ -409,13 +409,13 @@ async function doReg() {
 
     closeM();
     toast('ok', '🎉 Đăng ký thành công! Chào mừng ' + fn.split(' ').pop());
-  } catch(e) {
-    alrt('ar','err', e.message?.includes('already') ? '❌ Email này đã được đăng ký' : '❌ ' + (e.message||'Lỗi không xác định'));
+  } catch (e) {
+    alrt('ar', 'err', e.message?.includes('already') ? '❌ Email này đã được đăng ký' : '❌ ' + (e.message || 'Lỗi không xác định'));
   } finally { ld('brg', false); }
 }
 
 async function doLogout() {
-  if (!sb) return; await sb.auth.signOut(); toast('ok','👋 Đã đăng xuất');
+  if (!sb) return; await sb.auth.signOut(); toast('ok', '👋 Đã đăng xuất');
 }
 async function loadP(retries = 3) {
   if (!sb || !U) return;
@@ -428,7 +428,7 @@ async function loadP(retries = 3) {
         console.log(`✅ Profile loaded (attempt ${attempt}): ELO=${data.elo} W=${data.wins} L=${data.losses}`);
         return;
       }
-    } catch(e) {
+    } catch (e) {
       console.warn(`⚠️ loadP attempt ${attempt}/${retries} failed:`, e.message);
       if (attempt < retries) await new Promise(r => setTimeout(r, 600 * attempt));
     }
@@ -471,7 +471,7 @@ async function uploadAvatar(file) {
   const LIMIT = 3 * 1024 * 1024;
   if (file.size > LIMIT) { toast('err', '❌ Ảnh quá lớn! Tối đa 3MB.'); return; }
 
-  const allowedTypes = ['image/jpeg','image/png','image/webp','image/gif'];
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
   if (!allowedTypes.includes(file.type)) { toast('err', '❌ Chỉ hỗ trợ JPG, PNG, WebP, GIF'); return; }
 
   const uploadBtn = G('av-upload-btn');
@@ -485,7 +485,7 @@ async function uploadAvatar(file) {
   refreshAllAvatars();
 
   try {
-    const ext  = file.type.split('/')[1].replace('jpeg','jpg');
+    const ext = file.type.split('/')[1].replace('jpeg', 'jpg');
     const path = `${U.id}.${ext}`;
 
     // Upload lên Supabase Storage bucket "avatars" (upsert)
@@ -513,16 +513,16 @@ async function uploadAvatar(file) {
     // Cập nhật presence socket
     if (socket && socket.connected) {
       socket.emit('presence:join', {
-        userId:     U.id,
-        full_name:  U.profile?.full_name  || U.email?.split('@')[0],
-        username:   U.profile?.username   || '',
-        elo:        U.profile?.elo        || 1200,
-        wins:       U.profile?.wins       || 0,
-        losses:     U.profile?.losses     || 0,
+        userId: U.id,
+        full_name: U.profile?.full_name || U.email?.split('@')[0],
+        username: U.profile?.username || '',
+        elo: U.profile?.elo || 1200,
+        wins: U.profile?.wins || 0,
+        losses: U.profile?.losses || 0,
         avatar_url: avatarUrl,
       });
     }
-  } catch(err) {
+  } catch (err) {
     console.error('uploadAvatar error:', err);
     // Rollback preview
     U.profile.avatar_url = prevAv;
@@ -592,7 +592,7 @@ function renderIn() {
   const p = U?.profile;
   const name = p?.full_name || U?.email?.split('@')[0] || 'Người dùng';
   const un = p?.username || '';
-  const ini = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  const ini = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
   const elo = p?.elo || 1200;
   const wins = p?.wins || 0;
   const rank = getRankFromElo(elo);
@@ -744,11 +744,11 @@ function closeM() {
   document.body.style.overflow = '';
 }
 function swTab(t) {
-  G('fl').style.display  = t==='login'    ? 'block' : 'none';
-  G('fr').style.display  = t==='register' ? 'block' : 'none';
-  G('ffp').style.display = t==='forgot'   ? 'block' : 'none';
-  G('tl').className = 'mt-tab' + (t==='login'    ? ' active' : '');
-  G('tr').className = 'mt-tab' + (t==='register' ? ' active' : '');
+  G('fl').style.display = t === 'login' ? 'block' : 'none';
+  G('fr').style.display = t === 'register' ? 'block' : 'none';
+  G('ffp').style.display = t === 'forgot' ? 'block' : 'none';
+  G('tl').className = 'mt-tab' + (t === 'login' ? ' active' : '');
+  G('tr').className = 'mt-tab' + (t === 'register' ? ' active' : '');
   // Reset forgot form when switching away
   if (t !== 'forgot') { clrA('afp'); }
   if (t === 'forgot') {
@@ -764,9 +764,9 @@ function swTab(t) {
 async function doForgotPw() {
   const email = G('fpe').value.trim();
   clrA('afp');
-  if (!email) { alrt('afp','err','⚠️ Vui lòng nhập địa chỉ email'); return; }
-  if (!/\S+@\S+\.\S+/.test(email)) { alrt('afp','err','⚠️ Email không hợp lệ'); return; }
-  if (!sb) { alrt('afp','err','⚠️ Supabase chưa cấu hình'); return; }
+  if (!email) { alrt('afp', 'err', '⚠️ Vui lòng nhập địa chỉ email'); return; }
+  if (!/\S+@\S+\.\S+/.test(email)) { alrt('afp', 'err', '⚠️ Email không hợp lệ'); return; }
+  if (!sb) { alrt('afp', 'err', '⚠️ Supabase chưa cấu hình'); return; }
   const btn = G('bfp'); btn.disabled = true;
   btn.querySelector('.bt').style.display = 'none';
   btn.querySelector('.bl').style.display = 'inline-flex';
@@ -777,8 +777,8 @@ async function doForgotPw() {
     if (error) throw error;
     G('fp-form-body').style.display = 'none';
     G('fp-ok').style.display = 'block';
-  } catch(e) {
-    alrt('afp','err','❌ ' + (e.message || 'Lỗi không xác định'));
+  } catch (e) {
+    alrt('afp', 'err', '❌ ' + (e.message || 'Lỗi không xác định'));
   } finally {
     btn.disabled = false;
     btn.querySelector('.bt').style.display = 'inline';
@@ -786,13 +786,13 @@ async function doForgotPw() {
   }
 }
 
-G('ov').addEventListener('click', function(e) { if (e.target === this) closeM(); });
-G('mcl').addEventListener('click', function(e) { e.stopPropagation(); closeM(); });
+G('ov').addEventListener('click', function (e) { if (e.target === this) closeM(); });
+G('mcl').addEventListener('click', function (e) { e.stopPropagation(); closeM(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeM(); });
 
 // ── HELPERS ──
 function G(id) { return document.getElementById(id); }
-function v(id)  { return G(id).value.trim(); }
+function v(id) { return G(id).value.trim(); }
 function show(id) { G(id).classList.add('show'); }
 function hide(id) { G(id).classList.remove('show'); }
 function alrt(id, type, msg) { const e = G(id); e.textContent = msg; e.className = 'abox ' + type; }
@@ -803,32 +803,32 @@ function ld(bid, on) {
   b.querySelector('.bl').style.display = on ? 'inline-flex' : 'none';
 }
 function eye(id, btn) {
-  const i = G(id); i.type = i.type==='password' ? 'text' : 'password';
-  btn.textContent = i.type==='password' ? '👁' : '🙈';
+  const i = G(id); i.type = i.type === 'password' ? 'text' : 'password';
+  btn.textContent = i.type === 'password' ? '👁' : '🙈';
 }
 function pws(pw) {
   let s = 0;
   if (pw.length >= 8) s++; if (/[A-Z]/.test(pw)) s++; if (/[0-9]/.test(pw)) s++; if (/[^A-Za-z0-9]/.test(pw)) s++;
-  const c = s<=2?'weak':s===3?'medium':'strong';
-  ['s1','s2','s3','s4'].forEach((id,i) => { if(G(id)) G(id).className = 'ps' + (i<s ? ' '+c : ''); });
+  const c = s <= 2 ? 'weak' : s === 3 ? 'medium' : 'strong';
+  ['s1', 's2', 's3', 's4'].forEach((id, i) => { if (G(id)) G(id).className = 'ps' + (i < s ? ' ' + c : ''); });
   // Cũng update thanh strength trong reset modal nếu đang mở
-  ['rs1','rs2','rs3','rs4'].forEach((id,i) => { if(G(id)) G(id).className = 'ps' + (i<s ? ' '+c : ''); });
+  ['rs1', 'rs2', 'rs3', 'rs4'].forEach((id, i) => { if (G(id)) G(id).className = 'ps' + (i < s ? ' ' + c : ''); });
 }
 function toast(type, msg) {
   const d = document.createElement('div');
   d.className = `toast ${type}`;
-  d.innerHTML = `<span>${type==='ok'?'✅':'❌'}</span><span>${msg}</span>`;
+  d.innerHTML = `<span>${type === 'ok' ? '✅' : '❌'}</span><span>${msg}</span>`;
   G('tw').appendChild(d); setTimeout(() => d.remove(), 3200);
 }
 function gp(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   G('page-' + id).classList.add('active');
   document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
-  const m = {home:'nl-home', challenge:'nl-challenge', leaderboard:'nl-leaderboard'};
+  const m = { home: 'nl-home', challenge: 'nl-challenge', leaderboard: 'nl-leaderboard' };
   if (m[id]) G(m[id])?.classList.add('active');
   // Sync bottom nav
   document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('active'));
-  const bm = {home:'bn-home', challenge:'bn-challenge', leaderboard:'bn-leaderboard', profile:'bn-profile'};
+  const bm = { home: 'bn-home', challenge: 'bn-challenge', leaderboard: 'bn-leaderboard', profile: 'bn-profile' };
   if (bm[id]) G(bm[id])?.classList.add('active');
 
   // Load leaderboard khi chuyển tab
@@ -852,32 +852,32 @@ function setupAvatarDragDrop() {
   const wrap = document.querySelector('.ph-avatar-wrap');
   if (!wrap || wrap._ddInit) return;
   wrap._ddInit = true;
-  ['dragenter','dragover'].forEach(ev => wrap.addEventListener(ev, e => {
+  ['dragenter', 'dragover'].forEach(ev => wrap.addEventListener(ev, e => {
     e.preventDefault(); wrap.classList.add('dragover');
   }));
-  ['dragleave','drop'].forEach(ev => wrap.addEventListener(ev, e => {
+  ['dragleave', 'drop'].forEach(ev => wrap.addEventListener(ev, e => {
     e.preventDefault(); wrap.classList.remove('dragover');
     if (ev === 'drop' && e.dataTransfer?.files[0]) uploadAvatar(e.dataTransfer.files[0]);
   }));
 }
 
 function swPTab(t) {
-  ['info','sec'].forEach(id => {
+  ['info', 'sec'].forEach(id => {
     G('pc-' + id).classList.toggle('active', id === t);
     G('pt-' + id).classList.toggle('active', id === t);
   });
   // Clear alerts when switching
-  setPA('info-alert','',''); setPA('sec-alert','','');
+  setPA('info-alert', '', ''); setPA('sec-alert', '', '');
 }
 
 function loadProfileFields() {
   const p = U?.profile;
   const name = p?.full_name || U?.email?.split('@')[0] || '';
-  const un   = p?.username  || '';
-  const email= p?.email     || U?.email || '';
-  const dob  = p?.date_of_birth || '';
-  const ini  = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2) || '?';
-  const av   = p?.avatar_url || '';
+  const un = p?.username || '';
+  const email = p?.email || U?.email || '';
+  const dob = p?.date_of_birth || '';
+  const ini = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || '?';
+  const av = p?.avatar_url || '';
 
   // Header avatar
   const phAvEl = G('ph-av');
@@ -889,34 +889,34 @@ function loadProfileFields() {
     }
   }
   G('ph-name').textContent = name || 'Người dùng';
-  G('ph-un').textContent   = un ? `@${un}` : '';
+  G('ph-un').textContent = un ? `@${un}` : '';
 
   // Fields
   G('p-fullname').value = name;
   G('p-username').value = un;
-  G('p-email').value    = email;
-  G('p-dob').value      = dob;
+  G('p-email').value = email;
+  G('p-dob').value = dob;
 
-  setPA('info-alert','','');
+  setPA('info-alert', '', '');
 }
 
 function setPA(id, type, msg) {
   const e = G(id);
   if (!e) return;
   e.textContent = msg;
-  e.className = 'pf-abox' + (type ? ' '+type : '');
+  e.className = 'pf-abox' + (type ? ' ' + type : '');
 }
 
 async function saveInfo() {
   if (!sb || !U) return;
   const fn = G('p-fullname').value.trim();
   const un = G('p-username').value.trim();
-  const dob= G('p-dob').value;
-  setPA('info-alert','','');
+  const dob = G('p-dob').value;
+  setPA('info-alert', '', '');
 
-  if (!fn) { setPA('info-alert','err','⚠️ Họ và tên không được để trống'); return; }
-  if (!un) { setPA('info-alert','err','⚠️ Tên đăng nhập không được để trống'); return; }
-  if (!/^[a-zA-Z0-9_]+$/.test(un)) { setPA('info-alert','err','⚠️ Tên đăng nhập chỉ chứa chữ, số, dấu _'); return; }
+  if (!fn) { setPA('info-alert', 'err', '⚠️ Họ và tên không được để trống'); return; }
+  if (!un) { setPA('info-alert', 'err', '⚠️ Tên đăng nhập không được để trống'); return; }
+  if (!/^[a-zA-Z0-9_]+$/.test(un)) { setPA('info-alert', 'err', '⚠️ Tên đăng nhập chỉ chứa chữ, số, dấu _'); return; }
 
   const btn = G('p-save-info'); btn.disabled = true;
   G('p-save-info-txt').textContent = '⏳ Đang lưu...';
@@ -929,13 +929,13 @@ async function saveInfo() {
     if (!U.profile) U.profile = {};
     U.profile.full_name = fn; U.profile.username = un;
     if (dob) U.profile.date_of_birth = dob;
-    setPA('info-alert','ok','✅ Lưu thành công!');
-    toast('ok','✅ Cập nhật hồ sơ thành công!');
+    setPA('info-alert', 'ok', '✅ Lưu thành công!');
+    toast('ok', '✅ Cập nhật hồ sơ thành công!');
     // Update header displays
     renderIn();
     loadProfileFields();
-  } catch(e) {
-    setPA('info-alert','err','❌ ' + (e.message||'Lỗi không xác định'));
+  } catch (e) {
+    setPA('info-alert', 'err', '❌ ' + (e.message || 'Lỗi không xác định'));
   } finally {
     btn.disabled = false;
     G('p-save-info-txt').textContent = '💾 Lưu thay đổi';
@@ -943,30 +943,30 @@ async function saveInfo() {
 }
 
 function ppws(pw) {
-  let s=0;
-  if(pw.length>=8)s++;if(/[A-Z]/.test(pw))s++;if(/[0-9]/.test(pw))s++;if(/[^A-Za-z0-9]/.test(pw))s++;
-  const c=s<=2?'weak':s===3?'medium':'strong';
-  ['pp1','pp2','pp3','pp4'].forEach((id,i)=>{G(id).className='pps'+(i<s?' '+c:'')});
+  let s = 0;
+  if (pw.length >= 8) s++; if (/[A-Z]/.test(pw)) s++; if (/[0-9]/.test(pw)) s++; if (/[^A-Za-z0-9]/.test(pw)) s++;
+  const c = s <= 2 ? 'weak' : s === 3 ? 'medium' : 'strong';
+  ['pp1', 'pp2', 'pp3', 'pp4'].forEach((id, i) => { G(id).className = 'pps' + (i < s ? ' ' + c : '') });
 }
 
 function peye(id, btn) {
-  const i=G(id); i.type=i.type==='password'?'text':'password';
-  btn.textContent=i.type==='password'?'👁':'🙈';
+  const i = G(id); i.type = i.type === 'password' ? 'text' : 'password';
+  btn.textContent = i.type === 'password' ? '👁' : '🙈';
 }
 
 function clearPwForm() {
-  ['p-pw-cur','p-pw-new','p-pw-cf'].forEach(id=>{ G(id).value=''; });
-  ['pp1','pp2','pp3','pp4'].forEach(id=>{ G(id).className='pps'; });
-  setPA('sec-alert','','');
+  ['p-pw-cur', 'p-pw-new', 'p-pw-cf'].forEach(id => { G(id).value = ''; });
+  ['pp1', 'pp2', 'pp3', 'pp4'].forEach(id => { G(id).className = 'pps'; });
+  setPA('sec-alert', '', '');
 }
 
 // ── PROFILE FORGOT PASSWORD MODAL ──
 function openForgotFromProfile() {
   const email = U?.profile?.email || U?.email || '';
   G('pfp-email-display').textContent = email;
-  G('pfp-sent-email').textContent    = email;
+  G('pfp-sent-email').textContent = email;
   // Reset về trạng thái ban đầu
-  G('pfp-body').style.display    = 'block';
+  G('pfp-body').style.display = 'block';
   G('pfp-success').style.display = 'none';
   clrA('a-pfp');
   G('b-pfp').disabled = false;
@@ -982,12 +982,12 @@ function closePFP() {
   document.body.style.overflow = '';
 }
 
-G('ov-pfp').addEventListener('click', function(e) { if (e.target === this) closePFP(); });
+G('ov-pfp').addEventListener('click', function (e) { if (e.target === this) closePFP(); });
 
 async function doSendProfileReset() {
   const email = U?.profile?.email || U?.email || '';
-  if (!email) { alrt('a-pfp','err','⚠️ Không tìm thấy email tài khoản'); return; }
-  if (!sb)    { alrt('a-pfp','err','⚠️ Supabase chưa cấu hình'); return; }
+  if (!email) { alrt('a-pfp', 'err', '⚠️ Không tìm thấy email tài khoản'); return; }
+  if (!sb) { alrt('a-pfp', 'err', '⚠️ Supabase chưa cấu hình'); return; }
 
   const btn = G('b-pfp'); btn.disabled = true;
   btn.querySelector('.bt').style.display = 'none';
@@ -998,10 +998,10 @@ async function doSendProfileReset() {
       redirectTo: window.location.origin + window.location.pathname
     });
     if (error) throw error;
-    G('pfp-body').style.display    = 'none';
+    G('pfp-body').style.display = 'none';
     G('pfp-success').style.display = 'block';
-  } catch(e) {
-    alrt('a-pfp','err','❌ ' + (e.message || 'Lỗi không xác định'));
+  } catch (e) {
+    alrt('a-pfp', 'err', '❌ ' + (e.message || 'Lỗi không xác định'));
     btn.disabled = false;
     btn.querySelector('.bt').style.display = 'inline';
     btn.querySelector('.bl').style.display = 'none';
@@ -1011,13 +1011,13 @@ async function doSendProfileReset() {
 async function savePw() {
   if (!sb || !U) return;
   const cur = G('p-pw-cur').value;
-  const nw  = G('p-pw-new').value;
-  const cf  = G('p-pw-cf').value;
-  setPA('sec-alert','','');
+  const nw = G('p-pw-new').value;
+  const cf = G('p-pw-cf').value;
+  setPA('sec-alert', '', '');
 
-  if (!cur||!nw||!cf) { setPA('sec-alert','err','⚠️ Vui lòng điền đầy đủ thông tin'); return; }
-  if (nw.length < 8)  { setPA('sec-alert','err','⚠️ Mật khẩu mới phải ít nhất 8 ký tự'); return; }
-  if (nw !== cf)      { setPA('sec-alert','err','⚠️ Mật khẩu xác nhận không khớp'); return; }
+  if (!cur || !nw || !cf) { setPA('sec-alert', 'err', '⚠️ Vui lòng điền đầy đủ thông tin'); return; }
+  if (nw.length < 8) { setPA('sec-alert', 'err', '⚠️ Mật khẩu mới phải ít nhất 8 ký tự'); return; }
+  if (nw !== cf) { setPA('sec-alert', 'err', '⚠️ Mật khẩu xác nhận không khớp'); return; }
 
   const btn = G('p-save-pw'); btn.disabled = true;
   G('p-save-pw-txt').textContent = '⏳ Đang xử lý...';
@@ -1025,15 +1025,15 @@ async function savePw() {
     // Re-authenticate first
     const email = U.profile?.email || U.email;
     const { error: reErr } = await sb.auth.signInWithPassword({ email, password: cur });
-    if (reErr) { setPA('sec-alert','err','❌ Mật khẩu hiện tại không đúng'); return; }
+    if (reErr) { setPA('sec-alert', 'err', '❌ Mật khẩu hiện tại không đúng'); return; }
 
     const { error } = await sb.auth.updateUser({ password: nw });
     if (error) throw error;
-    setPA('sec-alert','ok','✅ Đổi mật khẩu thành công!');
-    toast('ok','🔒 Mật khẩu đã được cập nhật!');
+    setPA('sec-alert', 'ok', '✅ Đổi mật khẩu thành công!');
+    toast('ok', '🔒 Mật khẩu đã được cập nhật!');
     clearPwForm();
-  } catch(e) {
-    setPA('sec-alert','err','❌ ' + (e.message||'Lỗi không xác định'));
+  } catch (e) {
+    setPA('sec-alert', 'err', '❌ ' + (e.message || 'Lỗi không xác định'));
   } finally {
     btn.disabled = false;
     G('p-save-pw-txt').textContent = '🔒 Đổi Mật Khẩu';
@@ -1044,62 +1044,62 @@ async function savePw() {
 //   GLORYCHEM ARENA — QUESTION BANK
 // ══════════════════════════════════════════════════════
 const TOPICS = [
-  {id:'acid-base', name:'Axit — Bazơ', icon:'⚗️'},
-  {id:'redox',     name:'Oxi hóa khử', icon:'⚡'},
-  {id:'electro',   name:'Điện hóa',    icon:'🔋'},
-  {id:'organic',   name:'Hóa hữu cơ',  icon:'🌿'},
-  {id:'periodic',  name:'Bảng tuần hoàn', icon:'📋'},
-  {id:'solution',  name:'Dung dịch',   icon:'💧'},
-  {id:'thermo',    name:'Nhiệt hóa học',icon:'🔥'},
-  {id:'equilib',   name:'Cân bằng hóa học',icon:'⚖️'},
+  { id: 'acid-base', name: 'Axit — Bazơ', icon: '⚗️' },
+  { id: 'redox', name: 'Oxi hóa khử', icon: '⚡' },
+  { id: 'electro', name: 'Điện hóa', icon: '🔋' },
+  { id: 'organic', name: 'Hóa hữu cơ', icon: '🌿' },
+  { id: 'periodic', name: 'Bảng tuần hoàn', icon: '📋' },
+  { id: 'solution', name: 'Dung dịch', icon: '💧' },
+  { id: 'thermo', name: 'Nhiệt hóa học', icon: '🔥' },
+  { id: 'equilib', name: 'Cân bằng hóa học', icon: '⚖️' },
 ];
 
 const QUESTION_BANK = {
-  'acid-base':[
-    {t:'mcq',q:'Dung dịch HCl 0.01M có pH bằng bao nhiêu?',opts:['pH = 1','pH = 2','pH = 3','pH = 12'],ans:1,exp:'[HCl]=0.01M → [H⁺]=0.01 → pH=-log(0.01)=2'},
-    {t:'num',q:'Tính pH của dung dịch NaOH 0.001M (pOH trước, rồi pH = 14 - pOH)',ans:'11',exp:'pOH=3 → pH=11'},
-    {t:'mcq',q:'Chất nào sau đây là axit mạnh?',opts:['CH₃COOH','HF','HNO₃','H₂CO₃'],ans:2,exp:'HNO₃ là axit mạnh, phân li hoàn toàn trong nước'},
-    {t:'num',q:'Trộn 100ml HCl 0.2M với 100ml NaOH 0.1M. pH của dung dịch thu được (làm tròn nguyên)?',ans:'1',exp:'nHCl=0.02, nNaOH=0.01 → dư 0.01mol HCl/200ml → [H+]=0.05M → pH≈1.3 ≈ 1'},
-    {t:'mcq',q:'Ion nào làm cho dung dịch có môi trường bazơ?',opts:['NH₄⁺','Al³⁺','CO₃²⁻','Fe³⁺'],ans:2,exp:'CO₃²⁻ thủy phân tạo OH⁻ → môi trường bazơ'},
-    {t:'mcq',q:'Giá trị pH của máu người bình thường là?',opts:['6.8 – 7.0','7.35 – 7.45','7.8 – 8.0','6.0 – 6.5'],ans:1,exp:'pH máu bình thường: 7.35 – 7.45'},
+  'acid-base': [
+    { t: 'mcq', q: 'Dung dịch HCl 0.01M có pH bằng bao nhiêu?', opts: ['pH = 1', 'pH = 2', 'pH = 3', 'pH = 12'], ans: 1, exp: '[HCl]=0.01M → [H⁺]=0.01 → pH=-log(0.01)=2' },
+    { t: 'num', q: 'Tính pH của dung dịch NaOH 0.001M (pOH trước, rồi pH = 14 - pOH)', ans: '11', exp: 'pOH=3 → pH=11' },
+    { t: 'mcq', q: 'Chất nào sau đây là axit mạnh?', opts: ['CH₃COOH', 'HF', 'HNO₃', 'H₂CO₃'], ans: 2, exp: 'HNO₃ là axit mạnh, phân li hoàn toàn trong nước' },
+    { t: 'num', q: 'Trộn 100ml HCl 0.2M với 100ml NaOH 0.1M. pH của dung dịch thu được (làm tròn nguyên)?', ans: '1', exp: 'nHCl=0.02, nNaOH=0.01 → dư 0.01mol HCl/200ml → [H+]=0.05M → pH≈1.3 ≈ 1' },
+    { t: 'mcq', q: 'Ion nào làm cho dung dịch có môi trường bazơ?', opts: ['NH₄⁺', 'Al³⁺', 'CO₃²⁻', 'Fe³⁺'], ans: 2, exp: 'CO₃²⁻ thủy phân tạo OH⁻ → môi trường bazơ' },
+    { t: 'mcq', q: 'Giá trị pH của máu người bình thường là?', opts: ['6.8 – 7.0', '7.35 – 7.45', '7.8 – 8.0', '6.0 – 6.5'], ans: 1, exp: 'pH máu bình thường: 7.35 – 7.45' },
   ],
-  'redox':[
-    {t:'mcq',q:'Trong phản ứng: Fe + CuSO₄ → FeSO₄ + Cu. Chất nào bị oxi hóa?',opts:['Fe','CuSO₄','FeSO₄','Cu'],ans:0,exp:'Fe → Fe²⁺ (mất electron) → Fe bị oxi hóa'},
-    {t:'num',q:'Số oxi hóa của Mn trong KMnO₄ là? (nhập số nguyên dương)',ans:'7',exp:'K(+1)+Mn(x)+4O(-2)=0 → x=+7'},
-    {t:'mcq',q:'Chất khử là chất:',opts:['Nhận electron','Cho electron','Nhận proton','Cho proton'],ans:1,exp:'Chất khử là chất nhường/cho electron'},
-    {t:'num',q:'Số oxi hóa của S trong H₂SO₄?',ans:'6',exp:'2(+1)+S+4(-2)=0 → S=+6'},
-    {t:'mcq',q:'Phản ứng nào sau đây là phản ứng oxi hóa khử?',opts:['NaCl + AgNO₃','CaCO₃ nhiệt phân','Zn + H₂SO₄ loãng','NaOH + HCl'],ans:2,exp:'Zn → Zn²⁺ + 2e⁻ (oxi hóa); 2H⁺ + 2e⁻ → H₂ (khử)'},
+  'redox': [
+    { t: 'mcq', q: 'Trong phản ứng: Fe + CuSO₄ → FeSO₄ + Cu. Chất nào bị oxi hóa?', opts: ['Fe', 'CuSO₄', 'FeSO₄', 'Cu'], ans: 0, exp: 'Fe → Fe²⁺ (mất electron) → Fe bị oxi hóa' },
+    { t: 'num', q: 'Số oxi hóa của Mn trong KMnO₄ là? (nhập số nguyên dương)', ans: '7', exp: 'K(+1)+Mn(x)+4O(-2)=0 → x=+7' },
+    { t: 'mcq', q: 'Chất khử là chất:', opts: ['Nhận electron', 'Cho electron', 'Nhận proton', 'Cho proton'], ans: 1, exp: 'Chất khử là chất nhường/cho electron' },
+    { t: 'num', q: 'Số oxi hóa của S trong H₂SO₄?', ans: '6', exp: '2(+1)+S+4(-2)=0 → S=+6' },
+    { t: 'mcq', q: 'Phản ứng nào sau đây là phản ứng oxi hóa khử?', opts: ['NaCl + AgNO₃', 'CaCO₃ nhiệt phân', 'Zn + H₂SO₄ loãng', 'NaOH + HCl'], ans: 2, exp: 'Zn → Zn²⁺ + 2e⁻ (oxi hóa); 2H⁺ + 2e⁻ → H₂ (khử)' },
   ],
-  'electro':[
-    {t:'mcq',q:'Suất điện động của pin Daniell (Zn-Cu) ở điều kiện chuẩn là bao nhiêu?',opts:['0.76 V','1.10 V','1.46 V','0.34 V'],ans:1,exp:'E°cell = E°Cu - E°Zn = 0.34 - (-0.76) = 1.10 V'},
-    {t:'num',q:'Điện cực nào là cực âm (anot) trong pin điện hóa? Nhập 1=anot, 2=catot',ans:'1',exp:'Cực âm = anot = xảy ra oxi hóa'},
-    {t:'mcq',q:'Trong điện phân dung dịch CuSO₄, tại catot xảy ra:',opts:['Cu²⁺ + 2e⁻ → Cu','Cu → Cu²⁺ + 2e⁻','2H₂O → O₂ + 4H⁺ + 4e⁻','SO₄²⁻ bị oxi hóa'],ans:0,exp:'Catot: Cu²⁺ + 2e⁻ → Cu (khử)'},
+  'electro': [
+    { t: 'mcq', q: 'Suất điện động của pin Daniell (Zn-Cu) ở điều kiện chuẩn là bao nhiêu?', opts: ['0.76 V', '1.10 V', '1.46 V', '0.34 V'], ans: 1, exp: 'E°cell = E°Cu - E°Zn = 0.34 - (-0.76) = 1.10 V' },
+    { t: 'num', q: 'Điện cực nào là cực âm (anot) trong pin điện hóa? Nhập 1=anot, 2=catot', ans: '1', exp: 'Cực âm = anot = xảy ra oxi hóa' },
+    { t: 'mcq', q: 'Trong điện phân dung dịch CuSO₄, tại catot xảy ra:', opts: ['Cu²⁺ + 2e⁻ → Cu', 'Cu → Cu²⁺ + 2e⁻', '2H₂O → O₂ + 4H⁺ + 4e⁻', 'SO₄²⁻ bị oxi hóa'], ans: 0, exp: 'Catot: Cu²⁺ + 2e⁻ → Cu (khử)' },
   ],
-  'organic':[
-    {t:'mcq',q:'Công thức phân tử của metan là?',opts:['C₂H₆','CH₄','C₃H₈','C₂H₄'],ans:1,exp:'Metan = CH₄, hydrocacbon no đơn giản nhất'},
-    {t:'num',q:'Etilen (C₂H₄) có bao nhiêu liên kết đôi C=C?',ans:'1',exp:'Etilen: CH₂=CH₂ → 1 liên kết đôi C=C'},
-    {t:'mcq',q:'Phản ứng đặc trưng của ankan là?',opts:['Cộng hợp','Thế halogen','Trùng hợp','Tách nước'],ans:1,exp:'Ankan có liên kết đơn bền → đặc trưng là phản ứng thế (halogen hóa)'},
-    {t:'mcq',q:'Glucozơ (C₆H₁₂O₆) thuộc loại hợp chất nào?',opts:['Lipit','Protein','Cacbohidrat','Axit amin'],ans:2,exp:'Glucozơ là monosaccarit thuộc nhóm cacbohidrat'},
-    {t:'num',q:'Số nguyên tử C trong phân tử benzen (C₆H₆)?',ans:'6',exp:'Benzen: C₆H₆ → 6 nguyên tử cacbon'},
+  'organic': [
+    { t: 'mcq', q: 'Công thức phân tử của metan là?', opts: ['C₂H₆', 'CH₄', 'C₃H₈', 'C₂H₄'], ans: 1, exp: 'Metan = CH₄, hydrocacbon no đơn giản nhất' },
+    { t: 'num', q: 'Etilen (C₂H₄) có bao nhiêu liên kết đôi C=C?', ans: '1', exp: 'Etilen: CH₂=CH₂ → 1 liên kết đôi C=C' },
+    { t: 'mcq', q: 'Phản ứng đặc trưng của ankan là?', opts: ['Cộng hợp', 'Thế halogen', 'Trùng hợp', 'Tách nước'], ans: 1, exp: 'Ankan có liên kết đơn bền → đặc trưng là phản ứng thế (halogen hóa)' },
+    { t: 'mcq', q: 'Glucozơ (C₆H₁₂O₆) thuộc loại hợp chất nào?', opts: ['Lipit', 'Protein', 'Cacbohidrat', 'Axit amin'], ans: 2, exp: 'Glucozơ là monosaccarit thuộc nhóm cacbohidrat' },
+    { t: 'num', q: 'Số nguyên tử C trong phân tử benzen (C₆H₆)?', ans: '6', exp: 'Benzen: C₆H₆ → 6 nguyên tử cacbon' },
   ],
-  'periodic':[
-    {t:'num',q:'Nguyên tố nào có số hiệu nguyên tử Z = 26? Nhập số nguyên tử proton của Fe',ans:'26',exp:'Z=26 là Fe (Sắt)'},
-    {t:'mcq',q:'Nhóm IA của bảng tuần hoàn còn được gọi là:',opts:['Halogen','Kim loại kiềm','Kim loại kiềm thổ','Khí hiếm'],ans:1,exp:'Nhóm IA = kim loại kiềm: Li, Na, K, Rb, Cs, Fr'},
-    {t:'num',q:'Chu kì 2 của bảng tuần hoàn có bao nhiêu nguyên tố?',ans:'8',exp:'Chu kì 2: Li → Ne = 8 nguyên tố'},
-    {t:'mcq',q:'Trong một chu kì, tính kim loại biến đổi theo chiều nào?',opts:['Tăng từ trái qua phải','Giảm từ trái qua phải','Không đổi','Biến đổi bất thường'],ans:1,exp:'Trong chu kì: tính kim loại giảm dần từ trái → phải'},
+  'periodic': [
+    { t: 'num', q: 'Nguyên tố nào có số hiệu nguyên tử Z = 26? Nhập số nguyên tử proton của Fe', ans: '26', exp: 'Z=26 là Fe (Sắt)' },
+    { t: 'mcq', q: 'Nhóm IA của bảng tuần hoàn còn được gọi là:', opts: ['Halogen', 'Kim loại kiềm', 'Kim loại kiềm thổ', 'Khí hiếm'], ans: 1, exp: 'Nhóm IA = kim loại kiềm: Li, Na, K, Rb, Cs, Fr' },
+    { t: 'num', q: 'Chu kì 2 của bảng tuần hoàn có bao nhiêu nguyên tố?', ans: '8', exp: 'Chu kì 2: Li → Ne = 8 nguyên tố' },
+    { t: 'mcq', q: 'Trong một chu kì, tính kim loại biến đổi theo chiều nào?', opts: ['Tăng từ trái qua phải', 'Giảm từ trái qua phải', 'Không đổi', 'Biến đổi bất thường'], ans: 1, exp: 'Trong chu kì: tính kim loại giảm dần từ trái → phải' },
   ],
-  'solution':[
-    {t:'num',q:'Độ tan của NaCl trong 100g nước ở 20°C là khoảng bao nhiêu gam? (làm tròn đến chục)',ans:'36',exp:'NaCl có độ tan ≈ 36g/100g nước ở 20°C'},
-    {t:'mcq',q:'Dung dịch bão hòa là dung dịch:',opts:['Có thể hòa tan thêm chất tan','Không thể hòa tan thêm chất tan','Không có chất tan','Có nồng độ mol/L = 1'],ans:1,exp:'Dung dịch bão hòa đã đạt giới hạn hòa tan của chất tan'},
-    {t:'mcq',q:'Nồng độ mol/L (C_M) được tính bằng:',opts:['m/V','n/V(L)','m/m_dm','n/m'],ans:1,exp:'C_M = n(mol) / V(lít)'},
+  'solution': [
+    { t: 'num', q: 'Độ tan của NaCl trong 100g nước ở 20°C là khoảng bao nhiêu gam? (làm tròn đến chục)', ans: '36', exp: 'NaCl có độ tan ≈ 36g/100g nước ở 20°C' },
+    { t: 'mcq', q: 'Dung dịch bão hòa là dung dịch:', opts: ['Có thể hòa tan thêm chất tan', 'Không thể hòa tan thêm chất tan', 'Không có chất tan', 'Có nồng độ mol/L = 1'], ans: 1, exp: 'Dung dịch bão hòa đã đạt giới hạn hòa tan của chất tan' },
+    { t: 'mcq', q: 'Nồng độ mol/L (C_M) được tính bằng:', opts: ['m/V', 'n/V(L)', 'm/m_dm', 'n/m'], ans: 1, exp: 'C_M = n(mol) / V(lít)' },
   ],
-  'thermo':[
-    {t:'mcq',q:'Phản ứng tỏa nhiệt có ΔH:',opts:['ΔH > 0','ΔH < 0','ΔH = 0','ΔH không xác định'],ans:1,exp:'Phản ứng tỏa nhiệt: ΔH < 0 (hệ tỏa năng lượng ra môi trường)'},
-    {t:'num',q:'Nhiệt đốt cháy của C thành CO₂ là -394 kJ/mol. Đốt 12g C sinh ra bao nhiêu kJ? (số nguyên)',ans:'394',exp:'12g C = 1mol → tỏa 394 kJ'},
+  'thermo': [
+    { t: 'mcq', q: 'Phản ứng tỏa nhiệt có ΔH:', opts: ['ΔH > 0', 'ΔH < 0', 'ΔH = 0', 'ΔH không xác định'], ans: 1, exp: 'Phản ứng tỏa nhiệt: ΔH < 0 (hệ tỏa năng lượng ra môi trường)' },
+    { t: 'num', q: 'Nhiệt đốt cháy của C thành CO₂ là -394 kJ/mol. Đốt 12g C sinh ra bao nhiêu kJ? (số nguyên)', ans: '394', exp: '12g C = 1mol → tỏa 394 kJ' },
   ],
-  'equilib':[
-    {t:'mcq',q:'Nguyên lý Le Chatelier phát biểu về:',opts:['Tốc độ phản ứng','Chiều dịch chuyển cân bằng khi bị tác động','Năng lượng hoạt hóa','Trật tự phản ứng'],ans:1,exp:'Le Chatelier: khi cân bằng bị phá vỡ, hệ tự điều chỉnh để chống lại sự thay đổi đó'},
-    {t:'mcq',q:'Tăng nồng độ chất phản ứng sẽ làm cân bằng:',opts:['Dịch chuyển sang trái','Dịch chuyển sang phải','Không thay đổi','Phụ thuộc nhiệt độ'],ans:1,exp:'Tăng nồng độ chất đầu → cân bằng chuyển sang phải (tạo thêm sản phẩm)'},
+  'equilib': [
+    { t: 'mcq', q: 'Nguyên lý Le Chatelier phát biểu về:', opts: ['Tốc độ phản ứng', 'Chiều dịch chuyển cân bằng khi bị tác động', 'Năng lượng hoạt hóa', 'Trật tự phản ứng'], ans: 1, exp: 'Le Chatelier: khi cân bằng bị phá vỡ, hệ tự điều chỉnh để chống lại sự thay đổi đó' },
+    { t: 'mcq', q: 'Tăng nồng độ chất phản ứng sẽ làm cân bằng:', opts: ['Dịch chuyển sang trái', 'Dịch chuyển sang phải', 'Không thay đổi', 'Phụ thuộc nhiệt độ'], ans: 1, exp: 'Tăng nồng độ chất đầu → cân bằng chuyển sang phải (tạo thêm sản phẩm)' },
   ],
 };
 
@@ -1135,14 +1135,14 @@ let AR = {
 
 // ── HELPERS ──
 function showArena(step) {
-  ['ar-searching','ar-lobby','ar-battle','ar-result'].forEach(id=>{
+  ['ar-searching', 'ar-lobby', 'ar-battle', 'ar-result'].forEach(id => {
     const el = G(id);
     el.style.display = 'none';
     el.style.flexDirection = '';
   });
   G('arena-overlay').style.display = 'block';
   document.body.style.overflow = 'hidden';
-  const el = G('ar-'+step);
+  const el = G('ar-' + step);
   el.style.display = 'flex';
   el.style.flexDirection = 'column';
 }
@@ -1218,7 +1218,7 @@ function getMyInfo() {
 }
 
 function mkIni(name) {
-  return name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2) || '?';
+  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || '?';
 }
 
 // ── BUILD QUESTION SET FROM TOPICS ──
@@ -1229,7 +1229,7 @@ function buildQuestions(topics) {
     pool.push(...qs);
   });
   // Shuffle & take 10
-  for (let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+  for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[pool[i], pool[j]] = [pool[j], pool[i]]; }
   return pool.slice(0, 10);
 }
 
@@ -1278,36 +1278,36 @@ function subscribeToRoom(roomId) {
   AR.channel = sb.channel('room:' + roomId, {
     config: { broadcast: { self: false }, presence: { key: U.id } }
   })
-  .on('postgres_changes', {
-    event: 'UPDATE', schema: 'public', table: 'battle_rooms', filter: `id=eq.${roomId}`
-  }, handleRoomUpdate)
-  .on('broadcast', { event: 'lobby_action' }, ({ payload }) => handleLobbyAction(payload))
-  .on('broadcast', { event: 'battle_action' }, ({ payload }) => handleBattleAction(payload))
-  .on('presence', { event: 'join' }, async ({ newPresences }) => {
-    for (const p of newPresences) {
-      if (!p.userId || p.userId === U.id) continue;
-      if (AR.role === 'host' && p.role === 'guest' && !G('ar-lobby').style.display.includes('flex')) {
-        const { data: gp } = await sb.from('profiles').select('*').eq('id', p.userId).single();
-        AR.oppId = p.userId;
-        AR.oppProfile = gp;
-        await sb.from('battle_rooms').update({ guest_id: p.userId, status: 'lobby' }).eq('id', roomId);
-        enterLobby();
+    .on('postgres_changes', {
+      event: 'UPDATE', schema: 'public', table: 'battle_rooms', filter: `id=eq.${roomId}`
+    }, handleRoomUpdate)
+    .on('broadcast', { event: 'lobby_action' }, ({ payload }) => handleLobbyAction(payload))
+    .on('broadcast', { event: 'battle_action' }, ({ payload }) => handleBattleAction(payload))
+    .on('presence', { event: 'join' }, async ({ newPresences }) => {
+      for (const p of newPresences) {
+        if (!p.userId || p.userId === U.id) continue;
+        if (AR.role === 'host' && p.role === 'guest' && !G('ar-lobby').style.display.includes('flex')) {
+          const { data: gp } = await sb.from('profiles').select('*').eq('id', p.userId).single();
+          AR.oppId = p.userId;
+          AR.oppProfile = gp;
+          await sb.from('battle_rooms').update({ guest_id: p.userId, status: 'lobby' }).eq('id', roomId);
+          enterLobby();
+        }
       }
-    }
-  })
-  .subscribe(async (status) => {
-    if (status === 'SUBSCRIBED') {
-      await AR.channel.track({ userId: U.id, role: AR.role });
-      if (AR.role === 'guest') {
-        // Broadcast guest_joined để host biết ngay lập tức (song song với presence)
-        await AR.channel.send({
-          type: 'broadcast', event: 'lobby_action',
-          payload: { type: 'guest_joined', userId: U.id }
-        });
-        enterLobby();
+    })
+    .subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        await AR.channel.track({ userId: U.id, role: AR.role });
+        if (AR.role === 'guest') {
+          // Broadcast guest_joined để host biết ngay lập tức (song song với presence)
+          await AR.channel.send({
+            type: 'broadcast', event: 'lobby_action',
+            payload: { type: 'guest_joined', userId: U.id }
+          });
+          enterLobby();
+        }
       }
-    }
-  });
+    });
 }
 
 async function handleRoomUpdate(payload) {
@@ -1363,17 +1363,17 @@ function enterLobby() {
       <div class="ffa-lobby-header">👥 ${AR.ffaPlayers.length} người tham chiến</div>
       <div class="ffa-lobby-grid">
         ${AR.ffaPlayers.map(p => {
-          const name = p.full_name || p.name || p.username || 'Người chơi';
-          const isMe = p.userId === AR.myUserId;
-          const ini = mkIni(name);
-          const av = p.avatar_url || '';
-          return `<div class="ffa-lobby-card${isMe ? ' me' : ''}">
+      const name = p.full_name || p.name || p.username || 'Người chơi';
+      const isMe = p.userId === AR.myUserId;
+      const ini = mkIni(name);
+      const av = p.avatar_url || '';
+      return `<div class="ffa-lobby-card${isMe ? ' me' : ''}">
             <div class="lpc-av">${av ? `<img src="${av}" style="width:100%;height:100%;border-radius:50%;object-fit:cover" onerror="this.parentElement.textContent='${ini}'" alt="">` : ini}</div>
             <div class="lpc-name" style="font-size:.82rem">${name.split(' ').pop()}${isMe ? ' <span style="color:var(--teal);font-size:.6rem">● Bạn</span>' : ''}</div>
             <div class="lpc-elo">ELO: ${p.elo || 1200}</div>
             <div id="lp-ready-${p.userId}" class="lpc-status wait">⏳ Chờ...</div>
           </div>`;
-        }).join('')}
+    }).join('')}
       </div>`;
   } else {
     // ── 1v1 mode: hiện 2 player dạng cũ ──
@@ -1381,17 +1381,17 @@ function enterLobby() {
     G('lobby-ffa-area').style.display = 'none';
     const opp = AR.oppProfile;
     const oppName = opp?.full_name || opp?.username || 'Đối thủ';
-    const myAv  = U?.profile?.avatar_url || '';
+    const myAv = U?.profile?.avatar_url || '';
     const oppAv = opp?.avatar_url || '';
     setAvEl(G('lp-me-av'), me.name, myAv);
     G('lp-me-name').textContent = me.name;
-    G('lp-me-elo').textContent  = `ELO: ${me.elo}`;
-    G('lp-me-rec').textContent  = `${me.wins}W — ${me.losses}L`;
+    G('lp-me-elo').textContent = `ELO: ${me.elo}`;
+    G('lp-me-rec').textContent = `${me.wins}W — ${me.losses}L`;
     setAvEl(G('lp-opp-av'), oppName, oppAv);
     G('lp-opp-name').textContent = oppName;
-    G('lp-opp-elo').textContent  = `ELO: ${opp?.elo || 1200}`;
-    const oppWins = opp?.wins||0, oppLosses = opp?.losses||0;
-    G('lp-opp-rec').textContent  = `${oppWins}W — ${oppLosses}L`;
+    G('lp-opp-elo').textContent = `ELO: ${opp?.elo || 1200}`;
+    const oppWins = opp?.wins || 0, oppLosses = opp?.losses || 0;
+    G('lp-opp-rec').textContent = `${oppWins}W — ${oppLosses}L`;
   }
 
   // Chọn chủ đề (giống nhau cho cả 2 mode)
@@ -1414,7 +1414,7 @@ function enterLobby() {
 }
 
 
- 
+
 
 function updateMeReadyUI() {
   G('lp-me-ready').textContent = '✅ Sẵn sàng!';
@@ -1436,10 +1436,10 @@ function updateOppReadyUI() {
 function toggleTopic(tid, btn) {
   if (AR.ready) return;
   if (AR.selectedTopics.includes(tid)) {
-    AR.selectedTopics = AR.selectedTopics.filter(t=>t!==tid);
+    AR.selectedTopics = AR.selectedTopics.filter(t => t !== tid);
     btn.classList.remove('selected');
   } else {
-    if (AR.selectedTopics.length >= 3) { toast('err','⚠️ Chỉ chọn tối đa 3 chủ đề!'); return; }
+    if (AR.selectedTopics.length >= 3) { toast('err', '⚠️ Chỉ chọn tối đa 3 chủ đề!'); return; }
     AR.selectedTopics.push(tid);
     btn.classList.add('selected');
   }
@@ -1447,7 +1447,7 @@ function toggleTopic(tid, btn) {
 }
 function setReady() {
   if (AR.selectedTopics.length === 0) {
-    AR.selectedTopics = TOPICS.map(t => t.id).sort(() => Math.random() - 0.5).slice(0,3);
+    AR.selectedTopics = TOPICS.map(t => t.id).sort(() => Math.random() - 0.5).slice(0, 3);
   }
   AR.ready = true;
   if (AR.isFFA) {
@@ -1468,7 +1468,7 @@ function setReady() {
 function autoReady() {
   if (!AR.ready) {
     if (AR.selectedTopics.length === 0)
-      AR.selectedTopics = TOPICS.map(t=>t.id).sort(()=>Math.random()-.5).slice(0,3);
+      AR.selectedTopics = TOPICS.map(t => t.id).sort(() => Math.random() - .5).slice(0, 3);
     setReady();
   }
 }
@@ -1509,7 +1509,7 @@ function startBattle(questionsJson) {
   clearInterval(AR.lobbyTimer);
   let qs;
   try { qs = typeof questionsJson === 'string' ? JSON.parse(questionsJson) : questionsJson; }
-  catch(e) { qs = buildQuestions(AR.selectedTopics.length?AR.selectedTopics:['acid-base','redox']); }
+  catch (e) { qs = buildQuestions(AR.selectedTopics.length ? AR.selectedTopics : ['acid-base', 'redox']); }
   AR.questions = qs;
   AR.qIndex = 0; AR.myScore = 0; AR.oppScore = 0;
 
@@ -1522,10 +1522,10 @@ function startBattle(questionsJson) {
   } else {
     const me = getMyInfo();
     const oppName = AR.oppProfile?.full_name || AR.oppProfile?.username || 'Đối thủ';
-    const myAv  = U?.profile?.avatar_url || '';
+    const myAv = U?.profile?.avatar_url || '';
     const oppAv = AR.oppProfile?.avatar_url || '';
     setAvEl(G('bs-me-av'), me.name, myAv);
-    G('bs-me-name').textContent  = me.name;
+    G('bs-me-name').textContent = me.name;
     setAvEl(G('bs-opp-av'), oppName, oppAv);
     G('bs-opp-name').textContent = oppName;
     updateBattleScore();
@@ -1581,7 +1581,7 @@ function renderBattleQuestion(data) {
     const ffaSb = G('ffa-scoreboard');
     if (ffaSb) ffaSb.style.display = 'none';
     const oppName = AR.oppProfile?.full_name || AR.oppProfile?.username || 'Đối thủ';
-    const myAv  = U?.profile?.avatar_url || '';
+    const myAv = U?.profile?.avatar_url || '';
     const oppAv = AR.oppProfile?.avatar_url || '';
     setAvEl(G('bs-me-av'), me.name, myAv);
     G('bs-me-name').textContent = me.name;
@@ -1627,7 +1627,7 @@ function renderBattleQuestion(data) {
     data.question.opts.forEach((opt, i) => {
       const btn = document.createElement('button');
       btn.className = 'mcq-btn';
-      btn.textContent = `${['A','B','C','D'][i]}. ${opt}`;
+      btn.innerHTML = `<div class=\"mcq-num-label\">${['A', 'B', 'C', 'D'][i]}</div><div class=\"mcq-text-content\">${opt}</div>`;
       btn.onclick = () => submitMCQ(i, btn, data.question);
       G('battle-mcq').appendChild(btn);
     });
@@ -1660,8 +1660,8 @@ function renderQuestion() {
   G('opp-answered').style.display = 'none';
   G('battle-feedback').style.display = 'none';
 
-  const topicName = TOPICS.find(t=>t.id === q.topicId)?.name || '';
-  G('battle-q-num').textContent  = `Câu ${AR.qIndex+1}/${AR.questions.length}`;
+  const topicName = TOPICS.find(t => t.id === q.topicId)?.name || '';
+  G('battle-q-num').textContent = `Câu ${AR.qIndex + 1}/${AR.questions.length}`;
   G('battle-q-text').textContent = q.q;
   G('battle-q-topic').textContent = topicName;
 
@@ -1674,7 +1674,7 @@ function renderQuestion() {
     q.opts.forEach((opt, i) => {
       const btn = document.createElement('button');
       btn.className = 'mcq-btn';
-      btn.textContent = `${['A','B','C','D'][i]}. ${opt}`;
+      btn.innerHTML = `<div class=\"mcq-num-label\">${['A', 'B', 'C', 'D'][i]}</div><div class=\"mcq-text-content\">${opt}</div>`;
       btn.onclick = () => submitMCQ(i, btn, q);
       G('battle-mcq').appendChild(btn);
     });
@@ -1741,9 +1741,11 @@ function showFeedback(correct, exp) {
 }
 
 async function broadcastAnswer(correct) {
-  await AR.channel?.send({ type:'broadcast', event:'battle_action', payload:{
-    type:'answered', userId: U.id, correct, qIndex: AR.qIndex
-  }});
+  await AR.channel?.send({
+    type: 'broadcast', event: 'battle_action', payload: {
+      type: 'answered', userId: U.id, correct, qIndex: AR.qIndex
+    }
+  });
 }
 
 function handleBattleAction(payload) {
@@ -1762,7 +1764,7 @@ function updateBattleScore() {
   if (AR.isFFA) {
     renderFfaScoreboard();
   } else {
-    G('bs-me-score').textContent  = AR.myScore;
+    G('bs-me-score').textContent = AR.myScore;
     G('bs-opp-score').textContent = AR.oppScore;
   }
 }
@@ -1775,10 +1777,10 @@ function renderFfaScoreboard() {
   const rankEmojis = ['🥇', '🥈', '🥉'];
   sb.innerHTML = players.map((p, idx) => {
     const score = AR.ffaScores[p.userId] || 0;
-    const isMe  = p.userId === (AR.myUserId || U?.id);
-    const name  = (p.full_name || p.name || p.username || 'Người chơi').split(' ').pop();
-    const ini   = mkIni(p.full_name || p.name || '?');
-    const rank  = rankEmojis[idx] || `${idx+1}.`;
+    const isMe = p.userId === (AR.myUserId || U?.id);
+    const name = (p.full_name || p.name || p.username || 'Người chơi').split(' ').pop();
+    const ini = mkIni(p.full_name || p.name || '?');
+    const rank = rankEmojis[idx] || `${idx + 1}.`;
     return `<div class="ffa-sb-row${isMe ? ' me' : ''}">
       <div class="ffa-sb-rank">${rank}</div>
       <div class="ffa-sb-av">${ini}</div>
@@ -1805,10 +1807,10 @@ async function endBattle(data) {
 
   if (isFfa) {
     // ── Kết quả FFA ──
-    const scores     = data?.scores || AR.ffaScores || {};
+    const scores = data?.scores || AR.ffaScores || {};
     const eloChanges = data?.elo_change || {};
-    const winnerUid  = data?.winnerUserId;
-    const myScore    = scores[me.id] || 0;
+    const winnerUid = data?.winnerUserId;
+    const myScore = scores[me.id] || 0;
     const myEloChange = eloChanges[me.id] || 0;
 
     const players = [...(AR.ffaPlayers || [])];
@@ -1818,7 +1820,7 @@ async function endBattle(data) {
 
     G('result-emoji').textContent = rankEmojis[myRank - 1] || '💪';
     G('result-title').textContent = myRank === 1 ? 'Chiến Thắng!' : myRank === 2 ? 'Á Quân!' : myRank === 3 ? 'Hạng Ba!' : 'Tiếp Tục Cố!';
-    G('result-sub').textContent   = `Bạn xếp hạng #${myRank} trong số ${players.length} người chơi`;
+    G('result-sub').textContent = `Bạn xếp hạng #${myRank} trong số ${players.length} người chơi`;
 
     // Ẩn bảng 2p, hiện FFA ranked list
     const twoCard = G('result-2p-scores');
@@ -1828,17 +1830,17 @@ async function endBattle(data) {
       ffaList.style.display = 'block';
       ffaList.innerHTML = players.map((p, idx) => {
         const pScore = scores[p.userId] || 0;
-        const pElo   = eloChanges[p.userId] || 0;
-        const isMe   = p.userId === me.id;
-        const name   = p.full_name || p.name || p.username || 'Người chơi';
-        const ini    = mkIni(name);
-        const badge  = rankEmojis[idx] || `#${idx+1}`;
+        const pElo = eloChanges[p.userId] || 0;
+        const isMe = p.userId === me.id;
+        const name = p.full_name || p.name || p.username || 'Người chơi';
+        const ini = mkIni(name);
+        const badge = rankEmojis[idx] || `#${idx + 1}`;
         return `<div class="ffa-result-row${isMe ? ' me' : ''}">
           <div class="ffa-result-rank">${badge}</div>
           <div class="ffa-result-av">${ini}</div>
           <div class="ffa-result-info">
             <div class="ffa-result-name">${name.split(' ').pop()}${isMe ? ' <span style="color:var(--teal);font-size:.6rem">● Bạn</span>' : ''}</div>
-            <div class="ffa-result-elo" style="color:${pElo>=0?'var(--green)':'var(--rose)'}">${pElo>=0?'+':''}${pElo} ELO</div>
+            <div class="ffa-result-elo" style="color:${pElo >= 0 ? 'var(--green)' : 'var(--rose)'}">${pElo >= 0 ? '+' : ''}${pElo} ELO</div>
           </div>
           <div class="ffa-result-score">${pScore}</div>
         </div>`;
@@ -1846,9 +1848,9 @@ async function endBattle(data) {
     }
 
     const eloEl = G('result-elo-change');
-    if (myEloChange > 0)      { eloEl.textContent = `📈 +${myEloChange} ELO`; eloEl.style.background='var(--green-lt)'; eloEl.style.color='var(--green)'; }
-    else if (myEloChange < 0) { eloEl.textContent = `📉 ${myEloChange} ELO`; eloEl.style.background='var(--rose-lt)';  eloEl.style.color='var(--rose)'; }
-    else                      { eloEl.textContent = `📊 ELO không đổi`;  eloEl.style.background='var(--amber-lt)'; eloEl.style.color='var(--amber)'; }
+    if (myEloChange > 0) { eloEl.textContent = `📈 +${myEloChange} ELO`; eloEl.style.background = 'var(--green-lt)'; eloEl.style.color = 'var(--green)'; }
+    else if (myEloChange < 0) { eloEl.textContent = `📉 ${myEloChange} ELO`; eloEl.style.background = 'var(--rose-lt)'; eloEl.style.color = 'var(--rose)'; }
+    else { eloEl.textContent = `📊 ELO không đổi`; eloEl.style.background = 'var(--amber-lt)'; eloEl.style.color = 'var(--amber)'; }
 
     addToHistory({ win: myRank === 1, myScore, oppScore: scores[winnerUid] || 0, oppName: players[0]?.full_name || 'Người chơi', eloChange: myEloChange });
 
@@ -1856,19 +1858,19 @@ async function endBattle(data) {
     // ── Kết quả 1v1 ──
     let scores = data?.scores;
     if (!scores) { scores = {}; scores[me.id] = AR.myScore; scores[AR.oppId] = AR.oppScore; }
-    const myScore  = scores[me.id] || 0;
+    const myScore = scores[me.id] || 0;
     const oppScore = scores[AR.oppId] || 0;
-    const win  = myScore > oppScore;
+    const win = myScore > oppScore;
     const draw = myScore === oppScore;
     const oppName = AR.oppProfile?.full_name || AR.oppProfile?.username || 'Đối thủ';
 
     G('result-emoji').textContent = win ? '🏆' : draw ? '🤝' : '💪';
     G('result-title').textContent = win ? 'Chiến Thắng!' : draw ? 'Hòa!' : 'Thất Bại!';
-    G('result-sub').textContent   = win ? 'Xuất sắc!' : draw ? 'Màn trình diễn ngang tài ngang sức!' : 'Cố lên!';
-    G('rs-me-score').textContent  = myScore;
+    G('result-sub').textContent = win ? 'Xuất sắc!' : draw ? 'Màn trình diễn ngang tài ngang sức!' : 'Cố lên!';
+    G('rs-me-score').textContent = myScore;
     G('rs-opp-score').textContent = oppScore;
-    G('rs-me-name').textContent   = me.name;
-    G('rs-opp-name').textContent  = oppName;
+    G('rs-me-name').textContent = me.name;
+    G('rs-opp-name').textContent = oppName;
 
     const twoCard = G('result-2p-scores');
     if (twoCard) twoCard.style.display = '';
@@ -1880,9 +1882,9 @@ async function endBattle(data) {
     else eloChange = win ? 20 : draw ? 0 : -15;
 
     const eloEl = G('result-elo-change');
-    if (eloChange > 0)      { eloEl.textContent = `📈 +${eloChange} ELO`; eloEl.style.background='var(--green-lt)'; eloEl.style.color='var(--green)'; }
-    else if (eloChange < 0) { eloEl.textContent = `📉 ${eloChange} ELO`; eloEl.style.background='var(--rose-lt)';  eloEl.style.color='var(--rose)'; }
-    else                    { eloEl.textContent = `📊 ELO không đổi`;  eloEl.style.background='var(--amber-lt)'; eloEl.style.color='var(--amber)'; }
+    if (eloChange > 0) { eloEl.textContent = `📈 +${eloChange} ELO`; eloEl.style.background = 'var(--green-lt)'; eloEl.style.color = 'var(--green)'; }
+    else if (eloChange < 0) { eloEl.textContent = `📉 ${eloChange} ELO`; eloEl.style.background = 'var(--rose-lt)'; eloEl.style.color = 'var(--rose)'; }
+    else { eloEl.textContent = `📊 ELO không đổi`; eloEl.style.background = 'var(--amber-lt)'; eloEl.style.color = 'var(--amber)'; }
 
     addToHistory({ win, myScore, oppScore, oppName, eloChange });
   }
@@ -1904,8 +1906,8 @@ function addToHistory(entry) {
   const old = list.querySelector('.hist-empty');
   if (old) old.remove();
   const d = document.createElement('div');
-  d.style.cssText='display:flex;align-items:center;gap:.75rem;padding:.65rem .85rem;border:1px solid var(--border);border-radius:10px;background:var(--bg-white);margin-bottom:.4rem';
-  d.innerHTML=`<span style="font-size:1.3rem">${entry.win?'🏆':'💪'}</span><div style="flex:1"><div style="font-weight:700;font-size:.85rem;font-family:var(--font-h)">${entry.win?'Thắng':'Thua'} vs ${entry.oppName}</div><div style="font-size:.75rem;color:var(--text-3)">${entry.myScore} – ${entry.oppScore}</div></div><div style="font-size:.8rem;font-weight:700;color:${entry.eloChange>=0?'var(--green)':'var(--rose)'}">${entry.eloChange>=0?'+':''}${entry.eloChange} ELO</div>`;
+  d.style.cssText = 'display:flex;align-items:center;gap:.75rem;padding:.65rem .85rem;border:1px solid var(--border);border-radius:10px;background:var(--bg-white);margin-bottom:.4rem';
+  d.innerHTML = `<span style="font-size:1.3rem">${entry.win ? '🏆' : '💪'}</span><div style="flex:1"><div style="font-weight:700;font-size:.85rem;font-family:var(--font-h)">${entry.win ? 'Thắng' : 'Thua'} vs ${entry.oppName}</div><div style="font-size:.75rem;color:var(--text-3)">${entry.myScore} – ${entry.oppScore}</div></div><div style="font-size:.8rem;font-weight:700;color:${entry.eloChange >= 0 ? 'var(--green)' : 'var(--rose)'}">${entry.eloChange >= 0 ? '+' : ''}${entry.eloChange} ELO</div>`;
   list.prepend(d);
 }
 
@@ -1929,17 +1931,28 @@ function joinGlobalPresence() {
   PRESENCE_CH
     .on('presence', { event: 'sync' }, () => {
       const state = PRESENCE_CH.presenceState();
-      ONLINE_USERS = {};
+      const NEW_USERS = {};
       Object.values(state).forEach(presences => {
         const p = presences[0];
-        if (p && p.userId && p.userId !== U.id) ONLINE_USERS[p.userId] = p;
+        if (p && p.userId && p.userId !== U.id) {
+          if (ONLINE_USERS[p.userId] && ONLINE_USERS[p.userId].status) {
+            p.status = ONLINE_USERS[p.userId].status;
+          }
+          NEW_USERS[p.userId] = p;
+        }
       });
+      ONLINE_USERS = NEW_USERS;
       updateOnlineCount();
       refreshOnlineUI();
     })
     .on('presence', { event: 'join' }, ({ newPresences }) => {
       newPresences.forEach(p => {
-        if (p.userId && p.userId !== U.id) ONLINE_USERS[p.userId] = p;
+        if (p.userId && p.userId !== U.id) {
+          if (ONLINE_USERS[p.userId] && ONLINE_USERS[p.userId].status) {
+            p.status = ONLINE_USERS[p.userId].status;
+          }
+          ONLINE_USERS[p.userId] = p;
+        }
       });
       updateOnlineCount();
       refreshOnlineUI();
@@ -1949,7 +1962,7 @@ function joinGlobalPresence() {
       updateOnlineCount();
       refreshOnlineUI();
     })
-    .subscribe(async (status) => {
+    .subscribe(async (status, err) => {
       if (status === 'SUBSCRIBED') {
         await PRESENCE_CH.track({
           userId: U.id,
@@ -1960,6 +1973,10 @@ function joinGlobalPresence() {
           losses: me.losses,
         });
         updateOnlineCount();
+      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        console.warn('[Supabase] Presence channel error:', status, err);
+        // Tự động tái kết nối sau 3 giây
+        setTimeout(() => joinGlobalPresence(), 3000);
       }
     });
 }
@@ -1984,7 +2001,7 @@ function updateOnlineCount() {
 }
 
 function refreshOnlineUI() {
-  if (G('ov-friend')?.classList.contains('open')) {
+  if (G('ov-lobby-detail')?.classList.contains('open')) {
     const q = G('friend-search')?.value?.trim() || '';
     renderOnlinePlayers(Object.values(ONLINE_USERS), q);
   }
@@ -1993,48 +2010,16 @@ function refreshOnlineUI() {
 // ══════════════════════════════════════════════════════
 //   FRIEND ARENA
 // ══════════════════════════════════════════════════════
- 
 
-function selectFriendPlayer(player, row) {
-  document.querySelectorAll('.online-player-row').forEach(r => r.classList.remove('selected'));
-  row.classList.add('selected');
-  FA.selectedUser = player;
-  G('fs-name').innerText = player.full_name;
-  G('fs-elo').innerHTML = `⚡ ELO: ${player.elo}`;
-  G('friend-selected').style.display = 'block';
-}
-
-
-function openFriendArena() {
-  if (!U) { openM('login'); return; }
-  G('ov-friend').classList.add('open');
-  document.body.style.overflow = 'hidden';
-  FA.selectedUser = null;
-  G('friend-selected').style.display = 'none';
-  G('friend-waiting').style.display = 'none';
-  refreshOnlineUI();
-}
-
-function closeFriendArena() {
-  G('ov-friend').classList.remove('open');
-  FA.selectedUser = null;
-  // Nếu mở từ lobby room → restore lobby detail modal
-  if (FA.inviteRoomId && currentLobbyRoomId) {
-    document.getElementById('ov-lobby-detail')?.classList.add('open');
-  } else {
-    document.body.style.overflow = '';
-  }
-  FA.inviteRoomId = null;
-}
-
-function renderOnlinePlayers(players, query='') {
+function renderOnlinePlayers(players, query = '') {
   const list = G('online-list');
+  if (!list) return;
   let filtered = players;
   if (query) {
     const q = query.toLowerCase();
     filtered = players.filter(p =>
-      (p.name||'').toLowerCase().includes(q) ||
-      (p.username||'').toLowerCase().includes(q)
+      (p.name || p.full_name || p.username || '').toLowerCase().includes(q) ||
+      (p.username || '').toLowerCase().includes(q)
     );
   }
   if (!filtered.length) {
@@ -2046,62 +2031,64 @@ function renderOnlinePlayers(players, query='') {
   list.innerHTML = '';
   filtered.forEach(p => {
     const name = p.name || p.full_name || p.username || 'Người chơi';
+    const status = p.status || 'free';
+    
+    let btnHtml = '';
+    if (status === 'battle') {
+        btnHtml = `<button class="btn btn-secondary btn-invite-friend" style="padding:.4rem .8rem;font-size:.70rem;border-radius:8px;background:var(--bg-3);color:var(--text-4);opacity:0.8;box-shadow:none;border:1px solid var(--border-2)" disabled>Đang đấu</button>`;
+    } else if (status === 'lobby') {
+        btnHtml = `<button class="btn btn-secondary btn-invite-friend" style="padding:.4rem .8rem;font-size:.70rem;border-radius:8px;background:var(--bg-3);color:var(--text-4);opacity:0.8;box-shadow:none;border:1px solid var(--border-2)" disabled>Trong nhóm</button>`;
+    } else {
+        btnHtml = `<button class="btn btn-teal btn-invite-friend" style="padding:.4rem .8rem;font-size:.75rem;border-radius:8px;" onclick="sendInviteDirectly(this, '${p.userId}')">Mời</button>`;
+    }
+
     const row = document.createElement('div');
     row.className = 'online-player-row';
+    row.style.cursor = 'default';
     row.innerHTML = `
       <div class="opr-av">${mkIni(name)}</div>
       <div style="flex:1">
         <div class="opr-name">${name}</div>
-        <div style="font-size:.73rem;color:var(--text-4)">@${p.username||''}</div>
+        <div style="font-size:.73rem;color:var(--text-4)">@${p.username || ''}</div>
       </div>
-      <div class="opr-elo">⚡ ${p.elo||1200}</div>
-      <div class="online-dot" title="Online ngay bây giờ"></div>`;
-      row.onclick = () => selectFriendPlayer({
-        userId: p.userId,
-        full_name: p.name || p.full_name || p.username || 'Người chơi',
-        username: p.username,
-        elo: p.elo,
-        wins: p.wins || 0,
-        losses: p.losses || 0
-      }, row);
+      <div class="opr-elo" style="margin-right:.5rem;">⚡ ${p.elo || 1200}</div>
+      ${btnHtml}
+      <div class="online-dot" title="Online" style="margin-left:.4rem;${status !== 'free' ? 'background:var(--amber)' : ''}"></div>`;
     list.appendChild(row);
   });
 }
+
 function searchFriends(query) {
-  const filtered = Object.values(onlineUsers).filter(u =>
-    (u.full_name + u.username).toLowerCase().includes(query.toLowerCase())
-  );
-  renderOnlineList(filtered);
+  renderOnlinePlayers(Object.values(ONLINE_USERS), query);
 }
 
-function selectFriend(player) {
-  FA.selectedUser = player;
-  // hiển thị thông tin người được chọn
-  document.getElementById('friend-selected').style.display = 'block';
-  document.getElementById('fs-name').innerText = player.full_name;
-  document.getElementById('fs-elo').innerHTML = `⚡ ELO: ${player.elo}`;
+function sendInviteDirectly(btn, userId) {
+  if (!currentLobbyRoomId && !FA.inviteRoomId) return;
+  const roomId = currentLobbyRoomId || FA.inviteRoomId;
+  socket.emit('invite_friend', { toUserId: userId, roomId: roomId });
+
+  const originalText = btn.innerText;
+  btn.innerText = "Đã gửi lời mời!";
+  btn.style.background = 'transparent';
+  btn.style.color = 'var(--text-3)';
+  btn.style.border = '1px solid var(--border-2)';
+  btn.style.boxShadow = 'none';
+  btn.disabled = true;
+
+  setTimeout(() => {
+    btn.innerText = "Mời";
+    btn.style.background = '';
+    btn.style.color = '';
+    btn.style.border = '';
+    btn.style.boxShadow = '';
+    btn.disabled = false;
+  }, 10000);
 }
 
-async function sendInvite() {
-  if (!FA.selectedUser) return;
-  const payload = { toUserId: FA.selectedUser.userId };
-  if (FA.inviteRoomId) payload.roomId = FA.inviteRoomId;
-  socket.emit('invite_friend', payload);
-  document.getElementById('friend-selected').style.display = 'none';
-  document.getElementById('friend-waiting').style.display = 'block';
-  document.getElementById('fw-name').innerText = FA.selectedUser.full_name;
-}
 
-function clearFriendSelected() {
-  FA.selectedUser = null;
-  G('friend-selected').style.display = 'none';
-  document.querySelectorAll('.online-player-row').forEach(r=>r.classList.remove('selected'));
-}
-
- 
 
 function cancelInvite() {
-  if (AR.roomId) sb.from('battle_rooms').delete().eq('id', AR.roomId).then(()=>{});
+  if (AR.roomId) sb.from('battle_rooms').delete().eq('id', AR.roomId).then(() => { });
   G('friend-waiting').style.display = 'none';
   G('friend-selected').style.display = 'none';
   cleanupRoom();
@@ -2109,9 +2096,9 @@ function cancelInvite() {
 
 function subscribeToInvites() {
   if (!U) return;
-  FA.inviteChannel = sb.channel('invites:'+U.id)
-    .on('postgres_changes', { event:'INSERT', schema:'public', table:'battle_invites', filter:`to_id=eq.${U.id}` },
-      async ({new: inv}) => {
+  FA.inviteChannel = sb.channel('invites:' + U.id)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'battle_invites', filter: `to_id=eq.${U.id}` },
+      async ({ new: inv }) => {
         // Load invite room & sender
         const { data: room } = await sb.from('battle_rooms').select('*').eq('id', inv.room_id).single();
         if (!room || room.status !== 'invited') return;
@@ -2121,7 +2108,7 @@ function subscribeToInvites() {
         AR.oppProfile = sender;
         const senderName = sender?.full_name || sender?.username || 'Ai đó';
         G('inv-from-name').textContent = senderName;
-        G('inv-from-elo').textContent  = `⚡ ELO: ${sender?.elo||1200}`;
+        G('inv-from-elo').textContent = `⚡ ELO: ${sender?.elo || 1200}`;
         G('ov-invite').classList.add('open');
       })
     .subscribe();
@@ -2129,7 +2116,6 @@ function subscribeToInvites() {
 
 function acceptInvite() {
   G('ov-invite').classList.remove('open');
-  closeFriendArena();
   socket.emit('invite_response', {
     roomId: AR.inviteRoomId,
     accept: true
@@ -2139,115 +2125,115 @@ function acceptInvite() {
 
 async function rejectInvite() {
   G('ov-invite').classList.remove('open');
-  if (AR.inviteRoomId) await sb.from('battle_rooms').update({ status:'rejected' }).eq('id', AR.inviteRoomId);
+  if (AR.inviteRoomId) await sb.from('battle_rooms').update({ status: 'rejected' }).eq('id', AR.inviteRoomId);
   AR.inviteFrom = null; AR.inviteRoomId = null;
 }
 
 // ══════════════════════════════════
 //   ENHANCED CHEMISTRY PARTICLE SYSTEM
 // ══════════════════════════════════
-(function() {
+(function () {
   const canvas = G('pc');
   const ctx = canvas.getContext('2d');
   let W, H, pts = [], mols = [], bubbles = [], rings = [];
-  const COLS = ['#0d9488','#2563eb','#7c3aed','#0891b2','#059669','#0284c7'];
-  const ELEMENTS = ['H','C','O','N','Fe','Cu','Na','Cl','Mg','Ca','K','S'];
+  const COLS = ['#0d9488', '#2563eb', '#7c3aed', '#0891b2', '#059669', '#0284c7'];
+  const ELEMENTS = ['H', 'C', 'O', 'N', 'Fe', 'Cu', 'Na', 'Cl', 'Mg', 'Ca', 'K', 'S'];
 
   function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
 
   // Floating atom particle
   function mkPt() {
     return {
-      x: Math.random()*W, y: Math.random()*H,
-      vx: (Math.random()-.5)*.5, vy: (Math.random()-.5)*.5,
-      r: Math.random()*2.5+1,
-      col: COLS[Math.floor(Math.random()*COLS.length)],
-      a: Math.random()*.28+.08,
-      ph: Math.random()*Math.PI*2,
+      x: Math.random() * W, y: Math.random() * H,
+      vx: (Math.random() - .5) * .5, vy: (Math.random() - .5) * .5,
+      r: Math.random() * 2.5 + 1,
+      col: COLS[Math.floor(Math.random() * COLS.length)],
+      a: Math.random() * .28 + .08,
+      ph: Math.random() * Math.PI * 2,
     };
   }
 
   // Molecule cluster
   function mkMol() {
-    const cx = Math.random()*W, cy = Math.random()*H;
-    const n = Math.floor(Math.random()*4)+2;
-    const col = COLS[Math.floor(Math.random()*COLS.length)];
-    const nodes = [{x:cx, y:cy, r:5, el:ELEMENTS[Math.floor(Math.random()*ELEMENTS.length)]}];
-    for (let i=0;i<n;i++) {
-      const a = (i/n)*Math.PI*2 + Math.random()*.3;
-      const d = 22+Math.random()*18;
-      nodes.push({x:cx+Math.cos(a)*d, y:cy+Math.sin(a)*d, r:3.5+Math.random(), el:ELEMENTS[Math.floor(Math.random()*ELEMENTS.length)]});
+    const cx = Math.random() * W, cy = Math.random() * H;
+    const n = Math.floor(Math.random() * 4) + 2;
+    const col = COLS[Math.floor(Math.random() * COLS.length)];
+    const nodes = [{ x: cx, y: cy, r: 5, el: ELEMENTS[Math.floor(Math.random() * ELEMENTS.length)] }];
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2 + Math.random() * .3;
+      const d = 22 + Math.random() * 18;
+      nodes.push({ x: cx + Math.cos(a) * d, y: cy + Math.sin(a) * d, r: 3.5 + Math.random(), el: ELEMENTS[Math.floor(Math.random() * ELEMENTS.length)] });
     }
-    return { nodes, col, a:0.08+Math.random()*.07, vx:(Math.random()-.5)*.22, vy:(Math.random()-.5)*.22, ph:Math.random()*Math.PI*2, rot:0, rotV:(Math.random()-.5)*.005 };
+    return { nodes, col, a: 0.08 + Math.random() * .07, vx: (Math.random() - .5) * .22, vy: (Math.random() - .5) * .22, ph: Math.random() * Math.PI * 2, rot: 0, rotV: (Math.random() - .5) * .005 };
   }
 
   // Electron orbit ring
   function mkRing() {
     return {
-      x: Math.random()*W, y: Math.random()*H,
-      rx: 30+Math.random()*25, ry: 12+Math.random()*10,
-      rot: Math.random()*Math.PI,
-      col: COLS[Math.floor(Math.random()*COLS.length)],
-      a: .04+Math.random()*.04,
-      speed: .012+Math.random()*.018,
-      angle: Math.random()*Math.PI*2,
-      vx: (Math.random()-.5)*.18, vy: (Math.random()-.5)*.18,
+      x: Math.random() * W, y: Math.random() * H,
+      rx: 30 + Math.random() * 25, ry: 12 + Math.random() * 10,
+      rot: Math.random() * Math.PI,
+      col: COLS[Math.floor(Math.random() * COLS.length)],
+      a: .04 + Math.random() * .04,
+      speed: .012 + Math.random() * .018,
+      angle: Math.random() * Math.PI * 2,
+      vx: (Math.random() - .5) * .18, vy: (Math.random() - .5) * .18,
     };
   }
 
   // Rising bubble
   function mkBubble() {
     return {
-      x: Math.random()*W,
+      x: Math.random() * W,
       y: H + 20,
-      r: 4+Math.random()*12,
-      vy: -(0.3+Math.random()*.5),
-      a: .05+Math.random()*.06,
-      col: COLS[Math.floor(Math.random()*COLS.length)],
-      wobble: Math.random()*Math.PI*2,
-      wobbleS: .02+Math.random()*.02,
+      r: 4 + Math.random() * 12,
+      vy: -(0.3 + Math.random() * .5),
+      a: .05 + Math.random() * .06,
+      col: COLS[Math.floor(Math.random() * COLS.length)],
+      wobble: Math.random() * Math.PI * 2,
+      wobbleS: .02 + Math.random() * .02,
     };
   }
 
   function setup() {
-    pts    = Array.from({length:55}, mkPt);
-    mols   = Array.from({length:8},  mkMol);
-    rings  = Array.from({length:6},  mkRing);
-    bubbles= Array.from({length:12}, mkBubble);
+    pts = Array.from({ length: 55 }, mkPt);
+    mols = Array.from({ length: 8 }, mkMol);
+    rings = Array.from({ length: 6 }, mkRing);
+    bubbles = Array.from({ length: 12 }, mkBubble);
   }
 
-  function hexA(a) { return Math.round(Math.max(0,Math.min(1,a))*255).toString(16).padStart(2,'0'); }
+  function hexA(a) { return Math.round(Math.max(0, Math.min(1, a)) * 255).toString(16).padStart(2, '0'); }
 
   function draw() {
-    ctx.clearRect(0,0,W,H);
-    const t = Date.now()/1000;
+    ctx.clearRect(0, 0, W, H);
+    const t = Date.now() / 1000;
 
     // ─ ELECTRON ORBIT RINGS ─
     rings.forEach(rg => {
       rg.angle += rg.speed;
       rg.x += rg.vx; rg.y += rg.vy;
-      if (rg.x < -80||rg.x > W+80) rg.vx *= -1;
-      if (rg.y < -80||rg.y > H+80) rg.vy *= -1;
+      if (rg.x < -80 || rg.x > W + 80) rg.vx *= -1;
+      if (rg.y < -80 || rg.y > H + 80) rg.vy *= -1;
 
       ctx.save();
       ctx.translate(rg.x, rg.y);
       ctx.rotate(rg.rot);
       ctx.beginPath();
-      ctx.ellipse(0, 0, rg.rx, rg.ry, 0, 0, Math.PI*2);
+      ctx.ellipse(0, 0, rg.rx, rg.ry, 0, 0, Math.PI * 2);
       ctx.strokeStyle = rg.col + hexA(rg.a);
       ctx.lineWidth = 1;
       ctx.stroke();
 
       // Electron dot on ring
-      const ex = Math.cos(rg.angle)*rg.rx;
-      const ey = Math.sin(rg.angle)*rg.ry;
-      ctx.beginPath(); ctx.arc(ex, ey, 2.5, 0, Math.PI*2);
-      ctx.fillStyle = rg.col + hexA(rg.a*3.5);
+      const ex = Math.cos(rg.angle) * rg.rx;
+      const ey = Math.sin(rg.angle) * rg.ry;
+      ctx.beginPath(); ctx.arc(ex, ey, 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = rg.col + hexA(rg.a * 3.5);
       ctx.fill();
       // Electron glow
-      const g = ctx.createRadialGradient(ex,ey,0,ex,ey,8);
-      g.addColorStop(0, rg.col+hexA(rg.a*2.5)); g.addColorStop(1, rg.col+'00');
-      ctx.beginPath(); ctx.arc(ex,ey,8,0,Math.PI*2); ctx.fillStyle=g; ctx.fill();
+      const g = ctx.createRadialGradient(ex, ey, 0, ex, ey, 8);
+      g.addColorStop(0, rg.col + hexA(rg.a * 2.5)); g.addColorStop(1, rg.col + '00');
+      ctx.beginPath(); ctx.arc(ex, ey, 8, 0, Math.PI * 2); ctx.fillStyle = g; ctx.fill();
 
       ctx.restore();
     });
@@ -2256,78 +2242,78 @@ async function rejectInvite() {
     bubbles.forEach(b => {
       b.wobble += b.wobbleS;
       b.y += b.vy;
-      b.x += Math.sin(b.wobble)*0.5;
-      if (b.y < -b.r*2) {
-        b.y = H + b.r; b.x = Math.random()*W;
-        b.r = 4+Math.random()*12;
+      b.x += Math.sin(b.wobble) * 0.5;
+      if (b.y < -b.r * 2) {
+        b.y = H + b.r; b.x = Math.random() * W;
+        b.r = 4 + Math.random() * 12;
       }
-      const prog = 1 - Math.max(0, (-b.y+H)/(H+b.r*2));
-      const oa = b.a * (1 - prog*.6);
-      ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
-      ctx.strokeStyle = b.col + hexA(oa*1.8);
+      const prog = 1 - Math.max(0, (-b.y + H) / (H + b.r * 2));
+      const oa = b.a * (1 - prog * .6);
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+      ctx.strokeStyle = b.col + hexA(oa * 1.8);
       ctx.lineWidth = .8;
       ctx.stroke();
       // Highlight
-      ctx.beginPath(); ctx.arc(b.x - b.r*.28, b.y - b.r*.28, b.r*.22, 0, Math.PI*2);
-      ctx.fillStyle = '#fff' + hexA(oa*.5);
+      ctx.beginPath(); ctx.arc(b.x - b.r * .28, b.y - b.r * .28, b.r * .22, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff' + hexA(oa * .5);
       ctx.fill();
     });
 
     // ─ MOLECULE CLUSTERS ─
     mols.forEach(m => {
-      m.ph  += .006;
+      m.ph += .006;
       m.rot += m.rotV;
-      const oa = m.a + Math.sin(m.ph)*.022;
+      const oa = m.a + Math.sin(m.ph) * .022;
       m.nodes.forEach(nd => { nd.x += m.vx; nd.y += m.vy; });
       const c = m.nodes[0];
-      if (c.x<-80||c.x>W+80) m.vx*=-1;
-      if (c.y<-80||c.y>H+80) m.vy*=-1;
+      if (c.x < -80 || c.x > W + 80) m.vx *= -1;
+      if (c.y < -80 || c.y > H + 80) m.vy *= -1;
 
       // Bonds
       ctx.lineWidth = 1.5;
-      for (let i=1;i<m.nodes.length;i++) {
-        ctx.beginPath(); ctx.moveTo(c.x,c.y); ctx.lineTo(m.nodes[i].x,m.nodes[i].y);
-        ctx.strokeStyle = m.col + hexA(oa*.85); ctx.stroke();
-        if (i%2===0) {
-          const dx = m.nodes[i].x-c.x, dy = m.nodes[i].y-c.y;
-          const len = Math.sqrt(dx*dx+dy*dy)||1;
-          const ox=-dy/len*4, oy=dx/len*4;
-          ctx.beginPath(); ctx.moveTo(c.x+ox,c.y+oy); ctx.lineTo(m.nodes[i].x+ox,m.nodes[i].y+oy);
-          ctx.strokeStyle = m.col + hexA(oa*.38); ctx.stroke();
+      for (let i = 1; i < m.nodes.length; i++) {
+        ctx.beginPath(); ctx.moveTo(c.x, c.y); ctx.lineTo(m.nodes[i].x, m.nodes[i].y);
+        ctx.strokeStyle = m.col + hexA(oa * .85); ctx.stroke();
+        if (i % 2 === 0) {
+          const dx = m.nodes[i].x - c.x, dy = m.nodes[i].y - c.y;
+          const len = Math.sqrt(dx * dx + dy * dy) || 1;
+          const ox = -dy / len * 4, oy = dx / len * 4;
+          ctx.beginPath(); ctx.moveTo(c.x + ox, c.y + oy); ctx.lineTo(m.nodes[i].x + ox, m.nodes[i].y + oy);
+          ctx.strokeStyle = m.col + hexA(oa * .38); ctx.stroke();
         }
       }
       // Atoms
       m.nodes.forEach(nd => {
-        ctx.beginPath(); ctx.arc(nd.x,nd.y,nd.r,0,Math.PI*2);
-        ctx.fillStyle = m.col + hexA(oa*1.5); ctx.fill();
-        const g = ctx.createRadialGradient(nd.x,nd.y,0,nd.x,nd.y,nd.r*3.2);
-        g.addColorStop(0, m.col+hexA(oa*.45)); g.addColorStop(1, m.col+'00');
-        ctx.beginPath(); ctx.arc(nd.x,nd.y,nd.r*3.2,0,Math.PI*2); ctx.fillStyle=g; ctx.fill();
+        ctx.beginPath(); ctx.arc(nd.x, nd.y, nd.r, 0, Math.PI * 2);
+        ctx.fillStyle = m.col + hexA(oa * 1.5); ctx.fill();
+        const g = ctx.createRadialGradient(nd.x, nd.y, 0, nd.x, nd.y, nd.r * 3.2);
+        g.addColorStop(0, m.col + hexA(oa * .45)); g.addColorStop(1, m.col + '00');
+        ctx.beginPath(); ctx.arc(nd.x, nd.y, nd.r * 3.2, 0, Math.PI * 2); ctx.fillStyle = g; ctx.fill();
       });
     });
 
     // ─ FLOATING PARTICLES + CONNECTIONS ─
     const maxD = 110;
-    for (let i=0;i<pts.length;i++) {
+    for (let i = 0; i < pts.length; i++) {
       const p = pts[i];
       p.ph += .016; p.x += p.vx; p.y += p.vy;
-      if (p.x<0||p.x>W) p.vx*=-1;
-      if (p.y<0||p.y>H) p.vy*=-1;
-      for (let j=i+1;j<pts.length;j++) {
+      if (p.x < 0 || p.x > W) p.vx *= -1;
+      if (p.y < 0 || p.y > H) p.vy *= -1;
+      for (let j = i + 1; j < pts.length; j++) {
         const q = pts[j];
-        const dx=p.x-q.x, dy=p.y-q.y, d=Math.sqrt(dx*dx+dy*dy);
-        if (d<maxD) {
-          ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y);
-          ctx.strokeStyle = p.col + hexA((1-d/maxD)*.12);
+        const dx = p.x - q.x, dy = p.y - q.y, d = Math.sqrt(dx * dx + dy * dy);
+        if (d < maxD) {
+          ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y);
+          ctx.strokeStyle = p.col + hexA((1 - d / maxD) * .12);
           ctx.lineWidth = .6; ctx.stroke();
         }
       }
-      const pr = p.r + Math.sin(p.ph)*.5;
-      const g = ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,pr*4);
-      g.addColorStop(0, p.col+hexA(p.a*.75)); g.addColorStop(1, p.col+'00');
-      ctx.beginPath(); ctx.arc(p.x,p.y,pr*4,0,Math.PI*2); ctx.fillStyle=g; ctx.fill();
-      ctx.beginPath(); ctx.arc(p.x,p.y,pr,0,Math.PI*2);
-      ctx.fillStyle = p.col + hexA(p.a*1.9); ctx.fill();
+      const pr = p.r + Math.sin(p.ph) * .5;
+      const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, pr * 4);
+      g.addColorStop(0, p.col + hexA(p.a * .75)); g.addColorStop(1, p.col + '00');
+      ctx.beginPath(); ctx.arc(p.x, p.y, pr * 4, 0, Math.PI * 2); ctx.fillStyle = g; ctx.fill();
+      ctx.beginPath(); ctx.arc(p.x, p.y, pr, 0, Math.PI * 2);
+      ctx.fillStyle = p.col + hexA(p.a * 1.9); ctx.fill();
     }
 
     requestAnimationFrame(draw);
@@ -2338,6 +2324,46 @@ async function rejectInvite() {
 })();
 
 // ══════════════════════════════════════
+//   DISCONNECT BANNER — hiện khi mất kết nối
+// ══════════════════════════════════════
+(function _setupDisconnectBanner() {
+  if (document.getElementById('gc-disconnect-banner')) return;
+  const style = document.createElement('style');
+  style.textContent = `
+    #gc-disconnect-banner {
+      position:fixed;bottom:0;left:0;right:0;z-index:99999;
+      background:#dc2626;color:#fff;text-align:center;
+      padding:.55rem 1rem;font-size:.82rem;font-weight:600;letter-spacing:.01em;
+      display:flex;align-items:center;justify-content:center;gap:.5rem;
+      transform:translateY(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);
+      box-shadow:0 -2px 12px rgba(0,0,0,.18);
+    }
+    #gc-disconnect-banner.visible { transform:translateY(0); }
+    @keyframes _gcSpin { to { transform:rotate(360deg); } }
+    #gc-disconnect-banner .gc-spin { display:inline-block; animation:_gcSpin 1s linear infinite; }
+  `;
+  document.head.appendChild(style);
+  const el = document.createElement('div');
+  el.id = 'gc-disconnect-banner';
+  el.innerHTML = `<span class="gc-spin">🔄</span><span id="gc-disc-msg">Đang kết nối lại máy chủ...</span>`;
+  document.body.appendChild(el);
+})();
+
+function _showDisconnectBanner(attempt) {
+  const el = document.getElementById('gc-disconnect-banner');
+  const msg = document.getElementById('gc-disc-msg');
+  if (msg) msg.textContent = attempt
+    ? `Đang kết nối lại... (lần ${attempt})`
+    : 'Mất kết nối — Đang thử kết nối lại...';
+  if (el) el.classList.add('visible');
+}
+
+function _hideDisconnectBanner() {
+  const el = document.getElementById('gc-disconnect-banner');
+  if (el) el.classList.remove('visible');
+}
+
+// ══════════════════════════════════════
 //   SOCKET INIT — chỉ gọi 1 lần
 // ══════════════════════════════════════
 let socket = null;
@@ -2345,9 +2371,15 @@ let currentRoomId = null;
 
 function initSocket() {
   if (socket && socket.connected) return; // Đã kết nối rồi, không init lại
-  if (socket) socket.disconnect();
+  if (socket) { socket.removeAllListeners(); socket.disconnect(); }
 
-  socket = io();
+  socket = io({
+    reconnection: true,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 10000,
+    reconnectionAttempts: Infinity,
+    timeout: 20000,
+  });
 
   socket.on('connect', () => {
     if (!U) return;
@@ -2369,9 +2401,9 @@ function initSocket() {
       if (u.userId === U?.id) {
         // Sync own stats if server has fresher data
         if (U && U.profile) {
-          if (u.elo   && u.elo   !== U.profile.elo)    U.profile.elo    = u.elo;
-          if (u.wins  !== undefined && u.wins  !== U.profile.wins)   U.profile.wins   = u.wins;
-          if (u.losses!== undefined && u.losses!== U.profile.losses) U.profile.losses = u.losses;
+          if (u.elo && u.elo !== U.profile.elo) U.profile.elo = u.elo;
+          if (u.wins !== undefined && u.wins !== U.profile.wins) U.profile.wins = u.wins;
+          if (u.losses !== undefined && u.losses !== U.profile.losses) U.profile.losses = u.losses;
         }
         return;
       }
@@ -2388,9 +2420,9 @@ function initSocket() {
       if (u.userId === U?.id) {
         // Sync own stats if server has fresher data
         if (U && U.profile) {
-          if (u.elo   && u.elo   !== U.profile.elo)    U.profile.elo    = u.elo;
-          if (u.wins  !== undefined && u.wins  !== U.profile.wins)   U.profile.wins   = u.wins;
-          if (u.losses!== undefined && u.losses!== U.profile.losses) U.profile.losses = u.losses;
+          if (u.elo && u.elo !== U.profile.elo) U.profile.elo = u.elo;
+          if (u.wins !== undefined && u.wins !== U.profile.wins) U.profile.wins = u.wins;
+          if (u.losses !== undefined && u.losses !== U.profile.losses) U.profile.losses = u.losses;
         }
         return;
       }
@@ -2453,10 +2485,9 @@ function initSocket() {
   });
 
   socket.on('match_found', async (data) => {
-    G('ov-friend').classList.remove('open');
-    G('friend-waiting').style.display = 'none';
-    G('friend-selected').style.display = 'none';
-    G('ov-invite').classList.remove('open');
+    // Safety check optionally close any old lobby if necessary
+    G('ov-lobby-detail')?.classList.remove('open');
+    G('ov-invite')?.classList.remove('open');
     clearTimeout(AR.waitTimer);
     currentRoomId = data.roomId;
     AR.roomId = data.roomId;
@@ -2480,95 +2511,95 @@ function initSocket() {
 
 
   socket.on('lobby_rooms_list', (rooms) => {
-      lobbyRoomsList = rooms;
-      renderLobbyRoomsList(rooms);
+    lobbyRoomsList = rooms;
+    renderLobbyRoomsList(rooms);
   });
 
   socket.on('lobby_room_created', (data) => {
-      const btn = document.getElementById('b-create-room');
-      if (btn) {
-          btn.disabled = false;
-          btn.querySelector('.bt').style.display = 'inline';
-          btn.querySelector('.bl').style.display = 'none';
-      }
-      toast('ok', `✅ Đã tạo phòng "${data.room.name}"`);
-      currentLobbyRoomId = data.roomId;
-      showLobbyRoomDetails(data.room);
+    const btn = document.getElementById('b-create-room');
+    if (btn) {
+      btn.disabled = false;
+      btn.querySelector('.bt').style.display = 'inline';
+      btn.querySelector('.bl').style.display = 'none';
+    }
+    toast('ok', `✅ Đã tạo phòng "${data.room.name}"`);
+    currentLobbyRoomId = data.roomId;
+    showLobbyRoomDetails(data.room);
   });
 
   socket.on('lobby_room_joined', (data) => {
-      currentLobbyRoomId = data.roomId;
-      showLobbyRoomDetails(data.room);
+    currentLobbyRoomId = data.roomId;
+    showLobbyRoomDetails(data.room);
   });
 
   socket.on('lobby_room_update', (data) => {
-      if (currentLobbyRoomId === data.roomId) {
-          currentLobbyRoom = data;
-          renderLobbyRoomPlayers(data.players, data.host_sid, data.ready_players || []);
-          const countEl = document.getElementById('lobby-player-count');
-          if (countEl) countEl.textContent = Object.keys(data.players || {}).length;
-      }
+    if (currentLobbyRoomId === data.roomId) {
+      currentLobbyRoom = data;
+      renderLobbyRoomPlayers(data.players, data.host_sid, data.ready_players || []);
+      const countEl = document.getElementById('lobby-player-count');
+      if (countEl) countEl.textContent = Object.keys(data.players || {}).length;
+    }
   });
 
   socket.on('lobby_battle_start', (data) => {
-      // Đóng các modal lobby khi bắt đầu trận đấu
-      document.getElementById('ov-lobby')?.classList.remove('open');
-      document.getElementById('ov-lobby-detail')?.classList.remove('open');
-      document.getElementById('ov-create-room')?.classList.remove('open');
-      document.body.style.overflow = '';
-      
-      currentRoomId = data.battleRoomId;
-      AR.roomId = data.battleRoomId;
-      AR.role = data.role;
-      if (data.mode === 'ffa') {
-        AR.isFFA = true;
-        AR.ffaPlayers = data.players || [];
-        AR.ffaScores = {};
-        AR.myUserId = data.myUserId;
-        const others = AR.ffaPlayers.filter(p => p.userId !== data.myUserId);
-        AR.oppId = others[0]?.userId || null;
-        AR.oppProfile = others[0] || null;
-      } else {
-        AR.isFFA = false;
-        AR.oppId = data.opponent.userId;
-        AR.oppProfile = data.opponent;
-      }
-      socket.emit('join_room', { roomId: data.battleRoomId });
-      const overlay = document.getElementById('cooldown-overlay');
-      if (overlay) overlay.style.display = 'none';
-      if (AR.waitTimer) clearInterval(AR.waitTimer);
-      enterLobby();
+    // Đóng các modal lobby khi bắt đầu trận đấu
+    document.getElementById('ov-lobby')?.classList.remove('open');
+    document.getElementById('ov-lobby-detail')?.classList.remove('open');
+    document.getElementById('ov-create-room')?.classList.remove('open');
+    document.body.style.overflow = '';
+
+    currentRoomId = data.battleRoomId;
+    AR.roomId = data.battleRoomId;
+    AR.role = data.role;
+    if (data.mode === 'ffa') {
+      AR.isFFA = true;
+      AR.ffaPlayers = data.players || [];
+      AR.ffaScores = {};
+      AR.myUserId = data.myUserId;
+      const others = AR.ffaPlayers.filter(p => p.userId !== data.myUserId);
+      AR.oppId = others[0]?.userId || null;
+      AR.oppProfile = others[0] || null;
+    } else {
+      AR.isFFA = false;
+      AR.oppId = data.opponent.userId;
+      AR.oppProfile = data.opponent;
+    }
+    socket.emit('join_room', { roomId: data.battleRoomId });
+    const overlay = document.getElementById('cooldown-overlay');
+    if (overlay) overlay.style.display = 'none';
+    if (AR.waitTimer) clearInterval(AR.waitTimer);
+    enterLobby();
   });
 
   socket.on('lobby_battle_spectate', (data) => {
-      toast('info', 'Trận đấu đã bắt đầu! Bạn có thể xem...');
-      // Có thể hiển thị giao diện xem
+    toast('info', 'Trận đấu đã bắt đầu! Bạn có thể xem...');
+    // Có thể hiển thị giao diện xem
   });
 
   socket.on('lobby_battle_ended', (data) => {
-      if (currentLobbyRoomId === data.roomId) {
-          toast('ok', '🏁 Trận đấu kết thúc, có thể bắt đầu trận mới');
-          socket.emit('list_lobby_rooms');
-          // Refresh room detail
-          joinLobbyRoom(currentLobbyRoomId);
-      }
+    if (currentLobbyRoomId === data.roomId) {
+      toast('ok', '🏁 Trận đấu kết thúc, có thể bắt đầu trận mới');
+      socket.emit('list_lobby_rooms');
+      // Refresh room detail
+      joinLobbyRoom(currentLobbyRoomId);
+    }
   });
 
   socket.on('invite_received', (data) => {
-      // Cập nhật để hiển thị tên phòng
-      AR.inviteFrom = data.from;
-      AR.inviteRoomId = data.roomId;
-      G('inv-from-name').innerText = data.from.full_name;
-      G('inv-from-elo').innerHTML = `⚡ ELO: ${data.from.elo}`;
-      const roomWrap = G('inv-room-wrap');
-      const roomNameEl = G('inv-room-name');
-      if (data.roomName && roomNameEl) {
-          roomNameEl.innerText = data.roomName;
-          if (roomWrap) roomWrap.style.display = 'inline-block';
-      } else {
-          if (roomWrap) roomWrap.style.display = 'none';
-      }
-      G('ov-invite').classList.add('open');
+    // Cập nhật để hiển thị tên phòng
+    AR.inviteFrom = data.from;
+    AR.inviteRoomId = data.roomId;
+    G('inv-from-name').innerText = data.from.full_name;
+    G('inv-from-elo').innerHTML = `⚡ ELO: ${data.from.elo}`;
+    const roomWrap = G('inv-room-wrap');
+    const roomNameEl = G('inv-room-name');
+    if (data.roomName && roomNameEl) {
+      roomNameEl.innerText = data.roomName;
+      if (roomWrap) roomWrap.style.display = 'inline-block';
+    } else {
+      if (roomWrap) roomWrap.style.display = 'none';
+    }
+    G('ov-invite').classList.add('open');
   });
 
   socket.on('lobby_update', (data) => {
@@ -2637,9 +2668,77 @@ function initSocket() {
     closeArena();
   });
 
-  socket.on('disconnect', () => {
-    toast('err', 'Mất kết nối đến máy chủ');
-    closeArena();
+  // ── Mất kết nối: chỉ đóng arena nếu server chủ động ngắt, còn lại chờ reconnect ──
+  socket.on('disconnect', (reason) => {
+    console.warn('[Socket] Disconnected:', reason);
+    const intentional = reason === 'io client disconnect' || reason === 'io server disconnect';
+    if (intentional) {
+      _hideDisconnectBanner();
+      toast('err', 'Mất kết nối đến máy chủ');
+      closeArena();
+    } else {
+      // Mất mạng tạm thời — hiện banner chờ reconnect, KHÔNG đóng arena
+      _showDisconnectBanner();
+    }
+  });
+
+  // ── Đang thử kết nối lại ──
+  socket.on('reconnect_attempt', (n) => {
+    _showDisconnectBanner(n);
+  });
+
+  // ── Kết nối lại thành công ──
+  socket.on('reconnect', async (n) => {
+    console.log('[Socket] Reconnected after', n, 'attempt(s)');
+    _hideDisconnectBanner();
+    toast('ok', '✅ Đã kết nối lại!');
+    if (!U) return;
+
+    // Tải profile mới nhất từ DB (không dùng giá trị mặc định cũ)
+    await loadP();
+    renderIn();
+
+    // Gửi lại presence với dữ liệu mới nhất
+    if (socket.connected) {
+      socket.emit('presence:join', {
+        userId: U.id,
+        full_name: U.profile?.full_name || U.email?.split('@')[0],
+        username: U.profile?.username || '',
+        elo: U.profile?.elo || 1200,
+        wins: U.profile?.wins || 0,
+        losses: U.profile?.losses || 0,
+        avatar_url: U.profile?.avatar_url || '',
+      });
+      // Yêu cầu server đồng bộ lại trạng thái (danh sách phòng, online users)
+      socket.emit('request_sync');
+    }
+
+    // Tái kết nối Supabase realtime channels nếu bị gián đoạn
+    subscribeProfileRealtime();
+    joinGlobalPresence();
+  });
+
+  socket.on('reconnect_failed', () => {
+    toast('err', '❌ Không thể kết nối lại. Vui lòng tải lại trang.');
+  });
+
+  // ── Đồng bộ state từ server sau khi reconnect ──
+  socket.on('sync_state', (data) => {
+    if (data.presence) {
+      ONLINE_USERS = {};
+      (data.presence || []).forEach(u => {
+        if (u.userId && u.userId !== U?.id) ONLINE_USERS[u.userId] = u;
+        // Cập nhật stats của bản thân nếu server có dữ liệu mới hơn
+        if (u.userId === U?.id && U?.profile) {
+          if (u.elo !== undefined) U.profile.elo = u.elo;
+          if (u.wins !== undefined) U.profile.wins = u.wins;
+          if (u.losses !== undefined) U.profile.losses = u.losses;
+        }
+      });
+      updateOnlineCount();
+      refreshOnlineUI();
+    }
+    if (data.lobby_rooms) renderLobbyRoomsList(data.lobby_rooms);
   });
 
   socket.on('error', (err) => {
@@ -2649,25 +2748,85 @@ function initSocket() {
 
 init();
 
+// ══════════════════════════════════════
+//   VISIBILITY CHANGE — kết nối lại khi quay lại tab
+// ══════════════════════════════════════
+document.addEventListener('visibilitychange', async () => {
+  if (document.hidden || !U) return;
+
+  // Khi tab hiển thị trở lại: kiểm tra kết nối socket
+  if (!socket || !socket.connected) {
+    console.log('[Visibility] Tab visible, socket disconnected — reconnecting...');
+    if (!socket) initSocket();
+    else socket.connect();
+  }
+
+  // Luôn tải lại profile mới nhất từ Supabase để tránh dữ liệu cũ
+  try {
+    await loadP();
+    renderIn();
+    if (socket && socket.connected) {
+      socket.emit('presence:join', {
+        userId: U.id,
+        full_name: U.profile?.full_name || U.email?.split('@')[0],
+        username: U.profile?.username || '',
+        elo: U.profile?.elo || 1200,
+        wins: U.profile?.wins || 0,
+        losses: U.profile?.losses || 0,
+        avatar_url: U.profile?.avatar_url || '',
+      });
+    }
+  } catch (e) { console.warn('[Visibility] Profile reload failed:', e); }
+});
+
+// ══════════════════════════════════════
+//   PERIODIC REFRESH — tải lại dữ liệu mỗi 3 phút
+// ══════════════════════════════════════
+setInterval(async () => {
+  if (!U || !sb || document.hidden) return;
+  try {
+    const prev = { elo: U.profile?.elo, wins: U.profile?.wins, losses: U.profile?.losses };
+    await loadP();
+    const cur = U.profile;
+    // Chỉ re-render nếu dữ liệu thực sự thay đổi
+    if (cur && (cur.elo !== prev.elo || cur.wins !== prev.wins || cur.losses !== prev.losses)) {
+      console.log('[Refresh] Profile updated:', cur.elo, 'ELO');
+      renderIn();
+      if (socket && socket.connected) {
+        socket.emit('presence:update', {
+          elo: cur.elo || 1200,
+          wins: cur.wins || 0,
+          losses: cur.losses || 0,
+        });
+      }
+    }
+    // Đảm bảo Supabase realtime còn hoạt động
+    if (!PRESENCE_CH || PRESENCE_CH.state !== 'joined') {
+      console.log('[Refresh] Supabase presence channel lost, resubscribing...');
+      joinGlobalPresence();
+    }
+  } catch (e) { console.warn('[Refresh] Periodic refresh error:', e); }
+}, 3 * 60 * 1000); // mỗi 3 phút
+
 
 
 
 
 function renderLobbyRoomsList(rooms) {
-    const container = document.getElementById('lobby-rooms-list');
-    if (!container) return;
-    if (!rooms || !rooms.length) {
-        container.innerHTML = `
+  const container = document.getElementById('lobby-rooms-list');
+  if (!container) return;
+  if (!rooms || !rooms.length) {
+    container.innerHTML = `
           <div class="empty-rooms">
             <div style="font-size:2.5rem;margin-bottom:.65rem">🏠</div>
             <div style="font-weight:700;margin-bottom:.3rem;color:var(--text-3)">Chưa có phòng nào</div>
             <div>Hãy tạo phòng mới để bắt đầu!</div>
           </div>`;
-        return;
-    }
-    container.innerHTML = rooms.map(room => {
-        const isFull = room.player_count >= room.max_players;
-        return `
+    return;
+  }
+  container.innerHTML = rooms.map(room => {
+    const isFull = room.player_count >= room.max_players;
+    return `
           <div class="lobby-room-card">
             <div class="lrc-icon">${room.is_private ? '🔒' : '🏠'}</div>
             <div style="flex:1;min-width:0">
@@ -2681,132 +2840,133 @@ function renderLobbyRoomsList(rooms) {
             <button class="btn-join-room${isFull ? ' full' : ''}"
               ${isFull ? 'disabled title="Phòng đã đầy"' : ''}
               onclick="${room.is_private
-                ? `openRoomPasswordModal('${room.id}')`
-                : `joinLobbyRoom('${room.id}')`}">
+        ? `openRoomPasswordModal('${room.id}')`
+        : `joinLobbyRoom('${room.id}')`}">
               ${isFull ? '🔴 Đầy' : '🚪 Vào'}
             </button>
           </div>`;
-    }).join('');
+  }).join('');
 }
 
 function showLobbyRoomDetails(room) {
-    const modal = document.getElementById('ov-lobby-detail');
-    if (!modal) return;
-    modal.classList.add('open');
-    document.body.style.overflow = 'hidden';
-    document.getElementById('ov-lobby')?.classList.remove('open');
-    document.getElementById('ov-create-room')?.classList.remove('open');
-    currentLobbyRoom = room;
-    currentLobbyRoomId = room.id || room.roomId || currentLobbyRoomId;
-    document.getElementById('lobby-room-name').textContent = room.name || 'Phòng';
-    const typeIcon = document.getElementById('lr-type-icon');
-    if (typeIcon) typeIcon.textContent = room.is_private ? '🔒' : '👥';
-    const privBadge = document.getElementById('lr-privacy-badge');
-    if (privBadge) privBadge.textContent = room.is_private ? '🔒 Riêng tư' : '🌐 Công khai';
-    const sharePw = document.getElementById('lr-share-pw');
-    if (sharePw) sharePw.style.display = room.is_private ? 'block' : 'none';
-    renderLobbyRoomPlayers(room.players, room.host_sid, room.ready_players || []);
+  const modal = document.getElementById('ov-lobby-detail');
+  if (!modal) return;
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  document.getElementById('ov-lobby')?.classList.remove('open');
+  document.getElementById('ov-create-room')?.classList.remove('open');
+  currentLobbyRoom = room;
+  currentLobbyRoomId = room.id || room.roomId || currentLobbyRoomId;
+  document.getElementById('lobby-room-name').textContent = room.name || 'Phòng';
+  const typeIcon = document.getElementById('lr-type-icon');
+  if (typeIcon) typeIcon.textContent = room.is_private ? '🔒' : '👥';
+  const privBadge = document.getElementById('lr-privacy-badge');
+  if (privBadge) privBadge.textContent = room.is_private ? '🔒 Riêng tư' : '🌐 Công khai';
+  const sharePw = document.getElementById('lr-share-pw');
+  if (sharePw) sharePw.style.display = room.is_private ? 'block' : 'none';
+  renderLobbyRoomPlayers(room.players, room.host_sid, room.ready_players || []);
+  refreshOnlineUI();
 }
 
 function toggleLobbyReady() {
-    if (!currentLobbyRoomId || !socket) return;
-    socket.emit('toggle_lobby_ready', { roomId: currentLobbyRoomId });
+  if (!currentLobbyRoomId || !socket) return;
+  socket.emit('toggle_lobby_ready', { roomId: currentLobbyRoomId });
 }
 
 function renderLobbyRoomPlayers(players, hostSid, readyPlayers = []) {
-    const container = document.getElementById('lobby-players-list');
-    const emptySlots = document.getElementById('lobby-empty-slots');
-    const countEl = document.getElementById('lobby-player-count');
-    const hostNameEl = document.getElementById('lr-host-name');
-    const youHostEl = document.getElementById('lr-you-host');
-    const hostActionsEl = document.getElementById('lr-host-actions');
-    const guestActionsEl = document.getElementById('lr-guest-actions');
-    const btnStart = document.getElementById('btn-start-lobby-battle');
-    const btnReady = document.getElementById('btn-lobby-ready');
-    if (!container) return;
-    const entries = Object.entries(players || {});
-    const count = entries.length;
-    const MAX = 5;
-    if (countEl) countEl.textContent = count;
-    const hostEntry = entries.find(([sid]) => sid === hostSid);
-    const hostUser = hostEntry ? hostEntry[1] : null;
-    if (hostNameEl) hostNameEl.textContent = hostUser ? (hostUser.full_name || hostUser.username || 'Chủ phòng') : 'Chủ phòng';
-    const isHost = socket && hostSid === socket.id;
-    
-    const allGuestsReady = entries.filter(([sid]) => sid !== hostSid).every(([sid]) => readyPlayers.includes(sid));
-    const canStart = count >= 2 && allGuestsReady;
+  const container = document.getElementById('lobby-players-list');
+  const emptySlots = document.getElementById('lobby-empty-slots');
+  const countEl = document.getElementById('lobby-player-count');
+  const hostNameEl = document.getElementById('lr-host-name');
+  const youHostEl = document.getElementById('lr-you-host');
+  const hostActionsEl = document.getElementById('lr-host-actions');
+  const guestActionsEl = document.getElementById('lr-guest-actions');
+  const btnStart = document.getElementById('btn-start-lobby-battle');
+  const btnReady = document.getElementById('btn-lobby-ready');
+  if (!container) return;
+  const entries = Object.entries(players || {});
+  const count = entries.length;
+  const MAX = 5;
+  if (countEl) countEl.textContent = count;
+  const hostEntry = entries.find(([sid]) => sid === hostSid);
+  const hostUser = hostEntry ? hostEntry[1] : null;
+  if (hostNameEl) hostNameEl.textContent = hostUser ? (hostUser.full_name || hostUser.username || 'Chủ phòng') : 'Chủ phòng';
+  const isHost = socket && hostSid === socket.id;
 
-    if (youHostEl) youHostEl.style.display = isHost ? 'inline' : 'none';
-    if (hostActionsEl) hostActionsEl.style.display = isHost ? 'block' : 'none';
-    if (guestActionsEl) guestActionsEl.style.display = (!isHost && socket) ? 'block' : 'none';
-    
-    if (btnStart) {
-        if (canStart) {
-            btnStart.disabled = false;
-            btnStart.style.background = 'linear-gradient(135deg,var(--teal),#0891b2)';
-            btnStart.style.cursor = 'pointer';
-            btnStart.textContent = '⚔️ Bắt Đầu — Tất Cả Cùng Đấu!';
-        } else {
-            btnStart.disabled = true;
-            btnStart.style.background = 'var(--text-4)';
-            btnStart.style.cursor = 'not-allowed';
-            btnStart.textContent = count < 2 ? '⚠️ Cần ít nhất 2 người' : '⏳ Đang chờ người chơi sẵn sàng...';
-        }
+  const allGuestsReady = entries.filter(([sid]) => sid !== hostSid).every(([sid]) => readyPlayers.includes(sid));
+  const canStart = count >= 2 && allGuestsReady;
+
+  if (youHostEl) youHostEl.style.display = isHost ? 'inline' : 'none';
+  if (hostActionsEl) hostActionsEl.style.display = isHost ? 'block' : 'none';
+  if (guestActionsEl) guestActionsEl.style.display = (!isHost && socket) ? 'block' : 'none';
+
+  if (btnStart) {
+    if (canStart) {
+      btnStart.disabled = false;
+      btnStart.style.background = 'linear-gradient(135deg,var(--teal),#0891b2)';
+      btnStart.style.cursor = 'pointer';
+      btnStart.textContent = '⚔️ Bắt Đầu — Tất Cả Cùng Đấu!';
+    } else {
+      btnStart.disabled = true;
+      btnStart.style.background = 'var(--text-4)';
+      btnStart.style.cursor = 'not-allowed';
+      btnStart.textContent = count < 2 ? '⚠️ Cần ít nhất 2 người' : '⏳ Đang chờ người chơi sẵn sàng...';
     }
-    
-    if (btnReady && socket) {
-        const isReady = readyPlayers.includes(socket.id);
-        if (isReady) {
-            btnReady.textContent = '✅ Đã Sẵn Sàng (Nhấn để hủy)';
-            btnReady.style.background = 'linear-gradient(135deg, #16a34a, #15803d)';
-        } else {
-            btnReady.textContent = '☑️ Sẵn Sàng';
-            btnReady.style.background = 'linear-gradient(135deg, #eab308, #ca8a04)';
-        }
+  }
+
+  if (btnReady && socket) {
+    const isReady = readyPlayers.includes(socket.id);
+    if (isReady) {
+      btnReady.textContent = '✅ Đã Sẵn Sàng (Nhấn để hủy)';
+      btnReady.style.background = 'linear-gradient(135deg, #16a34a, #15803d)';
+    } else {
+      btnReady.textContent = '☑️ Sẵn Sàng';
+      btnReady.style.background = 'linear-gradient(135deg, #eab308, #ca8a04)';
     }
-    
-    container.innerHTML = entries.map(([sid, p]) => {
-        const name = p.full_name || p.username || 'Người chơi';
-        const isH = sid === hostSid;
-        const isR = readyPlayers.includes(sid);
-        const ini = mkIni(name);
-        const isMe = U && p.userId === U.id;
-        const av = p.avatar_url
-            ? `<img src="${p.avatar_url}" alt="${ini}" class="av-img" onerror="this.parentElement.textContent='${ini}'" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`
-            : ini;
-            
-        let readyBadge = '';
-        if (!isH) {
-            if (isR) readyBadge = '<div style="position:absolute;bottom:-4px;right:-4px;background:#16a34a;color:#fff;font-size:.65rem;padding:2px 4px;border-radius:4px;font-weight:bold;z-index:2;line-height:1">✅</div>';
-            else readyBadge = '<div style="position:absolute;bottom:-4px;right:-4px;background:#eab308;color:#fff;font-size:.65rem;padding:2px 4px;border-radius:4px;font-weight:bold;z-index:2;line-height:1">⏳</div>';
-        }
-        
-        return `
+  }
+
+  container.innerHTML = entries.map(([sid, p]) => {
+    const name = p.full_name || p.username || 'Người chơi';
+    const isH = sid === hostSid;
+    const isR = readyPlayers.includes(sid);
+    const ini = mkIni(name);
+    const isMe = U && p.userId === U.id;
+    const av = p.avatar_url
+      ? `<img src="${p.avatar_url}" alt="${ini}" class="av-img" onerror="this.parentElement.textContent='${ini}'" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`
+      : ini;
+
+    let readyBadge = '';
+    if (!isH) {
+      if (isR) readyBadge = '<div style="position:absolute;bottom:-4px;right:-4px;background:#16a34a;color:#fff;font-size:.65rem;padding:2px 4px;border-radius:4px;font-weight:bold;z-index:2;line-height:1">✅</div>';
+      else readyBadge = '<div style="position:absolute;bottom:-4px;right:-4px;background:#eab308;color:#fff;font-size:.65rem;padding:2px 4px;border-radius:4px;font-weight:bold;z-index:2;line-height:1">⏳</div>';
+    }
+
+    return `
           <div class="lr-player-card${isH ? ' host' : ''}${isR && !isH ? ' ready' : ''}" style="position:relative">
             ${isH ? '<div class="lr-host-crown">👑</div>' : ''}
             <div class="lr-player-av" style="position:relative">${av}${readyBadge}</div>
             <div class="lr-player-name">${escapeHtml(name)}${isMe ? ' <span style="color:var(--teal);font-size:.65rem">● Bạn</span>' : ''}</div>
             <div class="lr-player-elo">⚡ ${p.elo || 1200}</div>
           </div>`;
-    }).join('');
-    if (emptySlots) {
-        emptySlots.innerHTML = Array.from({length: Math.max(0, MAX - count)}).map(() => `
+  }).join('');
+  if (emptySlots) {
+    emptySlots.innerHTML = Array.from({ length: Math.max(0, MAX - count) }).map(() => `
           <div class="lr-empty-slot">
             <div class="lr-empty-slot-av">👤</div>
             <div>Chờ người...</div>
           </div>`).join('');
-    }
+  }
 }
 
 function openLobbyRooms() {
-    if (!U) { openM('login'); return; }
-    document.getElementById('ov-lobby').classList.add('open');
-    document.body.style.overflow = 'hidden';
-    loadLobbyRooms();
+  if (!U) { openM('login'); return; }
+  document.getElementById('ov-lobby').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  loadLobbyRooms();
 }
 function closeLobbyRooms() {
-    document.getElementById('ov-lobby').classList.remove('open');
-    document.body.style.overflow = '';
+  document.getElementById('ov-lobby').classList.remove('open');
+  document.body.style.overflow = '';
 }
 
 
@@ -2818,11 +2978,11 @@ let LB = { filter: 'all', data: [], myRank: null };
 
 // Rank colors cho pill
 const RANK_COLORS = {
-  'Electron':    { bg: '#dbeafe', color: '#1d4ed8' },
-  'Nguyên Tử':  { bg: '#ede9fe', color: '#5b21b6' },
-  'Phân Tử':    { bg: '#ccfbf1', color: '#0f766e' },
-  'Nhà Hóa Học':{ bg: '#fef3c7', color: '#92400e' },
-  'Giáo Sư':    { bg: '#ffe4e6', color: '#9f1239' },
+  'Electron': { bg: '#dbeafe', color: '#1d4ed8' },
+  'Nguyên Tử': { bg: '#ede9fe', color: '#5b21b6' },
+  'Phân Tử': { bg: '#ccfbf1', color: '#0f766e' },
+  'Nhà Hóa Học': { bg: '#fef3c7', color: '#92400e' },
+  'Giáo Sư': { bg: '#ffe4e6', color: '#9f1239' },
 };
 
 function lbSetFilter(f, btn) {
@@ -2863,7 +3023,7 @@ async function loadLeaderboard() {
     renderLeaderboard(LB.data);
     G('lb-total-count').textContent = LB.data.length + ' người chơi';
 
-  } catch(e) {
+  } catch (e) {
     listEl.innerHTML = '<div class="lb-empty">❌ Không thể tải dữ liệu. Vui lòng thử lại.</div>';
     console.error('Leaderboard error:', e);
   }
