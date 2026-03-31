@@ -524,89 +524,83 @@
     </div>
 
     <!-- ── BƯỚC 3: ĐẤU TRƯỜNG ── -->
-    <div id="ar-battle" style="display:none;min-height:100vh;padding:2.5rem 1rem;background: radial-gradient(circle at 50% 0%, rgba(13,148,136,0.12) 0%, rgba(248,250,252,1) 50%, rgba(241,245,249,1) 100%);">
-      <div style="max-width:860px;margin:0 auto">
+    <div id="ar-battle" style="display:none;min-height:100vh;padding:1rem">
+      <div style="max-width:720px;margin:0 auto">
 
-        <!-- Scoreboard vs -->
+        <!-- Scoreboard -->
         <div id="battle-2p-scoreboard"
-          style="display:grid;grid-template-columns:1fr auto 1fr;gap:2rem;align-items:center;margin-bottom:2.5rem;background:rgba(255,255,255,0.7);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.8);border-radius:24px;padding:1.5rem 2rem;box-shadow:0 12px 36px rgba(0,0,0,0.03), inset 0 0 20px rgba(255,255,255,0.5);position:relative">
-          <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--rose),#be123c);color:white;padding:5px 20px;border-radius:20px;font-size:0.75rem;font-weight:800;letter-spacing:1px;box-shadow:0 6px 16px rgba(225,29,72,0.3)">ĐẤU TRƯỜNG</div>
-          
-          <div class="battle-score-card" id="bs-me" style="display:flex;align-items:center;gap:1.2rem;background:transparent;box-shadow:none;border:none;padding:0">
-            <div class="bsc-av" id="bs-me-av" style="width:64px;height:64px;font-size:1.8rem;box-shadow:0 0 0 4px rgba(13,148,136,0.1)">?</div>
-            <div>
-              <div class="bsc-name" id="bs-me-name" style="font-size:1.1rem;margin-bottom:0.2rem;font-weight:800;color:var(--text-2)">Bạn</div>
-              <div class="bsc-score" id="bs-me-score" style="font-size:2.2rem;text-align:left;color:var(--teal);text-shadow:0 2px 10px rgba(13,148,136,0.2)">0</div>
-            </div>
+          style="display:grid;grid-template-columns:1fr auto 1fr;gap:.75rem;align-items:center;margin-bottom:1rem">
+          <div class="battle-score-card" id="bs-me">
+            <div class="bsc-av" id="bs-me-av">?</div>
+            <div class="bsc-name" id="bs-me-name">Bạn</div>
+            <div class="bsc-score" id="bs-me-score">0</div>
           </div>
-          <div style="text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative">
-            <div style="font-family:var(--font-m);font-size:3.5rem;font-weight:900;line-height:0.9;background:linear-gradient(to bottom, var(--rose), #881337);-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 4px 12px rgba(225,29,72,0.2))" id="battle-timer">60</div>
-            <div style="font-size:.7rem;color:var(--text-4);letter-spacing:4px;font-weight:800;margin-top:0.4rem">GIÂY</div>
-            <div style="margin-top:.8rem;font-size:.75rem;font-weight:800;color:var(--text-3);background:var(--bg-white);padding:4px 14px;border-radius:12px;border:1px solid var(--border-2);box-shadow:0 2px 8px rgba(0,0,0,0.02)" id="battle-topic-label">Chủ đề</div>
-          </div>
-          <div class="battle-score-card right" id="bs-opp" style="display:flex;align-items:center;gap:1.2rem;flex-direction:row-reverse;background:transparent;box-shadow:none;border:none;padding:0;text-align:right">
-            <div class="bsc-av" id="bs-opp-av" style="width:64px;height:64px;font-size:1.8rem;box-shadow:0 0 0 4px rgba(225,29,72,0.1)">?</div>
-            <div>
-              <div class="bsc-name" id="bs-opp-name" style="font-size:1.1rem;margin-bottom:0.2rem;font-weight:800;color:var(--text-2)">Đối thủ</div>
-              <div class="bsc-score" id="bs-opp-score" style="font-size:2.2rem;text-align:right;color:var(--rose);text-shadow:0 2px 10px rgba(225,29,72,0.2)">0</div>
+          <div style="text-align:center">
+            <div style="font-family:var(--font-m);font-size:2rem;font-weight:800;color:var(--rose)" id="battle-timer">60
             </div>
+            <div style="font-size:.65rem;color:var(--text-4);letter-spacing:1px">GIÂY</div>
+            <div style="margin-top:.5rem;font-size:.7rem;font-weight:700;color:var(--text-3)" id="battle-topic-label">
+              Chủ đề</div>
+          </div>
+          <div class="battle-score-card right" id="bs-opp">
+            <div class="bsc-av" id="bs-opp-av">?</div>
+            <div class="bsc-name" id="bs-opp-name">Đối thủ</div>
+            <div class="bsc-score" id="bs-opp-score">0</div>
           </div>
         </div>
-        
         <!-- FFA scoreboard (hiện trong FFA mode) -->
         <div id="ffa-scoreboard"
-          style="display:none;flex-direction:column;gap:.4rem;margin-bottom:2rem;background:rgba(255,255,255,0.7);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.6);border-radius:24px;padding:1.5rem;box-shadow:0 12px 32px rgba(0,0,0,0.03)">
+          style="display:none;flex-direction:column;gap:.3rem;margin-bottom:1rem;background:var(--bg-white);border:1px solid var(--border);border-radius:12px;padding:.75rem">
         </div>
 
         <!-- Progress bar -->
-        <div style="background:rgba(0,0,0,0.05);border-radius:100px;height:8px;margin-bottom:2.5rem;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,0.05)">
+        <div style="background:var(--border);border-radius:100px;height:5px;margin-bottom:1.2rem;overflow:hidden">
           <div id="battle-progress"
-            style="height:100%;background:linear-gradient(90deg, #10b981, var(--teal), var(--rose));border-radius:100px;transition:width 1s linear;width:100%;position:relative">
-            <div style="content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.4),transparent);opacity:0.6;animation:shimmer 2s infinite"></div>
+            style="height:100%;background:linear-gradient(90deg,var(--teal),#0891b2);border-radius:100px;transition:width 1s linear;width:100%">
           </div>
         </div>
 
         <!-- Câu hỏi -->
         <div id="battle-q-wrap"
-          style="background:var(--bg-white);border:1px solid rgba(255,255,255,0.9);border-radius:28px;padding:3.5rem 3rem;box-shadow:0 24px 48px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.02);margin-bottom:1.5rem;min-height:280px;position:relative;overflow:hidden">
-          <div style="position:absolute;top:0;left:0;width:100%;height:6px;background:linear-gradient(90deg, var(--teal), #38bdf8)"></div>
-          
-          <div style="display:flex;gap:.8rem;align-items:center;margin-bottom:2.5rem">
-            <span id="battle-q-num" style="padding:6px 16px;background:var(--teal-lt);color:var(--teal-dark);border-radius:12px;font-family:var(--font-h);font-size:.85rem;font-weight:900;border:1px solid rgba(13,148,136,0.15)">Câu 1/10</span>
+          style="background:var(--bg-white);border:1px solid var(--border);border-radius:var(--rl);padding:1.75rem;box-shadow:var(--shadow);margin-bottom:1rem;min-height:180px">
+          <div style="display:flex;gap:.6rem;align-items:center;margin-bottom:1rem">
+            <span id="battle-q-num" style="font-family:var(--font-m);font-size:.7rem;color:var(--text-4)">Câu
+              1/10</span>
             <span id="battle-q-type" class="q-type-badge"></span>
-            <span id="battle-q-topic" style="font-size:.85rem;color:var(--teal);font-weight:800;margin-left:auto;display:flex;align-items:center;gap:6px;background:var(--bg-soft);padding:6px 16px;border-radius:12px"></span>
+            <span id="battle-q-topic" style="font-size:.7rem;color:var(--teal);font-weight:700;margin-left:auto"></span>
           </div>
-          
           <div id="battle-q-text"
-            style="font-family:var(--font-h);font-size:1.5rem;font-weight:800;line-height:1.6;color:var(--text-2);margin-bottom:3rem">
+            style="font-family:var(--font-h);font-size:1.05rem;font-weight:700;line-height:1.6;margin-bottom:1.2rem">
             Đang tải câu hỏi...</div>
-            
           <!-- Trắc nghiệm -->
-          <div id="battle-mcq" style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem"></div>
-          
+          <div id="battle-mcq" style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem"></div>
           <!-- Điền số -->
           <div id="battle-input" style="display:none">
-            <div style="display:flex;gap:1rem">
-              <input id="battle-ans-inp" type="text" placeholder="Nhập đáp án số học..."
-                style="flex:1;padding:1.4rem;border:2px solid var(--border-2);border-radius:18px;background:var(--bg-soft);font-family:var(--font-h);font-size:1.2rem;font-weight:800;outline:none;transition:all .2s;color:var(--text-2)"
-                onfocus="this.style.borderColor='var(--teal)';this.style.background='var(--bg-white)';this.style.boxShadow='0 0 0 4px rgba(13,148,136,0.1)'" onblur="this.style.borderColor='var(--border-2)';this.style.background='var(--bg-soft)';this.style.boxShadow='none'"
+            <div style="display:flex;gap:.6rem">
+              <input id="battle-ans-inp" type="text" placeholder="Nhập đáp án số..."
+                style="flex:1;padding:.75rem 1rem;border:2px solid var(--border-2);border-radius:11px;font-family:var(--font-m);font-size:1rem;font-weight:700;outline:none;transition:border .2s"
+                onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--border-2)'"
                 onkeydown="if(event.key==='Enter')submitAns()">
               <button id="submit-ans-btn" onclick="submitAns()"
-                style="padding:1.4rem 2.5rem;background:linear-gradient(135deg,var(--teal),#0891b2);color:#fff;border:none;border-radius:18px;font-family:var(--font-h);font-size:1.15rem;font-weight:900;cursor:pointer;white-space:nowrap;box-shadow:0 8px 20px rgba(13,148,136,0.25);transition:transform 0.2s"
-                onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">Trả lời ↵</button>
+                style="padding:.75rem 1.4rem;background:linear-gradient(135deg,var(--teal),#0891b2);color:#fff;border:none;border-radius:11px;font-family:var(--font-h);font-weight:800;cursor:pointer;white-space:nowrap">Trả
+                lời ↵</button>
             </div>
           </div>
         </div>
 
         <!-- Feedback flash -->
         <div id="battle-feedback"
-          style="display:none;text-align:center;padding:1.2rem;border-radius:18px;font-family:var(--font-h);font-weight:800;font-size:1.1rem;margin-bottom:1.5rem;box-shadow:0 8px 24px rgba(0,0,0,0.06)">
+          style="display:none;text-align:center;padding:.75rem;border-radius:11px;font-weight:700;font-size:.9rem;margin-bottom:.75rem">
         </div>
 
         <!-- Opp action indicator -->
         <div id="opp-answered"
-          style="display:none;align-items:center;justify-content:center;font-family:var(--font-m);font-size:.9rem;font-weight:700;color:white;background:var(--rose);padding:8px 20px;border-radius:24px;box-shadow:0 6px 16px rgba(225,29,72,0.3);width:fit-content;margin:0 auto 1.5rem">
-          <span id="opp-name-ind" style="margin-right:6px"></span> đã chọn đáp án ⚡
+          style="display:none;text-align:center;font-size:.8rem;color:var(--text-4);margin-bottom:.5rem">
+          <span id="opp-name-ind"></span> đã trả lời câu này ⚡
+        </div>
+        <div id="cooldown-indicator"
+          style="display:none; text-align:center; margin-top:0.5rem; font-size:0.8rem; color:var(--rose); font-weight:bold">
+          ⏳ Đóng băng: <span id="cooldown-seconds">3</span>s
         </div>
       </div>
     </div>
