@@ -68,12 +68,13 @@ def broadcast_presence():
 
 def make_user_payload(u):
     return {
-        "userId":    u.get("userId"),
-        "full_name": u.get("full_name", ""),
-        "username":  u.get("username", ""),
-        "elo":       u.get("elo", 1200),
-        "wins":      u.get("wins", 0),
-        "losses":    u.get("losses", 0),
+        "userId":     u.get("userId"),
+        "full_name":  u.get("full_name", ""),
+        "username":   u.get("username", ""),
+        "elo":        u.get("elo", 1200),
+        "wins":       u.get("wins", 0),
+        "losses":     u.get("losses", 0),
+        "avatar_url": u.get("avatar_url", ""),
     }
 
 
@@ -222,6 +223,63 @@ def health():
 
 
 # ══════════════════════════════════════
+#   AVATAR UPLOAD
+# ══════════════════════════════════════
+ALLOWED_MIME = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+MAX_AVATAR_BYTES = 3 * 1024 * 1024  # 3 MB
+
+
+@app.route("/upload-avatar", methods=["POST"])
+def upload_avatar():
+    """Receive a base64-encoded image, push to Supabase Storage, update profiles."""
+    try:
+        body = request.get_json(force=True)
+        user_id  = body.get("userId", "").strip()
+        mime     = body.get("mime", "image/jpeg")
+        b64data  = body.get("data", "")
+
+        if not user_id:
+            return {"error": "userId required"}, 400
+        if mime not in ALLOWED_MIME:
+            return {"error": "Loại file không được hỗ trợ (chỉ jpg/png/webp/gif)"}, 400
+
+        import base64
+        raw = base64.b64decode(b64data)
+        if len(raw) > MAX_AVATAR_BYTES:
+            return {"error": "Ảnh quá lớn (tối đa 3 MB)"}, 413
+
+        ext  = mime.split("/")[1].replace("jpeg", "jpg")
+        path = f"avatars/{user_id}.{ext}"
+
+        # Upsert vào Supabase Storage bucket "avatars"
+        supabase.storage.from_("avatars").upload(
+            path, raw,
+            {"content-type": mime, "upsert": "true"},
+        )
+
+        # Lấy public URL
+        pub = supabase.storage.from_("avatars").get_public_url(path)
+        # Thêm cache-bust để browser reload ảnh mới
+        import time
+        avatar_url = f"{pub}?v={int(time.time())}"
+
+        # Lưu vào profiles
+        supabase.table("profiles").update({"avatar_url": avatar_url}).eq("id", user_id).execute()
+
+        # Cập nhật online_users nếu user đang online
+        uid_sid = uid_to_sid.get(user_id)
+        if uid_sid and uid_sid in online_users:
+            online_users[uid_sid]["avatar_url"] = avatar_url
+            broadcast_presence()
+
+        return {"url": avatar_url}, 200
+
+    except Exception as e:
+        print("upload_avatar error:", e)
+        return {"error": str(e)}, 500
+
+
+# ══════════════════════════════════════
 #   CONNECTION LIFECYCLE
 # ══════════════════════════════════════
 @socketio.on("connect")
@@ -276,13 +334,14 @@ def handle_presence_join(data):
         sid_to_uid.pop(old_sid, None)
 
     entry = {
-        "sid":       sid,
-        "userId":    uid,
-        "full_name": data.get("full_name", ""),
-        "username":  data.get("username", ""),
-        "elo":       int(data.get("elo", 1200)),
-        "wins":      int(data.get("wins", 0)),
-        "losses":    int(data.get("losses", 0)),
+        "sid":        sid,
+        "userId":     uid,
+        "full_name":  data.get("full_name", ""),
+        "username":   data.get("username", ""),
+        "elo":        int(data.get("elo", 1200)),
+        "wins":       int(data.get("wins", 0)),
+        "losses":     int(data.get("losses", 0)),
+        "avatar_url": data.get("avatar_url", ""),
     }
     online_users[sid] = entry
     sid_to_uid[sid]   = uid

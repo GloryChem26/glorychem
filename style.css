@@ -1,4 +1,3 @@
-
 :root {
   --bg:        #f5f7fa;
   --bg-soft:   #edf0f5;
@@ -808,20 +807,250 @@ nav{
 /* ov-friend open */
 #ov-friend.open,#ov-invite.open{display:flex!important}
 
+/* ════════════════════════════
+   BOTTOM NAV — MOBILE ONLY
+════════════════════════════ */
+:root { --bottom-nav-h: 64px; }
+
+.bottom-nav { display: none; }
+
+.bn-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  flex: 1;
+  padding: 0.4rem 0.25rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 12px;
+  transition: all .18s;
+  text-decoration: none;
+  position: relative;
+  min-width: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.bn-icon {
+  font-size: 1.35rem;
+  line-height: 1;
+  transition: transform .2s;
+}
+.bn-label {
+  font-family: var(--font-b);
+  font-size: 0.63rem;
+  font-weight: 700;
+  color: var(--text-4);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  transition: color .18s;
+}
+.bn-item.active .bn-label { color: var(--teal); }
+.bn-item.active .bn-icon  { transform: translateY(-2px); }
+.bn-item.active::before {
+  content: '';
+  position: absolute;
+  top: 0.28rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 28px;
+  height: 3px;
+  border-radius: 100px;
+  background: var(--teal);
+}
+.bn-item:active { transform: scale(0.92); }
+
 /* ═══ RESPONSIVE ═══ */
-@media(max-width:640px){
-  nav{padding:0 1rem}
-  .nav-links{display:none}
-  .mgrid,.frow{grid-template-columns:1fr}
-  .stats{grid-template-columns:repeat(2,1fr)}
-  .el-row{display:none}
-  .wb-stats{gap:1rem}
-  .welcome-banner{padding:1.5rem 1.25rem;margin:0 1rem 2rem}
-  .pf-grid{grid-template-columns:1fr}
-  .profile-header{flex-direction:column;text-align:center}
-  .ptabs{flex-direction:column}
-  .p-actions{flex-direction:column;align-items:stretch}
-  .psave,.pcancel{justify-content:center}
+@media (max-width: 640px) {
+  /* ── Bottom nav: fixed to bottom ── */
+  .bottom-nav {
+    display: flex !important;
+    position: fixed !important;
+    top: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 9100;
+    height: var(--bottom-nav-h);
+    background: rgba(255,255,255,0.97);
+    -webkit-backdrop-filter: blur(20px) saturate(1.6);
+    backdrop-filter: blur(20px) saturate(1.6);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.08);
+    padding: 0 0.25rem;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    align-items: stretch;
+    justify-content: space-around;
+    gap: 0;
+  }
+  /* Nav — hide links, keep logo + auth buttons */
+  nav {
+    padding: 0 1rem;
+    height: 56px;
+    --nav-h: 56px;
+  }
+  .nav-links { display: none; }
+
+  /* Pages get padding for both top nav AND bottom nav */
+  .page {
+    padding-top: 56px;
+    padding-bottom: var(--bottom-nav-h);
+  }
+
+  /* Hero */
+  .hero {
+    padding: 2.5rem 1.25rem 2rem;
+    min-height: calc(100vh - 56px - var(--bottom-nav-h));
+  }
+  .h1 { letter-spacing: -1.5px; }
+  .hsub { font-size: .93rem; }
+  .hbtns { gap: .6rem; }
+  .hbtns .btn-xl { padding: .75rem 1.4rem; font-size: .9rem; }
+  .el-row { display: none; }
+
+  /* Stats bar — 2 cols */
+  .stats { grid-template-columns: repeat(2,1fr); }
+  .sc { padding: 1rem .75rem; }
+  .sv { font-size: 1.4rem; }
+
+  /* Section */
+  .sec { padding: 3rem 1.25rem; }
+  .sh2 { font-size: 1.45rem; }
+
+  /* Grids */
+  .mgrid, .frow { grid-template-columns: 1fr; }
+  .fg3 { grid-template-columns: 1fr; gap: .85rem; }
+  .fg2 { grid-template-columns: 1fr; }
+
+  /* Welcome banner */
+  .wb-stats { gap: 1rem; }
+  .welcome-banner { padding: 1.5rem 1.25rem; margin: 0 1rem 2rem; }
+
+  /* Profile */
+  .pf-grid { grid-template-columns: 1fr; }
+  .profile-header { flex-direction: column; text-align: center; }
+  .ptabs { flex-direction: column; gap: .3rem; }
+  .p-actions { flex-direction: column; align-items: stretch; }
+  .psave, .pcancel { justify-content: center; }
+  .profile-wrap { padding: 1.5rem 1rem 2rem; }
+
+  /* Auth buttons in nav — smaller */
+  .nav-r .btn { font-size: .78rem; padding: .4rem .8rem; border-radius: 9px; }
+
+  /* Toast — full width bottom */
+  .tw {
+    bottom: calc(var(--bottom-nav-h) + .75rem);
+    right: 1rem;
+    left: 1rem;
+  }
+  .toast { min-width: unset; width: 100%; }
+
+  /* Modal – căn giữa, không bị bottom-nav che */
+  .overlay {
+    align-items: center !important;
+    padding: 1rem;
+    padding-bottom: calc(var(--bottom-nav-h) + 0.5rem);
+    z-index: 10000;
+  }
+  .modal {
+    max-height: calc(90vh - var(--bottom-nav-h) - 1rem);
+    margin: 0;
+    border-radius: 24px;
+  }
+
+  /* Challenge / Arena */
+  .arena { padding: 0 1rem 2rem; }
+  .pbar { padding: .9rem 1rem; gap: .75rem; }
+  .peloval { font-size: 1.35rem; }
+
+  /* Leaderboard */
+  .lb-head { padding: 2rem 1rem 1.5rem; }
+  .lb-table-wrap { padding: 0 .75rem; }
+  .lb-filter-bar { padding: 0 .75rem; }
+  #lb-my-rank-card { padding: 0 .75rem; }
+}
+
+@media (max-width: 480px) {
+  /* Nav — hide links, keep logo + auth buttons */
+  nav {
+    padding: 0 1rem;
+    height: 56px;
+    --nav-h: 56px;
+  }
+  .nav-links { display: none; }
+
+  /* Pages get padding for both top nav AND bottom nav */
+  .page {
+    padding-top: 56px;
+    padding-bottom: var(--bottom-nav-h);
+  }
+
+  /* Hero */
+  .hero {
+    padding: 2.5rem 1.25rem 2rem;
+    min-height: calc(100vh - 56px - var(--bottom-nav-h));
+  }
+  .h1 { letter-spacing: -1.5px; }
+  .hsub { font-size: .93rem; }
+  .hbtns { gap: .6rem; }
+  .hbtns .btn-xl { padding: .75rem 1.4rem; font-size: .9rem; }
+  .el-row { display: none; }
+
+  /* Stats bar — 2 cols */
+  .stats { grid-template-columns: repeat(2,1fr); }
+  .sc { padding: 1rem .75rem; }
+  .sv { font-size: 1.4rem; }
+
+  /* Section */
+  .sec { padding: 3rem 1.25rem; }
+  .sh2 { font-size: 1.45rem; }
+
+  /* Grids */
+  .mgrid, .frow { grid-template-columns: 1fr; }
+  .fg3 { grid-template-columns: 1fr; gap: .85rem; }
+  .fg2 { grid-template-columns: 1fr; }
+
+  /* Welcome banner */
+  .wb-stats { gap: 1rem; }
+  .welcome-banner { padding: 1.5rem 1.25rem; margin: 0 1rem 2rem; }
+
+  /* Profile */
+  .pf-grid { grid-template-columns: 1fr; }
+  .profile-header { flex-direction: column; text-align: center; }
+  .ptabs { flex-direction: column; gap: .3rem; }
+  .p-actions { flex-direction: column; align-items: stretch; }
+  .psave, .pcancel { justify-content: center; }
+  .profile-wrap { padding: 1.5rem 1rem 2rem; }
+
+  /* Auth buttons in nav — smaller */
+  .nav-r .btn { font-size: .78rem; padding: .4rem .8rem; border-radius: 9px; }
+
+  /* Toast — full width bottom */
+  .tw {
+    bottom: calc(var(--bottom-nav-h) + .75rem);
+    right: 1rem;
+    left: 1rem;
+  }
+  .toast { min-width: unset; width: 100%; }
+
+  /* Modal padding */
+  .modal { border-radius: 20px 20px 0 0; max-height: 90vh; overflow-y: auto; }
+  .overlay { align-items: flex-end; padding: 0; }
+
+  /* Challenge / Arena */
+  .arena { padding: 0 1rem 2rem; }
+  .pbar { padding: .9rem 1rem; gap: .75rem; }
+  .peloval { font-size: 1.35rem; }
+
+  /* Leaderboard */
+  .lb-head { padding: 2rem 1rem 1.5rem; }
+  .lb-table-wrap { padding: 0 .75rem; }
+  .lb-filter-bar { padding: 0 .75rem; }
+  #lb-my-rank-card { padding: 0 .75rem; }
 }
 
 @keyframes fadePulse {
@@ -1245,8 +1474,91 @@ nav{
   .lb-table-header span:nth-child(5),
   .lb-wins-val,
   .lb-losses-val { display: none; }
-  .lb-rank-badge { width: 70px; }
-  .lb-elo-val { width: 70px; }
+
+  .lb-row { padding: .65rem .75rem; }
+  .lb-rank-num { width: 32px; font-size: .85rem; }
+  .lb-av { width: 32px; height: 32px; font-size: .75rem; }
+  .lb-player-info { gap: .5rem; min-width: 0; flex: 1; overflow: hidden; }
+  .lb-player-name { font-size: .82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .lb-player-un   { font-size: .68rem; }
+  .lb-elo-val { width: 52px; font-size: .82rem; }
+  .lb-rank-badge { width: 62px; }
+  .lb-rank-pill  { font-size: .6rem; padding: .18rem .45rem; }
   .lb-my-right { gap: .9rem; }
   .lb-podium { gap: .6rem; }
+  .lb-table-header { padding: .45rem .75rem; font-size: .65rem; }
+}
+/* ══════════════════════════════════════
+   AVATAR IMAGE — dùng chung cho mọi vị trí
+   ══════════════════════════════════════ */
+.av-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  display: block;
+}
+
+/* Đảm bảo container avatar hỗ trợ ảnh */
+.uav, .pav, .wb-avatar,
+.lpc-av, .bsc-av,
+.lb-av, .lb-pod-av, .lb-my-av,
+.ph-avatar {
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ── Upload avatar wrapper trong profile ── */
+.ph-avatar-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .45rem;
+  position: relative;
+}
+
+.av-upload-label {
+  cursor: pointer;
+}
+
+.av-upload-btn {
+  display: inline-block;
+  padding: .3rem .85rem;
+  background: var(--teal);
+  color: #fff;
+  font-size: .75rem;
+  font-weight: 700;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background .18s, opacity .18s;
+  white-space: nowrap;
+  user-select: none;
+}
+.av-upload-btn:hover { background: var(--teal-d, #0d9488); opacity: .9; }
+.av-upload-label input[type=file] { display: none; }
+
+.av-upload-hint {
+  font-size: .67rem;
+  color: var(--muted, #94a3b8);
+  text-align: center;
+}
+
+/* Drag-over state để kéo thả ảnh lên avatar */
+.ph-avatar-wrap.dragover .ph-avatar {
+  outline: 3px dashed var(--teal);
+  opacity: .8;
+}
+
+/* Podium avatar với ảnh thật — xóa background gradient */
+.lb-pod-av:has(.av-img) {
+  background: #e2e8f0 !important;
+  padding: 0;
+}
+
+@media (max-width: 600px) {
+  .ph-avatar-wrap { gap: .35rem; }
+  .av-upload-btn  { font-size: .7rem; padding: .25rem .7rem; }
 }

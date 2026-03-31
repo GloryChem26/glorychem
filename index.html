@@ -529,7 +529,15 @@
 
     <!-- Header card -->
     <div class="profile-header">
-      <div class="ph-avatar" id="ph-av">?</div>
+      <div class="ph-avatar-wrap">
+        <div class="ph-avatar" id="ph-av">?</div>
+        <label class="av-upload-label" title="Đổi ảnh đại diện">
+          <span id="av-upload-btn" class="av-upload-btn">📷 Đổi ảnh</span>
+          <input type="file" id="av-file-input" accept="image/jpeg,image/png,image/webp,image/gif"
+            style="display:none" onchange="if(this.files[0]) uploadAvatar(this.files[0]); this.value='';">
+        </label>
+        <div class="av-upload-hint">JPG, PNG, WebP · Tối đa 3MB</div>
+      </div>
       <div class="ph-info">
         <div class="ph-name" id="ph-name">Đang tải...</div>
         <div class="ph-un" id="ph-un">@username</div>
@@ -883,6 +891,27 @@
 
 <div class="tw" id="tw"></div>
 <script src="/script.js"></script>
+
+<!-- ═══ BOTTOM NAV (Mobile) ═══ -->
+<nav class="bottom-nav" id="bottom-nav">
+  <button class="bn-item active" id="bn-home" onclick="gp('home')">
+    <span class="bn-icon">🏠</span>
+    <span class="bn-label">Trang Chủ</span>
+  </button>
+  <button class="bn-item" id="bn-challenge" onclick="gp('challenge')">
+    <span class="bn-icon">⚔️</span>
+    <span class="bn-label">Thách Đấu</span>
+  </button>
+  <button class="bn-item" id="bn-leaderboard" onclick="gp('leaderboard')">
+    <span class="bn-icon">🏆</span>
+    <span class="bn-label">BXH</span>
+  </button>
+  <button class="bn-item" id="bn-lesson" onclick="return false">
+    <span class="bn-icon">📚</span>
+    <span class="bn-label">Bài Học</span>
+  </button>
+
+</nav>
 
 </body>
 </html>

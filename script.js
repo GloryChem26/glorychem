@@ -280,6 +280,146 @@ async function loadP() {
   try { const { data } = await sb.from('profiles').select('*').eq('id', U.id).single(); if (data) U.profile = data; } catch(e) {}
 }
 
+// ── AVATAR HELPERS ──
+/**
+ * Trả về HTML cho một avatar element:
+ * - Nếu có avatar_url → <img>
+ * - Nếu không → initials text
+ * targetClass: CSS class của container (uav / lpc-av / bsc-av / ...)
+ */
+function mkAvHTML(name, avatarUrl, extraClass = '') {
+  if (avatarUrl) {
+    return `<img src="${avatarUrl}" alt="${name}" class="av-img ${extraClass}" onerror="this.style.display='none';this.nextSibling.style.display=''"><span style="display:none">${mkIni(name)}</span>`;
+  }
+  return mkIni(name);
+}
+
+/**
+ * Set nội dung avatar cho một element DOM:
+ * el: HTMLElement
+ */
+function setAvEl(el, name, avatarUrl) {
+  if (!el) return;
+  if (avatarUrl) {
+    el.innerHTML = `<img src="${avatarUrl}" alt="${name}" class="av-img" onerror="this.innerHTML='${mkIni(name)}'">`;
+  } else {
+    el.textContent = mkIni(name);
+  }
+}
+
+/**
+ * Upload avatar lên server, cập nhật profile
+ */
+async function uploadAvatar(file) {
+  if (!U || !sb) return;
+  const LIMIT = 3 * 1024 * 1024;
+  if (file.size > LIMIT) { toast('err', '❌ Ảnh quá lớn! Tối đa 3MB.'); return; }
+
+  const allowedTypes = ['image/jpeg','image/png','image/webp','image/gif'];
+  if (!allowedTypes.includes(file.type)) { toast('err', '❌ Chỉ hỗ trợ JPG, PNG, WebP, GIF'); return; }
+
+  const uploadBtn = G('av-upload-btn');
+  if (uploadBtn) { uploadBtn.disabled = true; uploadBtn.textContent = '⏳ Đang tải...'; }
+
+  // Preview tạm bằng Object URL
+  const previewUrl = URL.createObjectURL(file);
+  if (!U.profile) U.profile = {};
+  const prevAv = U.profile.avatar_url;
+  U.profile.avatar_url = previewUrl;
+  refreshAllAvatars();
+
+  try {
+    const ext  = file.type.split('/')[1].replace('jpeg','jpg');
+    const path = `${U.id}.${ext}`;
+
+    // Upload lên Supabase Storage bucket "avatars" (upsert)
+    const { error: upErr } = await sb.storage
+      .from('avatars')
+      .upload(path, file, { upsert: true, contentType: file.type });
+    if (upErr) throw upErr;
+
+    // Lấy public URL (thêm cache-bust)
+    const { data: pubData } = sb.storage.from('avatars').getPublicUrl(path);
+    const avatarUrl = pubData.publicUrl + '?v=' + Date.now();
+
+    // Lưu vào profiles
+    const { error: dbErr } = await sb.from('profiles')
+      .update({ avatar_url: avatarUrl })
+      .eq('id', U.id);
+    if (dbErr) throw dbErr;
+
+    // Cập nhật local state
+    U.profile.avatar_url = avatarUrl;
+    URL.revokeObjectURL(previewUrl);
+    refreshAllAvatars();
+    toast('ok', '✅ Cập nhật ảnh đại diện thành công!');
+
+    // Cập nhật presence socket
+    if (socket && socket.connected) {
+      socket.emit('presence:join', {
+        userId:     U.id,
+        full_name:  U.profile?.full_name  || U.email?.split('@')[0],
+        username:   U.profile?.username   || '',
+        elo:        U.profile?.elo        || 1200,
+        wins:       U.profile?.wins       || 0,
+        losses:     U.profile?.losses     || 0,
+        avatar_url: avatarUrl,
+      });
+    }
+  } catch(err) {
+    console.error('uploadAvatar error:', err);
+    // Rollback preview
+    U.profile.avatar_url = prevAv;
+    URL.revokeObjectURL(previewUrl);
+    refreshAllAvatars();
+
+    // Thông báo lỗi rõ ràng
+    let msg = err.message || 'Lỗi không xác định';
+    if (msg.includes('Bucket not found') || msg.includes('bucket')) {
+      msg = 'Bucket "avatars" chưa được tạo trong Supabase Storage.';
+    } else if (msg.includes('not allowed') || msg.includes('policy')) {
+      msg = 'Chưa cấu hình Storage Policy. Vào Supabase → Storage → Policies.';
+    }
+    toast('err', '❌ ' + msg);
+  } finally {
+    if (uploadBtn) { uploadBtn.disabled = false; uploadBtn.textContent = '📷 Đổi ảnh'; }
+  }
+}
+
+/**
+ * Làm mới tất cả các avatar trên toàn trang với thông tin hiện tại
+ */
+function refreshAllAvatars() {
+  const p = U?.profile;
+  const name = p?.full_name || U?.email?.split('@')[0] || 'Người dùng';
+  const av = p?.avatar_url || '';
+  const ini = mkIni(name);
+
+  // Nav pill avatar
+  const uavEl = document.querySelector('.uav');
+  if (uavEl) setAvEl(uavEl, name, av);
+
+  // Challenge page avatar
+  const pavEl = G('pav');
+  if (pavEl) setAvEl(pavEl, name, av);
+
+  // Welcome banner
+  const wbAvEl = G('wb-av');
+  if (wbAvEl) setAvEl(wbAvEl, name, av);
+
+  // Profile header
+  const phAvEl = G('ph-av');
+  if (phAvEl) setAvEl(phAvEl, name, av);
+
+  // Battle scoreboard - my side (nếu đang battle)
+  const bsMeEl = G('bs-me-av');
+  if (bsMeEl && AR.oppId) setAvEl(bsMeEl, name, av);
+
+  // Lobby - my side (nếu đang lobby)
+  const lpMeEl = G('lp-me-av');
+  if (lpMeEl && AR.oppId) setAvEl(lpMeEl, name, av);
+}
+
 function submitAnswer(answer) {
   if (AR.answered) return;
   AR.answered = true;
@@ -300,12 +440,12 @@ function renderIn() {
   const elo = p?.elo || 1200;
   const wins = p?.wins || 0;
   const rank = getRankFromElo(elo);
-
+  const av = p?.avatar_url || '';
 
   // Nav avatar pill
   G('nav-r').innerHTML = `
     <div class="upill" tabindex="0">
-      <div class="uav">${ini}</div>
+      <div class="uav">${av ? `<img src="${av}" alt="${name}" class="av-img" onerror="this.parentElement.textContent='${ini}'">` : ini}</div>
       <span class="un">${name.split(' ').pop()}</span>
       <span class="chv">▾</span>
       <div class="dmenu">
@@ -321,7 +461,7 @@ function renderIn() {
   G('s-in').style.display = 'block';
   G('pname').textContent = name;
   G('pmeta').textContent = `@${un} · Electron`;
-  G('pav').textContent = ini;
+  setAvEl(G('pav'), name, av);
   G('peloval').textContent = elo;
 
   // Hero section toggle
@@ -329,7 +469,7 @@ function renderIn() {
   G('hero-logged-in').style.display = 'block';
 
   // Welcome banner
-  G('wb-av').textContent = ini;
+  setAvEl(G('wb-av'), name, av);
   G('wb-name').textContent = `Chào mừng, ${name.split(' ').pop()}! 👋`;
   G('wb-sub').textContent = `@${un} · Tiếp tục hành trình chinh phục Hóa học`;
 
@@ -351,6 +491,7 @@ function renderIn() {
       elo: U.profile?.elo || 1200,
       wins: U.profile?.wins || 0,
       losses: U.profile?.losses || 0,
+      avatar_url: U.profile?.avatar_url || '',
     });
   }
 }
@@ -529,6 +670,10 @@ function gp(id) {
   document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
   const m = {home:'nl-home', challenge:'nl-challenge', leaderboard:'nl-leaderboard'};
   if (m[id]) G(m[id])?.classList.add('active');
+  // Sync bottom nav
+  document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('active'));
+  const bm = {home:'bn-home', challenge:'bn-challenge', leaderboard:'bn-leaderboard', profile:'bn-profile'};
+  if (bm[id]) G(bm[id])?.classList.add('active');
 
   // Load leaderboard khi chuyển tab
   if (id === 'leaderboard') { loadLeaderboard(); }
@@ -543,6 +688,21 @@ function openProfile() {
   gp('profile');
   loadProfileFields();
   swPTab('info');
+  // Khởi tạo drag-and-drop cho avatar wrapper
+  setupAvatarDragDrop();
+}
+
+function setupAvatarDragDrop() {
+  const wrap = document.querySelector('.ph-avatar-wrap');
+  if (!wrap || wrap._ddInit) return;
+  wrap._ddInit = true;
+  ['dragenter','dragover'].forEach(ev => wrap.addEventListener(ev, e => {
+    e.preventDefault(); wrap.classList.add('dragover');
+  }));
+  ['dragleave','drop'].forEach(ev => wrap.addEventListener(ev, e => {
+    e.preventDefault(); wrap.classList.remove('dragover');
+    if (ev === 'drop' && e.dataTransfer?.files[0]) uploadAvatar(e.dataTransfer.files[0]);
+  }));
 }
 
 function swPTab(t) {
@@ -561,9 +721,17 @@ function loadProfileFields() {
   const email= p?.email     || U?.email || '';
   const dob  = p?.date_of_birth || '';
   const ini  = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2) || '?';
+  const av   = p?.avatar_url || '';
 
-  // Header
-  G('ph-av').textContent   = ini;
+  // Header avatar
+  const phAvEl = G('ph-av');
+  if (phAvEl) {
+    if (av) {
+      phAvEl.innerHTML = `<img src="${av}" alt="${name}" class="av-img" onerror="this.parentElement.textContent='${ini}'">`;
+    } else {
+      phAvEl.textContent = ini;
+    }
+  }
   G('ph-name').textContent = name || 'Người dùng';
   G('ph-un').textContent   = un ? `@${un}` : '';
 
@@ -1022,14 +1190,16 @@ function enterLobby() {
   const me = getMyInfo();
   const opp = AR.oppProfile;
   const oppName = opp?.full_name || opp?.username || 'Đối thủ';
+  const myAv = U?.profile?.avatar_url || '';
+  const oppAv = opp?.avatar_url || '';
 
   // Render player cards
-  G('lp-me-av').textContent   = mkIni(me.name);
+  setAvEl(G('lp-me-av'), me.name, myAv);
   G('lp-me-name').textContent = me.name;
   G('lp-me-elo').textContent  = `ELO: ${me.elo}`;
   G('lp-me-rec').textContent  = `${me.wins}W — ${me.losses}L`;
 
-  G('lp-opp-av').textContent   = mkIni(oppName);
+  setAvEl(G('lp-opp-av'), oppName, oppAv);
   G('lp-opp-name').textContent = oppName;
   G('lp-opp-elo').textContent  = `ELO: ${opp?.elo || 1200}`;
   const oppWins = opp?.wins||0, oppLosses = opp?.losses||0;
@@ -1150,9 +1320,11 @@ function startBattle(questionsJson) {
   // Init scoreboard
   const me = getMyInfo();
   const oppName = AR.oppProfile?.full_name || AR.oppProfile?.username || 'Đối thủ';
-  G('bs-me-av').textContent    = mkIni(me.name);
+  const myAv  = U?.profile?.avatar_url || '';
+  const oppAv = AR.oppProfile?.avatar_url || '';
+  setAvEl(G('bs-me-av'), me.name, myAv);
   G('bs-me-name').textContent  = me.name;
-  G('bs-opp-av').textContent   = mkIni(oppName);
+  setAvEl(G('bs-opp-av'), oppName, oppAv);
   G('bs-opp-name').textContent = oppName;
   updateBattleScore();
 
@@ -1198,9 +1370,11 @@ function renderBattleQuestion(data) {
   // Cập nhật thông tin người chơi (tên, avatar)
   const me = getMyInfo();
   const oppName = AR.oppProfile?.full_name || AR.oppProfile?.username || 'Đối thủ';
-  G('bs-me-av').textContent = mkIni(me.name);
+  const myAv  = U?.profile?.avatar_url || '';
+  const oppAv = AR.oppProfile?.avatar_url || '';
+  setAvEl(G('bs-me-av'), me.name, myAv);
   G('bs-me-name').textContent = me.name;
-  G('bs-opp-av').textContent = mkIni(oppName);
+  setAvEl(G('bs-opp-av'), oppName, oppAv);
   G('bs-opp-name').textContent = oppName;
 
   // Cập nhật điểm hiện tại (giữ nguyên từ trước)
@@ -1907,6 +2081,7 @@ function initSocket() {
       elo: U.profile?.elo || 1200,
       wins: U.profile?.wins || 0,
       losses: U.profile?.losses || 0,
+      avatar_url: U.profile?.avatar_url || '',
     });
   });
 
@@ -2094,7 +2269,7 @@ async function loadLeaderboard() {
   try {
     const { data, error } = await sb
       .from('profiles')
-      .select('id, full_name, username, elo, wins, losses')
+      .select('id, full_name, username, elo, wins, losses, avatar_url')
       .order('elo', { ascending: false })
       .limit(100);
 
@@ -2137,14 +2312,23 @@ function renderPodium(data) {
       return;
     }
     const name = p.full_name || p.username || 'Ẩn danh';
-    av.textContent = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+    const ini = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+
+    if (p.avatar_url) {
+      av.innerHTML = `<img src="${p.avatar_url}" alt="${name}" class="av-img" onerror="this.parentElement.textContent='${ini}'">`;
+    } else {
+      av.textContent = ini;
+    }
+    // Reset inline background khi có ảnh
+    if (!p.avatar_url) {
+      if (rank === 1) av.style.background = 'linear-gradient(135deg,#d97706,#fbbf24)';
+      else if (rank === 2) av.style.background = 'linear-gradient(135deg,#64748b,#94a3b8)';
+      else av.style.background = 'linear-gradient(135deg,#92400e,#d97706)';
+    } else {
+      av.style.background = 'transparent';
+    }
     nameEl.textContent = name.split(' ').pop();
     eloEl.textContent = (p.elo || 1200) + ' ELO';
-
-    // Gold tint for #1 avatar
-    if (rank === 1) av.style.background = 'linear-gradient(135deg,#d97706,#fbbf24)';
-    else if (rank === 2) av.style.background = 'linear-gradient(135deg,#64748b,#94a3b8)';
-    else av.style.background = 'linear-gradient(135deg,#92400e,#d97706)';
   });
 }
 
@@ -2158,9 +2342,10 @@ function renderMyRankCard(profile, rank) {
   const ini = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
   const elo = profile.elo || 1200;
   const rankName = getRankFromElo(elo);
+  const av = profile.avatar_url || U?.profile?.avatar_url || '';
 
   G('lb-my-badge').textContent = '#' + rank;
-  G('lb-my-av').textContent = ini;
+  setAvEl(G('lb-my-av'), name, av);
   G('lb-my-name').textContent = name;
   G('lb-my-sub').textContent = (un ? '@' + un + ' · ' : '') + rankName;
   G('lb-my-elo').textContent = elo;
@@ -2198,14 +2383,16 @@ function renderLeaderboard(data) {
     const rc = RANK_COLORS[rankName] || { bg: '#f1f5f9', color: '#475569' };
     const isMe = U && p.id === U.id;
     const topClass = rank === 1 ? 'lb-top1' : rank === 2 ? 'lb-top2' : rank === 3 ? 'lb-top3' : '';
-
     const rankEmoji = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank;
     const rankNumClass = rank <= 3 ? 'lb-rank-num top' : 'lb-rank-num';
+    const avHtml = p.avatar_url
+      ? `<img src="${p.avatar_url}" alt="${name}" class="av-img" onerror="this.parentElement.textContent='${ini}'">`
+      : ini;
 
     return `<div class="lb-row ${topClass} ${isMe ? 'lb-me' : ''}" style="animation-delay:${i * 0.03}s">
       <div class="${rankNumClass}">${rankEmoji}</div>
       <div class="lb-player-info">
-        <div class="lb-av">${ini}</div>
+        <div class="lb-av">${avHtml}</div>
         <div>
           <div class="lb-player-name">${name}${isMe ? ' <span style="font-size:.68rem;color:var(--teal);font-weight:900">● Bạn</span>' : ''}</div>
           <div class="lb-player-un">${un ? '@' + un : ''}</div>
