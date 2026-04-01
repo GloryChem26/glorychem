@@ -13,6 +13,7 @@
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/lesson.css">
   <script>
     (function () {
       const storedTheme = localStorage.getItem('glorychem-theme');
@@ -36,8 +37,9 @@
     <ul class="nav-links">
       <li><a href="#" id="nl-home" class="active" onclick="gp('home');return false">Trang Chủ</a></li>
       <li><a href="#" id="nl-challenge" onclick="gp('challenge');return false">Thách Đấu</a></li>
+      <li><a href="#" id="nl-lesson" onclick="gp('lesson');return false">Bài Học</a></li>
       <li><a href="#" id="nl-leaderboard" onclick="gp('leaderboard');return false">Bảng Xếp Hạng</a></li>
-      <li><a href="#" onclick="return false">Bài Học</a></li>
+
     </ul>
     <div class="nav-r-wrapper">
       <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
@@ -54,215 +56,423 @@
   <!-- ═══ HOME ═══ -->
   <div id="page-home" class="page active">
 
-    <!-- Floating formula decorations -->
-    <span class="formula-deco" style="top:18%;left:4%">H₂SO₄ + 2NaOH →</span>
-    <span class="formula-deco" style="top:35%;right:3%">CH₃COOH ⇌ CH₃COO⁻ + H⁺</span>
-    <span class="formula-deco" style="top:72%;left:6%">Fe₂O₃ + 3CO → 2Fe + 3CO₂</span>
-    <span class="formula-deco" style="top:55%;right:5%">C₆H₁₂O₆ + 6O₂ → 6CO₂ + 6H₂O</span>
-    <span class="formula-deco" style="top:82%;right:8%">Zn + 2HCl → ZnCl₂ + H₂↑</span>
+    <!-- ═══ HERO — MAGAZINE SPLIT ═══ -->
+    <section class="mg-hero">
 
-    <section class="hero">
+      <!-- Left: editorial block -->
+      <div class="mg-hero-left">
 
-      <!-- ─── LOGGED OUT HERO ─── -->
-      <div id="hero-logged-out">
-        <div class="pill"><span class="dot"></span> Nền tảng học Hóa học thế hệ mới</div>
-        <h1 class="h1">GloryChem<br><em>Đấu Trường</em> Hóa Học</h1>
-        <p class="hsub">Đối đầu trực tiếp với học sinh toàn quốc, trả lời câu hỏi THPT theo thời gian thực và leo bảng
-          xếp hạng qua từng trận chiến.</p>
-        <div class="hbtns">
-          <button class="btn btn-teal btn-xl" onclick="openM('register')">🚀 Bắt Đầu Miễn Phí</button>
-          <button class="btn btn-ghost btn-xl" onclick="gp('challenge')">⚔️ Xem Thách Đấu</button>
+        <!-- Logged out -->
+        <div id="hero-logged-out">
+          <div class="mg-overline">
+            <span class="mg-overline-bar"></span>
+            <span>NỀN TẢNG HÓA HỌC THẾ HỆ MỚI</span>
+          </div>
+          <h1 class="mg-h1">
+            <span class="mg-h1-line">ĐẤU</span>
+            <span class="mg-h1-line mg-h1-accent">TRƯỜNG</span>
+            <span class="mg-h1-line">HÓA HỌC</span>
+          </h1>
+          <p class="mg-sub">Đối đầu trực tiếp với học sinh toàn quốc. Trả lời câu hỏi THPT theo thời gian thực và leo
+            bảng xếp hạng qua từng trận chiến.</p>
+          <div class="mg-cta-row">
+            <button class="btn-mg-primary" onclick="openM('register')">Bắt Đầu Miễn Phí</button>
+            <button class="btn-mg-ghost" onclick="gp('challenge')">Xem Thách Đấu →</button>
+          </div>
         </div>
-        <div class="el-row">
-          <div class="ec"><span class="sym">H</span>
-            <div>
-              <div class="nm">Hydro</div>
-              <div class="zz">Z=1</div>
+
+        <!-- Logged in -->
+        <div id="hero-logged-in" style="display:none">
+          <div class="mg-overline">
+            <span class="mg-overline-bar"></span>
+            <span>CHÀO MỪNG TRỞ LẠI, <span id="mg-welcome-name">...</span></span>
+          </div>
+          <h1 class="mg-h1">
+            <span class="mg-h1-line">ĐẤU</span>
+            <span class="mg-h1-line mg-h1-accent">TRƯỜNG</span>
+            <span class="mg-h1-line">HÓA HỌC</span>
+          </h1>
+          <div class="mg-user-stats">
+            <div class="mg-ustat">
+              <div class="mg-ustat-val" id="mg-elo">1200</div>
+              <div class="mg-ustat-lbl">ELO Rating</div>
+            </div>
+            <div class="mg-ustat-divider"></div>
+            <div class="mg-ustat">
+              <div class="mg-ustat-val" id="mg-wins">0</div>
+              <div class="mg-ustat-lbl">Trận thắng</div>
+            </div>
+            <div class="mg-ustat-divider"></div>
+            <div class="mg-ustat">
+              <div class="mg-ustat-val" id="mg-rank-label">Electron</div>
+              <div class="mg-ustat-lbl">Cấp bậc</div>
             </div>
           </div>
-          <div class="ec"><span class="sym">O</span>
-            <div>
-              <div class="nm">Oxy</div>
-              <div class="zz">Z=8</div>
-            </div>
+          <div class="mg-cta-row">
+            <button class="btn-mg-primary" onclick="gp('challenge')">Vào Đấu Trường</button>
+            <button class="btn-mg-ghost" onclick="gp('leaderboard')">Bảng Xếp Hạng →</button>
           </div>
-          <div class="ec"><span class="sym">C</span>
-            <div>
-              <div class="nm">Carbon</div>
-              <div class="zz">Z=6</div>
-            </div>
+        </div>
+
+      </div>
+
+      <!-- Right: element stack + live card -->
+      <div class="mg-hero-right">
+        <div class="mg-el-stack">
+          <div class="mg-el-card mg-el-dark">
+            <div class="mg-el-num">26</div>
+            <div class="mg-el-sym">Fe</div>
+            <div class="mg-el-name">Iron</div>
+            <div class="mg-el-mass">55.845</div>
           </div>
-          <div class="ec"><span class="sym">Na</span>
-            <div>
-              <div class="nm">Natri</div>
-              <div class="zz">Z=11</div>
-            </div>
+          <div class="mg-el-card mg-el-light">
+            <div class="mg-el-num">1</div>
+            <div class="mg-el-sym mg-el-sym-accent">H</div>
+            <div class="mg-el-name">Hydrogen</div>
+            <div class="mg-el-mass">1.008</div>
           </div>
-          <div class="ec"><span class="sym">Fe</span>
-            <div>
-              <div class="nm">Sắt</div>
-              <div class="zz">Z=26</div>
-            </div>
+          <div class="mg-el-card mg-el-mid">
+            <div class="mg-el-num">11</div>
+            <div class="mg-el-sym">Na</div>
+            <div class="mg-el-name">Sodium</div>
+            <div class="mg-el-mass">22.990</div>
           </div>
-          <div class="ec"><span class="sym">Cu</span>
-            <div>
-              <div class="nm">Đồng</div>
-              <div class="zz">Z=29</div>
-            </div>
+          <div class="mg-el-card mg-el-accent-card">
+            <div class="mg-el-num">6</div>
+            <div class="mg-el-sym">C</div>
+            <div class="mg-el-name">Carbon</div>
+            <div class="mg-el-mass">12.011</div>
           </div>
+        </div>
+
+        <!-- Live match badge -->
+        <div class="mg-live-badge">
+          <span class="mg-live-dot"></span>
+          <span class="mg-live-text">LIVE — <strong id="mg-live-count">89</strong> trận đang diễn ra</span>
         </div>
       </div>
 
-      <!-- ─── LOGGED IN HERO ─── -->
-      <div id="hero-logged-in">
-        <div class="welcome-banner" id="wb" style="display:block">
-          <div class="wb-avatar" id="wb-av">?</div>
-          <div class="wb-name" id="wb-name">Chào mừng trở lại!</div>
-          <div class="wb-sub" id="wb-sub">Tiếp tục hành trình chinh phục Hóa học</div>
-          <div class="wb-stats">
-            <div class="wb-stat">
-              <div class="wb-stat-val">1200</div>
-              <div class="wb-stat-lbl">ELO Rating</div>
-            </div>
-            <div class="wb-stat">
-              <div class="wb-stat-val">0</div>
-              <div class="wb-stat-lbl">Trận thắng</div>
-            </div>
-            <div class="wb-stat">
-              <div class="wb-stat-val">Electron</div>
-              <div class="wb-stat-lbl">Cấp bậc</div>
-            </div>
-          </div>
+    </section>
+
+    <!-- ═══ STATS TICKER ═══ -->
+    <div class="mg-ticker">
+      <div class="mg-ticker-inner">
+        <div class="mg-ticker-item"><span class="mg-ticker-val" data-target="2847">0</span><span
+            class="mg-ticker-lbl">Người chơi</span></div>
+        <div class="mg-ticker-sep">✦</div>
+        <div class="mg-ticker-item"><span class="mg-ticker-val" data-target="150">0</span><span
+            class="mg-ticker-lbl">Câu hỏi THPT</span></div>
+        <div class="mg-ticker-sep">✦</div>
+        <div class="mg-ticker-item"><span class="mg-ticker-val" data-target="12">0</span><span class="mg-ticker-lbl">Chủ
+            đề</span></div>
+        <div class="mg-ticker-sep">✦</div>
+        <div class="mg-ticker-item"><span class="mg-ticker-val" data-target="98">0</span><span class="mg-ticker-lbl">%
+            hài lòng</span></div>
+        <div class="mg-ticker-sep">✦</div>
+        <div class="mg-ticker-item"><span class="mg-ticker-val" data-target="5">0</span><span class="mg-ticker-lbl">Cấp
+            bậc</span></div>
+      </div>
+    </div>
+
+    <!-- ═══ FEATURES — BENTO MAGAZINE ═══ -->
+    <section class="mg-sec">
+      <div class="mg-sec-head">
+        <div class="mg-label-row">
+          <span class="mg-label-bar"></span>
+          <span class="mg-label-text">TÍNH NĂNG</span>
         </div>
-        <div class="hbtns" style="animation:fadeUp .55s .1s ease both">
-          <button class="btn btn-teal btn-xl" onclick="gp('challenge')">⚔️ Vào Đấu Trường</button>
-          <button class="btn btn-ghost btn-xl" onclick="return false">📊 Xem Thống Kê</button>
-        </div>
-        <div class="el-row">
-          <div class="ec"><span class="sym">H</span>
-            <div>
-              <div class="nm">Hydro</div>
-              <div class="zz">Z=1</div>
-            </div>
-          </div>
-          <div class="ec"><span class="sym">O</span>
-            <div>
-              <div class="nm">Oxy</div>
-              <div class="zz">Z=8</div>
-            </div>
-          </div>
-          <div class="ec"><span class="sym">C</span>
-            <div>
-              <div class="nm">Carbon</div>
-              <div class="zz">Z=6</div>
-            </div>
-          </div>
-          <div class="ec"><span class="sym">Na</span>
-            <div>
-              <div class="nm">Natri</div>
-              <div class="zz">Z=11</div>
-            </div>
-          </div>
-          <div class="ec"><span class="sym">Fe</span>
-            <div>
-              <div class="nm">Sắt</div>
-              <div class="zz">Z=26</div>
-            </div>
-          </div>
-          <div class="ec"><span class="sym">Cu</span>
-            <div>
-              <div class="nm">Đồng</div>
-              <div class="zz">Z=29</div>
-            </div>
-          </div>
-        </div>
+        <h2 class="mg-sh2">Tại Sao Chọn<br><em>GloryChem?</em></h2>
       </div>
 
-      <div class="stats">
-        <div class="sc"><span class="sv">2,847</span>
-          <div class="sl">Người chơi</div>
+      <div class="mg-bento">
+
+        <!-- Card lớn: Đấu 1v1 -->
+        <div class="mg-bc mg-bc-hero mg-tilt" onclick="gp('challenge')">
+          <div class="mg-bc-tag">Tính năng chính</div>
+          <div class="mg-bc-icon-big">⚔️</div>
+          <h3 class="mg-bc-title">Đấu Trực Tiếp 1v1</h3>
+          <p class="mg-bc-body">Đối đầu thời gian thực với học sinh cùng trình độ trên cả nước. Áp lực thi đấu giúp ghi
+            nhớ nhanh và lâu hơn gấp nhiều lần so với học thông thường.</p>
+          <div class="mg-bc-cta">Vào Đấu Trường →</div>
         </div>
-        <div class="sc"><span class="sv">150+</span>
-          <div class="sl">Câu hỏi</div>
+
+        <!-- Card nhỏ: ELO -->
+        <div class="mg-bc mg-bc-dark mg-tilt">
+          <div class="mg-bc-icon-sm">🏆</div>
+          <h3 class="mg-bc-title-sm">Hệ Thống ELO</h3>
+          <p class="mg-bc-body-sm">Rating công bằng. Leo từ Electron lên Giáo Sư.</p>
+          <div class="mg-rank-ladder">
+            <span class="mg-rank-pip active">⚛</span>
+            <span class="mg-rank-arrow">→</span>
+            <span class="mg-rank-pip">🔬</span>
+            <span class="mg-rank-arrow">→</span>
+            <span class="mg-rank-pip">🧪</span>
+            <span class="mg-rank-arrow">→</span>
+            <span class="mg-rank-pip">🎓</span>
+          </div>
         </div>
-        <div class="sc"><span class="sv">12</span>
-          <div class="sl">Chủ đề</div>
+
+        <!-- Card nhỏ: Chương trình -->
+        <div class="mg-bc mg-bc-light mg-tilt">
+          <div class="mg-bc-icon-sm">📚</div>
+          <h3 class="mg-bc-title-sm">Bám Sát THPT</h3>
+          <p class="mg-bc-body-sm">Đại cương · Vô cơ · Hữu cơ. Đúng chương trình, đúng dạng bài.</p>
+          <div class="mg-subject-pills">
+            <span class="mg-pill">Lớp 10</span>
+            <span class="mg-pill">Lớp 11</span>
+            <span class="mg-pill">Lớp 12</span>
+          </div>
         </div>
-        <div class="sc"><span class="sv">98%</span>
-          <div class="sl">Hài lòng</div>
+
+        <!-- Card rộng: Tiến độ -->
+        <div class="mg-bc mg-bc-wide mg-tilt">
+          <div class="mg-bc-icon-sm">📊</div>
+          <h3 class="mg-bc-title-sm">Theo Dõi Tiến Độ</h3>
+          <p class="mg-bc-body-sm">Dashboard cá nhân — điểm mạnh/yếu, lịch sử trận, ELO theo thời gian.</p>
+          <div class="mg-progress-demo">
+            <div class="mg-prog-row">
+              <span class="mg-prog-lbl">Hóa đại cương</span>
+              <div class="mg-prog-bar">
+                <div class="mg-prog-fill" style="width:78%;background:var(--teal)"></div>
+              </div>
+              <span class="mg-prog-pct">78%</span>
+            </div>
+            <div class="mg-prog-row">
+              <span class="mg-prog-lbl">Hóa vô cơ</span>
+              <div class="mg-prog-bar">
+                <div class="mg-prog-fill" style="width:55%;background:var(--blue)"></div>
+              </div>
+              <span class="mg-prog-pct">55%</span>
+            </div>
+            <div class="mg-prog-row">
+              <span class="mg-prog-lbl">Hóa hữu cơ</span>
+              <div class="mg-prog-bar">
+                <div class="mg-prog-fill" style="width:42%;background:var(--amber)"></div>
+              </div>
+              <span class="mg-prog-pct">42%</span>
+            </div>
+          </div>
         </div>
+
       </div>
     </section>
 
-    <section class="sec">
-      <div class="sec-header">
-        <div class="slabel">✦ Tính năng</div>
-        <h2 class="sh2">Tại Sao Chọn GloryChem?</h2>
-        <p class="ssub">Kết hợp khoa học giáo dục với cạnh tranh lành mạnh — cách học hiệu quả nhất cho học sinh THPT.
-        </p>
-      </div>
-      <div class="fg3">
-        <div class="fc ct">
-          <div class="fc-stripe"></div>
-          <div class="fi t">⚔️</div>
-          <div class="ftitle">Đấu Trực Tiếp 1v1</div>
-          <div class="fbody">Đối đầu thời gian thực với học sinh cùng trình độ. Áp lực thi đấu giúp ghi nhớ nhanh và lâu
-            hơn gấp nhiều lần so với học thông thường.</div>
+    <!-- ═══ EXPLORE — HÓA HỌC THÚ VỊ (REDESIGN) ═══ -->
+    <section class="xp-section">
+
+      <!-- Section header editorial -->
+      <div class="xp-header">
+        <div class="xp-header-left">
+          <div class="xp-kicker">
+            <span class="xp-kicker-line"></span>
+            <span>KHÁM PHÁ</span>
+          </div>
+          <h2 class="xp-h2">Hóa Học<br><em>Thú Vị</em></h2>
         </div>
-        <div class="fc cb">
-          <div class="fc-stripe"></div>
-          <div class="fi b">📚</div>
-          <div class="ftitle">Bám Sát Chương Trình</div>
-          <div class="fbody">Câu hỏi biên soạn đúng chương trình THPT — Hóa đại cương, Vô cơ, Hữu cơ. Bao gồm câu định
-            tính và bài toán tính toán.</div>
-        </div>
-        <div class="fc ca">
-          <div class="fc-stripe"></div>
-          <div class="fi a">📊</div>
-          <div class="ftitle">Theo Dõi Tiến Độ</div>
-          <div class="fbody">Dashboard cá nhân hiển thị điểm mạnh/yếu, lịch sử trận đấu, ELO rating và thống kê chi tiết
-            theo từng chủ đề hóa học.</div>
-        </div>
-        <div class="fc cr">
-          <div class="fc-stripe"></div>
-          <div class="fi r">🏆</div>
-          <div class="ftitle">Hệ Thống ELO & Rank</div>
-          <div class="fbody">Rating ELO công bằng, bảng xếp hạng toàn quốc. Leo rank từ Electron → Nguyên Tử → Phân Tử →
-            Nhà Hóa Học → Giáo Sư.</div>
+        <div class="xp-header-right">
+          <p class="xp-sub">Những điều bạn chưa biết về thế giới của các nguyên tố — từ bí ẩn vũ trụ đến phản ứng điên
+            rồ.</p>
+          <!-- Animated number strip -->
+          <div class="xp-num-strip">
+            <div class="xp-num-item">
+              <span class="xp-big-num">118</span>
+              <span class="xp-num-lbl">Nguyên tố</span>
+            </div>
+            <div class="xp-num-div"></div>
+            <div class="xp-num-item">
+              <span class="xp-big-num">10M+</span>
+              <span class="xp-num-lbl">Hợp chất Carbon</span>
+            </div>
+            <div class="xp-num-div"></div>
+            <div class="xp-num-item">
+              <span class="xp-big-num">-273°</span>
+              <span class="xp-num-lbl">Độ C tuyệt đối</span>
+            </div>
+          </div>
         </div>
       </div>
+
+      <!-- Scrolling marquee tape -->
+      <div class="xp-tape">
+        <div class="xp-tape-inner">
+          <span>Au · Ag · Fe · Cu · Na · K · Ca · Mg · Al · Si · P · S · Cl · Ar · H₂O · CO₂ · NaCl · HCl · H₂SO₄ ·
+            NH₃</span>
+          <span aria-hidden="true">Au · Ag · Fe · Cu · Na · K · Ca · Mg · Al · Si · P · S · Cl · Ar · H₂O · CO₂ · NaCl ·
+            HCl · H₂SO₄ · NH₃</span>
+        </div>
+      </div>
+
+      <!-- Main mosaic grid -->
+      <div class="xp-mosaic">
+
+        <!-- Card 1: Vàng — full-height left -->
+        <div class="xp-card xp-card-gold xp-tall">
+          <div class="xp-card-overlay"></div>
+          <div class="xp-card-tag">Nguyên tố · Au</div>
+          <div class="xp-giant-symbol">Au</div>
+          <div class="xp-card-content">
+            <h3 class="xp-card-title">Vàng — Kim loại huyền thoại</h3>
+            <p class="xp-card-body">Toàn bộ lượng vàng từng khai thác chỉ lấp đầy <strong>3.5 bể bơi Olympic</strong>.
+              Màu vàng duy nhất trong tự nhiên — do electron d tương đối tính.</p>
+          </div>
+          <div class="xp-card-num">79</div>
+        </div>
+
+        <!-- Card 2: Nước — ngang -->
+        <div class="xp-card xp-card-water">
+          <div class="xp-card-tag">Phân tử · H₂O</div>
+          <div class="xp-card-content">
+            <h3 class="xp-card-title">Nước — 3 trạng thái cùng lúc</h3>
+            <p class="xp-card-body">Tại <em>Triple Point</em> <strong>(0.01°C, 611.7 Pa)</strong>, nước tồn tại đồng
+              thời ở thể rắn, lỏng và khí cùng một lúc.</p>
+          </div>
+          <div class="xp-angle-badge">104.5°</div>
+        </div>
+
+        <!-- Card 3: Carbon — highlight box -->
+        <div class="xp-card xp-card-carbon">
+          <div class="xp-card-tag">Hữu cơ · C</div>
+          <div class="xp-mega-stat">
+            <span class="xp-mega-val">10M+</span>
+            <span class="xp-mega-lbl">hợp chất</span>
+          </div>
+          <h3 class="xp-card-title">Carbon — Nền tảng sự sống</h3>
+          <p class="xp-card-body">Một nguyên tố, mười triệu hợp chất. Kim cương và than chì đều là Carbon — chỉ khác
+            cách sắp xếp.</p>
+        </div>
+
+        <!-- Card 4: Mendeleev — dark editorial -->
+        <div class="xp-card xp-card-dark xp-card-mendeleev">
+          <div class="xp-card-tag" style="color:var(--teal)">Lịch sử · 1869</div>
+          <h3 class="xp-card-title" style="color:#fff">Mendeleev — Nhà tiên tri</h3>
+          <p class="xp-card-body" style="color:rgba(255,255,255,.6)">Dự đoán sự tồn tại của <strong
+              style="color:var(--teal)">Gallium</strong>, <strong style="color:var(--teal)">Germanium</strong> trước khi
+            chúng được tìm thấy — 15 năm sau đó khoa học xác nhận.</p>
+          <div class="xp-year-stamp">1869</div>
+        </div>
+
+        <!-- Card 5: Helium — color block -->
+        <div class="xp-card xp-card-helium">
+          <div class="xp-card-split">
+            <div class="xp-split-left">
+              <div class="xp-card-tag">Khí hiếm</div>
+              <div class="xp-element-block">
+                <span class="xp-el-num">2</span>
+                <span class="xp-el-sym">He</span>
+                <span class="xp-el-name">Helium</span>
+              </div>
+            </div>
+            <div class="xp-split-right">
+              <h3 class="xp-card-title">Từ Mặt Trời xuống Trái Đất</h3>
+              <p class="xp-card-body">Phát hiện qua quang phổ Mặt Trời năm <strong>1868</strong>, trước khi tìm thấy
+                trên Trái Đất 27 năm. Tên "Helios" — thần Mặt Trời Hy Lạp.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 6: Phản ứng điên rồ — interactive -->
+        <div class="xp-card xp-card-reaction" onclick="this.classList.toggle('xp-react-active')">
+          <div class="xp-card-tag">⚡ Phản ứng · Tap để xem</div>
+          <div class="xp-reaction-display">
+            <div class="xp-react-before">
+              <span class="xp-react-mol">Na</span>
+              <span class="xp-react-op">+</span>
+              <span class="xp-react-mol">H₂O</span>
+            </div>
+            <div class="xp-react-arrow">→</div>
+            <div class="xp-react-after">
+              <span class="xp-react-mol accent">NaOH</span>
+              <span class="xp-react-op">+</span>
+              <span class="xp-react-mol accent">H₂↑</span>
+            </div>
+          </div>
+          <p class="xp-card-body">Natri + Nước tạo ra ngọn lửa tím và khí Hydro bùng cháy. <strong>Nguy hiểm nhưng ngoạn
+              mục.</strong></p>
+          <div class="xp-burst">💥</div>
+        </div>
+
+      </div>
+
+      <!-- Bottom strip: element spotlight horizontal scroll -->
+      <div class="xp-spotlight-wrap">
+        <div class="xp-spotlight-label">
+          <span class="xp-kicker-line"></span>
+          <span>SPOTLIGHT NGUYÊN TỐ</span>
+        </div>
+        <div class="xp-spotlight-scroll">
+          <div class="xp-spot-card" style="--spot-color:#f59e0b">
+            <span class="xp-spot-num">79</span>
+            <span class="xp-spot-sym">Au</span>
+            <span class="xp-spot-name">Gold</span>
+            <span class="xp-spot-fact">Kim loại quý nhất</span>
+          </div>
+          <div class="xp-spot-card" style="--spot-color:#60a5fa">
+            <span class="xp-spot-num">1</span>
+            <span class="xp-spot-sym">H</span>
+            <span class="xp-spot-name">Hydrogen</span>
+            <span class="xp-spot-fact">Nhẹ nhất vũ trụ</span>
+          </div>
+          <div class="xp-spot-card" style="--spot-color:#14b8a6">
+            <span class="xp-spot-num">6</span>
+            <span class="xp-spot-sym">C</span>
+            <span class="xp-spot-name">Carbon</span>
+            <span class="xp-spot-fact">Nền tảng sự sống</span>
+          </div>
+          <div class="xp-spot-card" style="--spot-color:#a78bfa">
+            <span class="xp-spot-num">2</span>
+            <span class="xp-spot-sym">He</span>
+            <span class="xp-spot-name">Helium</span>
+            <span class="xp-spot-fact">Từ Mặt Trời</span>
+          </div>
+          <div class="xp-spot-card" style="--spot-color:#f43f5e">
+            <span class="xp-spot-num">11</span>
+            <span class="xp-spot-sym">Na</span>
+            <span class="xp-spot-name">Sodium</span>
+            <span class="xp-spot-fact">Cháy trong nước</span>
+          </div>
+          <div class="xp-spot-card" style="--spot-color:#22c55e">
+            <span class="xp-spot-num">8</span>
+            <span class="xp-spot-sym">O</span>
+            <span class="xp-spot-name">Oxygen</span>
+            <span class="xp-spot-fact">Thở mỗi giây</span>
+          </div>
+          <div class="xp-spot-card" style="--spot-color:#fb923c">
+            <span class="xp-spot-num">26</span>
+            <span class="xp-spot-sym">Fe</span>
+            <span class="xp-spot-name">Iron</span>
+            <span class="xp-spot-fact">Lõi Trái Đất</span>
+          </div>
+          <div class="xp-spot-card" style="--spot-color:#c084fc">
+            <span class="xp-spot-num">47</span>
+            <span class="xp-spot-sym">Ag</span>
+            <span class="xp-spot-name">Silver</span>
+            <span class="xp-spot-fact">Diệt khuẩn tự nhiên</span>
+          </div>
+        </div>
+      </div>
+
     </section>
 
-    <section class="sec" style="padding-top:2rem">
-      <div class="sec-header">
-        <div class="slabel">🔬 Khám phá</div>
-        <h2 class="sh2">Hóa Học Thú Vị</h2>
-        <p class="ssub">Những điều kỳ diệu của Hóa học mà bạn có thể chưa biết.</p>
-      </div>
-      <div class="fg2">
-        <div class="fct"><span class="badge t">Nguyên tố</span>
-          <p class="ftxt"><strong>Vàng (Au)</strong> là kim loại quý duy nhất có màu vàng tự nhiên. Toàn bộ lượng vàng
-            từng khai thác trên Trái Đất chỉ lấp đầy được khoảng <strong>3.5 bể bơi Olympic</strong>.</p>
+    <!-- ═══ CTA BOTTOM ═══ -->
+    <section class="mg-cta-section" id="mg-cta-section">
+      <div class="mg-cta-inner">
+        <div class="mg-cta-left">
+          <div class="mg-label-row">
+            <span class="mg-label-bar mg-label-bar-white"></span>
+            <span class="mg-label-text mg-label-white" id="mg-cta-kicker">SẴN SÀNG CHƯA?</span>
+          </div>
+          <h2 class="mg-cta-heading" id="mg-cta-heading">Tham Gia<br><em>GloryChem</em><br>Ngay Hôm Nay</h2>
         </div>
-        <div class="fct"><span class="badge b">Phân tử</span>
-          <p class="ftxt">Nước <strong>H₂O</strong> là chất duy nhất tồn tại tự nhiên ở cả 3 trạng thái trên bề mặt Trái
-            Đất. Góc liên kết H–O–H là <strong>104.5°</strong> tạo nên tính phân cực đặc biệt.</p>
-        </div>
-        <div class="fct"><span class="badge a">Hữu cơ</span>
-          <p class="ftxt"><strong>Carbon (C)</strong> tạo ra nhiều hợp chất hơn bất kỳ nguyên tố nào — hơn <strong>10
-              triệu hợp chất</strong> đã biết, là nền tảng toàn bộ hóa học hữu cơ và sự sống.</p>
-        </div>
-        <div class="fct"><span class="badge p">Lịch sử</span>
-          <p class="ftxt"><strong>Mendeleev</strong> lập bảng tuần hoàn năm 1869 và dự đoán chính xác sự tồn tại của các
-            nguyên tố chưa phát hiện như <strong>Gallium</strong> và <strong>Germanium</strong>.</p>
-        </div>
-        <div class="fct"><span class="badge g">Kỳ lạ</span>
-          <p class="ftxt"><strong>Helium (He)</strong> được phát hiện trên Mặt Trời trước khi tìm thấy trên Trái Đất.
-            Tên "Helium" từ "Helios" — thần Mặt Trời của Hy Lạp cổ đại.</p>
-        </div>
-        <div class="fct"><span class="badge r">Cấu trúc</span>
-          <p class="ftxt">Kim cương và than chì đều là <strong>Carbon nguyên chất (C)</strong> nhưng cấu trúc tinh thể
-            hoàn toàn khác — một cái cứng nhất tự nhiên, một cái đen và mềm.</p>
+        <div class="mg-cta-right">
+          <p class="mg-cta-desc" id="mg-cta-desc">Miễn phí hoàn toàn. Không cần cài đặt. Chỉ cần đăng ký và bắt đầu
+            chinh phục Hóa học cùng hàng nghìn học sinh trên cả nước.</p>
+          <div class="mg-cta-btns">
+            <button class="btn-mg-primary btn-mg-white" id="mg-cta-btn-register" onclick="openM('register')">Đăng Ký
+              Miễn Phí</button>
+            <button class="btn-mg-ghost btn-mg-ghost-white" id="mg-cta-btn-action" onclick="gp('leaderboard')">Xem Bảng
+              Xếp Hạng →</button>
+          </div>
+          <div class="mg-cta-note" id="mg-cta-note">✓ Miễn phí · ✓ Không cần cài đặt · ✓ Học sinh THPT toàn quốc</div>
         </div>
       </div>
     </section>
@@ -1358,8 +1568,50 @@
     </div>
   </div>
 
+  <!-- ═══ LESSON PAGE ═══ -->
+  <div id="page-lesson" class="page">
+
+    <!-- ── Grade tabs header ── -->
+    <div class="ls-header">
+      <div class="ls-header-top">
+        <div class="ls-header-icon">📚</div>
+        <div class="ls-header-text">
+          <h2>Bài Học Hóa Học</h2>
+          <p>Lý thuyết có hệ thống · Trắc nghiệm luyện tập · Lớp 10 – 12</p>
+        </div>
+      </div>
+      <div class="ls-grade-tabs">
+        <button class="ls-grade-tab active" data-grade="10" onclick="switchLessonGrade(10)">
+          ⚛️ Lớp 10 <span class="ls-grade-badge">😊</span>
+        </button>
+        <button class="ls-grade-tab" data-grade="11" onclick="switchLessonGrade(11)">
+          ⚗️ Lớp 11 <span class="ls-grade-badge">😁</span>
+        </button>
+        <button class="ls-grade-tab" data-grade="12" onclick="switchLessonGrade(12)">
+          🧬 Lớp 12 <span class="ls-grade-badge">😘</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Main layout: sidebar + content ── -->
+    <div class="ls-layout">
+
+      <!-- Sidebar: chapter / lesson list -->
+      <aside class="ls-sidebar" id="ls-sidebar">
+        <!-- Filled dynamically by lesson.js -->
+      </aside>
+
+      <!-- Main content area -->
+      <main class="ls-content" id="ls-content">
+        <!-- Filled dynamically by lesson.js -->
+      </main>
+
+    </div>
+  </div>
+
   <div class="tw" id="tw"></div>
   <script src="/script.js"></script>
+  <script src="/lesson.js"></script>
 
   <!-- ═══ BOTTOM NAV (Mobile) ═══ -->
   <nav class="bottom-nav" id="bottom-nav">
@@ -1371,13 +1623,15 @@
       <span class="bn-icon">⚔️</span>
       <span class="bn-label">Thách Đấu</span>
     </button>
+
+    <button class="bn-item" id="bn-lesson" onclick="gp('lesson')">
+      <span class="bn-icon">📚</span>
+      <span class="bn-label">Bài Học</span>
+    </button>
+
     <button class="bn-item" id="bn-leaderboard" onclick="gp('leaderboard')">
       <span class="bn-icon">🏆</span>
       <span class="bn-label">Xếp Hạng</span>
-    </button>
-    <button class="bn-item" id="bn-lesson" onclick="return false">
-      <span class="bn-icon">📚</span>
-      <span class="bn-label">Bài Học</span>
     </button>
 
   </nav>

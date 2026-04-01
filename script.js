@@ -666,10 +666,22 @@ function renderIn() {
   G('hero-logged-out').style.display = 'none';
   G('hero-logged-in').style.display = 'block';
 
-  // Welcome banner
+  // Magazine hero sync
+  const mgName = document.getElementById('mg-welcome-name');
+  if (mgName) mgName.textContent = name.split(' ').pop().toUpperCase();
+  const mgElo = document.getElementById('mg-elo');
+  if (mgElo) mgElo.textContent = Number(elo).toLocaleString('vi-VN');
+  const mgWins = document.getElementById('mg-wins');
+  if (mgWins) mgWins.textContent = wins;
+  const mgRank = document.getElementById('mg-rank-label');
+  if (mgRank) mgRank.textContent = rank;
+
+  // Welcome banner (only if elements exist)
   setAvEl(G('wb-av'), name, av);
-  G('wb-name').textContent = `Chào mừng, ${name.split(' ').pop()}! 👋`;
-  G('wb-sub').textContent = `@${un} · Tiếp tục hành trình chinh phục Hóa học`;
+  const wbName = G('wb-name');
+  if (wbName) wbName.textContent = `Chào mừng, ${name.split(' ').pop()}! 👋`;
+  const wbSub = G('wb-sub');
+  if (wbSub) wbSub.textContent = `@${un} · Tiếp tục hành trình chinh phục Hóa học`;
 
   const wbStats = document.querySelectorAll('.wb-stat');
   if (wbStats.length >= 3) {
@@ -692,6 +704,20 @@ function renderIn() {
       avatar_url: U.profile?.avatar_url || '',
     });
   }
+
+  // CTA bottom section — swap register button
+  const ctaRegBtn = G('mg-cta-btn-register');
+  const ctaActionBtn = G('mg-cta-btn-action');
+  const ctaNote = G('mg-cta-note');
+  if (ctaRegBtn) {
+    ctaRegBtn.textContent = '⚔️ Vào Đấu Trường';
+    ctaRegBtn.onclick = () => gp('challenge');
+  }
+  if (ctaActionBtn) {
+    ctaActionBtn.textContent = 'Bảng Xếp Hạng →';
+    ctaActionBtn.onclick = () => gp('leaderboard');
+  }
+  if (ctaNote) ctaNote.textContent = '✓ Đối đầu trực tiếp · ✓ Cập nhật ELO theo thời gian thực';
 }
 
 function renderOut() {
@@ -704,6 +730,20 @@ function renderOut() {
   G('s-in').style.display = 'none';
   G('hero-logged-out').style.display = 'block';
   G('hero-logged-in').style.display = 'none';
+
+  // CTA bottom section — restore register button
+  const ctaRegBtn = G('mg-cta-btn-register');
+  const ctaActionBtn = G('mg-cta-btn-action');
+  const ctaNote = G('mg-cta-note');
+  if (ctaRegBtn) {
+    ctaRegBtn.textContent = 'Đăng Ký Miễn Phí';
+    ctaRegBtn.onclick = () => openM('register');
+  }
+  if (ctaActionBtn) {
+    ctaActionBtn.textContent = 'Xem Bảng Xếp Hạng →';
+    ctaActionBtn.onclick = () => gp('leaderboard');
+  }
+  if (ctaNote) ctaNote.textContent = '✓ Miễn phí · ✓ Không cần cài đặt · ✓ Học sinh THPT toàn quốc';
 }
 
 
@@ -866,11 +906,11 @@ function gp(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   G('page-' + id).classList.add('active');
   document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
-  const m = { home: 'nl-home', challenge: 'nl-challenge', leaderboard: 'nl-leaderboard' };
+  const m = { home: 'nl-home', challenge: 'nl-challenge', leaderboard: 'nl-leaderboard', lesson: 'nl-lesson' };
   if (m[id]) G(m[id])?.classList.add('active');
   // Sync bottom nav
   document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('active'));
-  const bm = { home: 'bn-home', challenge: 'bn-challenge', leaderboard: 'bn-leaderboard', profile: 'bn-profile' };
+  const bm = { home: 'bn-home', challenge: 'bn-challenge', leaderboard: 'bn-leaderboard', profile: 'bn-profile', lesson: 'bn-lesson' };
   if (bm[id]) G(bm[id])?.classList.add('active');
 
   // Load leaderboard khi chuyển tab
@@ -878,6 +918,13 @@ function gp(id) {
   // Nếu chuyển về trang chủ và đã đăng nhập, làm mới dữ liệu
   if (id === 'home' && U) {
     renderIn();
+  }
+  // Khởi tạo trang bài học (lazy — chỉ lần đầu)
+  if (id === 'lesson') {
+    if (typeof initLessonPage === 'function' && !gp._lessonInited) {
+      gp._lessonInited = true;
+      initLessonPage();
+    }
   }
 }
 
@@ -1940,8 +1987,8 @@ function getRankFromElo(elo) {
   if (elo < 1300) return 'Electron';
   if (elo < 1500) return 'Nguyên Tử';
   if (elo < 1700) return 'Phân Tử';
-  if (elo < 1900) return 'Nhà Hóa Học';
-  return 'Giáo Sư';
+  if (elo < 1900) return 'Thách Đấu';
+  return 'Chiến Thần';
 }
 function addToHistory(entry) {
   const list = G('hist-list');
@@ -1987,7 +2034,7 @@ function joinGlobalPresence() {
       // Thay vì overwrite hoàn toàn, chúng ta chỉ thay các user từ sync
       // Nhưng sync của Supabase là full state, nên ta gán NEW_USERS
       // Tuy nhiên cần cẩn thận không để mất status nếu Socket.io vừa update
-      ONLINE_USERS = NEW_USERS; 
+      ONLINE_USERS = NEW_USERS;
       updateOnlineCount();
       refreshOnlineUI();
     })
@@ -2080,14 +2127,14 @@ function renderOnlinePlayers(players, query = '') {
   filtered.forEach(p => {
     const name = p.name || p.full_name || p.username || 'Người chơi';
     const status = p.status || 'free';
-    
+
     let btnHtml = '';
     if (status === 'battle') {
-        btnHtml = `<button class="btn btn-secondary btn-invite-friend" style="padding:.4rem .8rem;font-size:.70rem;border-radius:8px;background:var(--bg-3);color:var(--text-4);opacity:0.8;box-shadow:none;border:1px solid var(--border-2)" disabled>Đang đấu</button>`;
+      btnHtml = `<button class="btn btn-secondary btn-invite-friend" style="padding:.4rem .8rem;font-size:.70rem;border-radius:8px;background:var(--bg-3);color:var(--text-4);opacity:0.8;box-shadow:none;border:1px solid var(--border-2)" disabled>Đang đấu</button>`;
     } else if (status === 'lobby') {
-        btnHtml = `<button class="btn btn-secondary btn-invite-friend" style="padding:.4rem .8rem;font-size:.70rem;border-radius:8px;background:var(--bg-3);color:var(--text-4);opacity:0.8;box-shadow:none;border:1px solid var(--border-2)" disabled>Trong nhóm</button>`;
+      btnHtml = `<button class="btn btn-secondary btn-invite-friend" style="padding:.4rem .8rem;font-size:.70rem;border-radius:8px;background:var(--bg-3);color:var(--text-4);opacity:0.8;box-shadow:none;border:1px solid var(--border-2)" disabled>Trong nhóm</button>`;
     } else {
-        btnHtml = `<button class="btn btn-teal btn-invite-friend" style="padding:.4rem .8rem;font-size:.75rem;border-radius:8px;" onclick="sendInviteDirectly(this, '${p.userId}')">Mời</button>`;
+      btnHtml = `<button class="btn btn-teal btn-invite-friend" style="padding:.4rem .8rem;font-size:.75rem;border-radius:8px;" onclick="sendInviteDirectly(this, '${p.userId}')">Mời</button>`;
     }
 
     const row = document.createElement('div');
@@ -3205,3 +3252,95 @@ function renderLeaderboard(data) {
   listEl.innerHTML = rows;
 }
 
+/* ═══════════════════════════════
+   MAGAZINE HOME ANIMATIONS
+═══════════════════════════════ */
+
+// ── Counter animation ──
+function animateCounter(el, target, duration) {
+  const suffix = el.dataset.suffix || '';
+  let start = 0;
+  const step = target / (duration / 16);
+  const timer = setInterval(() => {
+    start = Math.min(start + step, target);
+    el.textContent = Math.round(start).toLocaleString('vi-VN') + suffix;
+    if (start >= target) clearInterval(timer);
+  }, 16);
+}
+
+function initCounters() {
+  const els = document.querySelectorAll('.mg-ticker-val[data-target]');
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && !entry.target.dataset.done) {
+        entry.target.dataset.done = '1';
+        const target = parseInt(entry.target.dataset.target, 10);
+        animateCounter(entry.target, target, 1400);
+        obs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: .3 });
+  els.forEach(el => obs.observe(el));
+}
+
+// ── Progress bar animate on scroll ──
+function initProgressBars() {
+  const bars = document.querySelectorAll('.mg-prog-fill');
+  if (!bars.length) return;
+  bars.forEach(b => {
+    const target = b.style.width;
+    b.style.width = '0';
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          setTimeout(() => { b.style.width = target; }, 200);
+          obs.unobserve(b);
+        }
+      });
+    }, { threshold: .5 });
+    obs.observe(b);
+  });
+}
+
+// ── 3D tilt on card hover (desktop only) ──
+function initTilt() {
+  if (window.matchMedia('(hover: none)').matches) return;
+  document.querySelectorAll('.mg-tilt').forEach(card => {
+    card.addEventListener('mousemove', e => {
+      const r = card.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - .5;
+      const y = (e.clientY - r.top) / r.height - .5;
+      card.style.transform = `perspective(600px) rotateY(${x * 8}deg) rotateX(${-y * 8}deg) translateY(-5px)`;
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = '';
+    });
+  });
+}
+// ── Scroll-reveal for section elements ──
+function initScrollReveal() {
+  const targets = document.querySelectorAll('.mg-bc, .mg-fact-card, .mg-user-stats');
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.opacity = '1';
+        e.target.style.transform = 'translateY(0)';
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: .12 });
+  targets.forEach((el, i) => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(22px)';
+    el.style.transition = `opacity .45s ${i * .06}s ease, transform .45s ${i * .06}s ease`;
+    obs.observe(el);
+  });
+}
+
+// ── Boot ──
+document.addEventListener('DOMContentLoaded', () => {
+  initCounters();
+  initProgressBars();
+  initTilt();
+  initScrollReveal();
+});

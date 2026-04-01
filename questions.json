@@ -31,6 +31,22 @@
     "equilib": {
       "name": "Cân bằng hóa học",
       "icon": "⚖️"
+    },
+    "atomic": {
+      "name": "Cấu tạo nguyên tử",
+      "icon": "⚛️"
+    },
+    "chemical-bonds": {
+      "name": "Liên kết hóa học",
+      "icon": "🤝"
+    },
+    "halogens": {
+      "name": "Nhóm Halogen",
+      "icon": "🧪"
+    },
+    "speed": {
+      "name": "Tốc độ phản ứng",
+      "icon": "⏱️"
     }
   },
   "QUESTION_BANK": {
@@ -343,6 +359,10 @@
         "correct": 1,
         "exp": "Tăng chất đầu → dịch phải"
       }
-    ]
+    ],
+    "atomic": [],
+    "chemical-bonds": [],
+    "halogens": [],
+    "speed": []
   }
 }
