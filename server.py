@@ -705,7 +705,7 @@ def handle_start_lobby_battle(data):
         "players":           {s: {"user": all_users[s], "joined": False} for s in all_sids},
         "state":             "lobby",
         "mode":              "ffa",
-        "lobby_timeout":     30,
+        "lobby_timeout":     90,
         "battle_timeout":    30,
         "questions":         [],
         "scores":            {s: 0 for s in all_sids},
@@ -930,22 +930,39 @@ def handle_invite_response(data):
 # ══════════════════════════════════════
 @socketio.on("join_queue")
 def handle_join_queue(data=None):
+    global queued_players
     sid  = request.sid
     user = online_users.get(sid)
     if not user:
         emit("error", {"msg": "Chưa đăng nhập"}); return
-    if any(p[0] == sid for p in queued_players):
-        return
-
+    # Ngăn người chơi queue nhiều tab, xóa session cũ nếu có
+    if any(p[1].get("userId") == user.get("userId") for p in queued_players):
+        queued_players = [p for p in queued_players if p[1].get("userId") != user.get("userId")]
+    
     queued_players.append((sid, user))
 
     if len(queued_players) >= 2:
+        # Sắp xếp queue theo ELO
         queued_players.sort(key=lambda x: x[1].get("elo", 1200))
-        p1_sid, p1_data = queued_players.pop(0)
+        
+        p1_sid, p1_data = queued_players[0]
+        p1_uid = p1_data.get("userId")
         p1_elo = p1_data.get("elo", 1200)
-        best   = min(range(len(queued_players)), key=lambda i: abs(queued_players[i][1].get("elo", 1200) - p1_elo))
-        p2_sid, p2_data = queued_players.pop(best)
-        _create_room_and_notify(p1_sid, p1_data, p2_sid, p2_data)
+
+        # Tìm đối thủ phù hợp nhất (ELO gần nhất, NHƯNG KHÁC userId)
+        valid_opponents = [(i, p) for i, p in enumerate(queued_players) if i != 0 and p[1].get("userId") != p1_uid]
+
+        if valid_opponents:
+            # Chọn đối thủ có ELO gần nhất với p1
+            best_idx, best_item = min(valid_opponents, key=lambda item: abs(item[1][1].get("elo", 1200) - p1_elo))
+            
+            # Lấy 2 người chơi ra khỏi queue
+            p2_sid, p2_data = queued_players.pop(best_idx) # pop p2 trước (vì index > 0)
+            queued_players.pop(0)                          # pop p1
+            
+            _create_room_and_notify(p1_sid, p1_data, p2_sid, p2_data)
+        else:
+            emit("queued", {"waiting": True, "position": len(queued_players)})
     else:
         emit("queued", {"waiting": True, "position": len(queued_players)})
 
@@ -1063,7 +1080,7 @@ def _setup_room(room_id, sid1, u1, sid2, u2):
     game_rooms[room_id] = {
         "players":           {sid1: {"user": u1, "joined": False}, sid2: {"user": u2, "joined": False}},
         "state":             "lobby",
-        "lobby_timeout":     30,
+        "lobby_timeout":     90,
         "battle_timeout":    30,
         "questions":         [],
         "scores":            {sid1: 0, sid2: 0},

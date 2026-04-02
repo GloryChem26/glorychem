@@ -159,6 +159,7 @@ function startLobbyBattle() {
 
 // ── INIT ──
 async function init() {
+  await loadCompetitionData(); 
   if (!sb) return;
 
   // ① Kiểm tra URL từ email link (cả hash lẫn query param – PKCE)
@@ -1132,65 +1133,51 @@ async function savePw() {
 // ══════════════════════════════════════════════════════
 //   GLORYCHEM ARENA — QUESTION BANK
 // ══════════════════════════════════════════════════════
-const TOPICS = [
-  { id: 'acid-base', name: 'Axit — Bazơ', icon: '⚗️' },
-  { id: 'redox', name: 'Oxi hóa khử', icon: '⚡' },
-  { id: 'electro', name: 'Điện hóa', icon: '🔋' },
-  { id: 'organic', name: 'Hóa hữu cơ', icon: '🌿' },
-  { id: 'periodic', name: 'Bảng tuần hoàn', icon: '📋' },
-  { id: 'solution', name: 'Dung dịch', icon: '💧' },
-  { id: 'thermo', name: 'Nhiệt hóa học', icon: '🔥' },
-  { id: 'equilib', name: 'Cân bằng hóa học', icon: '⚖️' },
-];
+// ??? ARENA DATA SOURCE - Now dynamic from questions.json
+let TOPICS = [];
+let QUESTION_BANK = {};
 
-const QUESTION_BANK = {
-  'acid-base': [
-    { t: 'mcq', q: 'Dung dịch HCl 0.01M có pH bằng bao nhiêu?', opts: ['pH = 1', 'pH = 2', 'pH = 3', 'pH = 12'], ans: 1, exp: '[HCl]=0.01M → [H⁺]=0.01 → pH=-log(0.01)=2' },
-    { t: 'num', q: 'Tính pH của dung dịch NaOH 0.001M (pOH trước, rồi pH = 14 - pOH)', ans: '11', exp: 'pOH=3 → pH=11' },
-    { t: 'mcq', q: 'Chất nào sau đây là axit mạnh?', opts: ['CH₃COOH', 'HF', 'HNO₃', 'H₂CO₃'], ans: 2, exp: 'HNO₃ là axit mạnh, phân li hoàn toàn trong nước' },
-    { t: 'num', q: 'Trộn 100ml HCl 0.2M với 100ml NaOH 0.1M. pH của dung dịch thu được (làm tròn nguyên)?', ans: '1', exp: 'nHCl=0.02, nNaOH=0.01 → dư 0.01mol HCl/200ml → [H+]=0.05M → pH≈1.3 ≈ 1' },
-    { t: 'mcq', q: 'Ion nào làm cho dung dịch có môi trường bazơ?', opts: ['NH₄⁺', 'Al³⁺', 'CO₃²⁻', 'Fe³⁺'], ans: 2, exp: 'CO₃²⁻ thủy phân tạo OH⁻ → môi trường bazơ' },
-    { t: 'mcq', q: 'Giá trị pH của máu người bình thường là?', opts: ['6.8 – 7.0', '7.35 – 7.45', '7.8 – 8.0', '6.0 – 6.5'], ans: 1, exp: 'pH máu bình thường: 7.35 – 7.45' },
-  ],
-  'redox': [
-    { t: 'mcq', q: 'Trong phản ứng: Fe + CuSO₄ → FeSO₄ + Cu. Chất nào bị oxi hóa?', opts: ['Fe', 'CuSO₄', 'FeSO₄', 'Cu'], ans: 0, exp: 'Fe → Fe²⁺ (mất electron) → Fe bị oxi hóa' },
-    { t: 'num', q: 'Số oxi hóa của Mn trong KMnO₄ là? (nhập số nguyên dương)', ans: '7', exp: 'K(+1)+Mn(x)+4O(-2)=0 → x=+7' },
-    { t: 'mcq', q: 'Chất khử là chất:', opts: ['Nhận electron', 'Cho electron', 'Nhận proton', 'Cho proton'], ans: 1, exp: 'Chất khử là chất nhường/cho electron' },
-    { t: 'num', q: 'Số oxi hóa của S trong H₂SO₄?', ans: '6', exp: '2(+1)+S+4(-2)=0 → S=+6' },
-    { t: 'mcq', q: 'Phản ứng nào sau đây là phản ứng oxi hóa khử?', opts: ['NaCl + AgNO₃', 'CaCO₃ nhiệt phân', 'Zn + H₂SO₄ loãng', 'NaOH + HCl'], ans: 2, exp: 'Zn → Zn²⁺ + 2e⁻ (oxi hóa); 2H⁺ + 2e⁻ → H₂ (khử)' },
-  ],
-  'electro': [
-    { t: 'mcq', q: 'Suất điện động của pin Daniell (Zn-Cu) ở điều kiện chuẩn là bao nhiêu?', opts: ['0.76 V', '1.10 V', '1.46 V', '0.34 V'], ans: 1, exp: 'E°cell = E°Cu - E°Zn = 0.34 - (-0.76) = 1.10 V' },
-    { t: 'num', q: 'Điện cực nào là cực âm (anot) trong pin điện hóa? Nhập 1=anot, 2=catot', ans: '1', exp: 'Cực âm = anot = xảy ra oxi hóa' },
-    { t: 'mcq', q: 'Trong điện phân dung dịch CuSO₄, tại catot xảy ra:', opts: ['Cu²⁺ + 2e⁻ → Cu', 'Cu → Cu²⁺ + 2e⁻', '2H₂O → O₂ + 4H⁺ + 4e⁻', 'SO₄²⁻ bị oxi hóa'], ans: 0, exp: 'Catot: Cu²⁺ + 2e⁻ → Cu (khử)' },
-  ],
-  'organic': [
-    { t: 'mcq', q: 'Công thức phân tử của metan là?', opts: ['C₂H₆', 'CH₄', 'C₃H₈', 'C₂H₄'], ans: 1, exp: 'Metan = CH₄, hydrocacbon no đơn giản nhất' },
-    { t: 'num', q: 'Etilen (C₂H₄) có bao nhiêu liên kết đôi C=C?', ans: '1', exp: 'Etilen: CH₂=CH₂ → 1 liên kết đôi C=C' },
-    { t: 'mcq', q: 'Phản ứng đặc trưng của ankan là?', opts: ['Cộng hợp', 'Thế halogen', 'Trùng hợp', 'Tách nước'], ans: 1, exp: 'Ankan có liên kết đơn bền → đặc trưng là phản ứng thế (halogen hóa)' },
-    { t: 'mcq', q: 'Glucozơ (C₆H₁₂O₆) thuộc loại hợp chất nào?', opts: ['Lipit', 'Protein', 'Cacbohidrat', 'Axit amin'], ans: 2, exp: 'Glucozơ là monosaccarit thuộc nhóm cacbohidrat' },
-    { t: 'num', q: 'Số nguyên tử C trong phân tử benzen (C₆H₆)?', ans: '6', exp: 'Benzen: C₆H₆ → 6 nguyên tử cacbon' },
-  ],
-  'periodic': [
-    { t: 'num', q: 'Nguyên tố nào có số hiệu nguyên tử Z = 26? Nhập số nguyên tử proton của Fe', ans: '26', exp: 'Z=26 là Fe (Sắt)' },
-    { t: 'mcq', q: 'Nhóm IA của bảng tuần hoàn còn được gọi là:', opts: ['Halogen', 'Kim loại kiềm', 'Kim loại kiềm thổ', 'Khí hiếm'], ans: 1, exp: 'Nhóm IA = kim loại kiềm: Li, Na, K, Rb, Cs, Fr' },
-    { t: 'num', q: 'Chu kì 2 của bảng tuần hoàn có bao nhiêu nguyên tố?', ans: '8', exp: 'Chu kì 2: Li → Ne = 8 nguyên tố' },
-    { t: 'mcq', q: 'Trong một chu kì, tính kim loại biến đổi theo chiều nào?', opts: ['Tăng từ trái qua phải', 'Giảm từ trái qua phải', 'Không đổi', 'Biến đổi bất thường'], ans: 1, exp: 'Trong chu kì: tính kim loại giảm dần từ trái → phải' },
-  ],
-  'solution': [
-    { t: 'num', q: 'Độ tan của NaCl trong 100g nước ở 20°C là khoảng bao nhiêu gam? (làm tròn đến chục)', ans: '36', exp: 'NaCl có độ tan ≈ 36g/100g nước ở 20°C' },
-    { t: 'mcq', q: 'Dung dịch bão hòa là dung dịch:', opts: ['Có thể hòa tan thêm chất tan', 'Không thể hòa tan thêm chất tan', 'Không có chất tan', 'Có nồng độ mol/L = 1'], ans: 1, exp: 'Dung dịch bão hòa đã đạt giới hạn hòa tan của chất tan' },
-    { t: 'mcq', q: 'Nồng độ mol/L (C_M) được tính bằng:', opts: ['m/V', 'n/V(L)', 'm/m_dm', 'n/m'], ans: 1, exp: 'C_M = n(mol) / V(lít)' },
-  ],
-  'thermo': [
-    { t: 'mcq', q: 'Phản ứng tỏa nhiệt có ΔH:', opts: ['ΔH > 0', 'ΔH < 0', 'ΔH = 0', 'ΔH không xác định'], ans: 1, exp: 'Phản ứng tỏa nhiệt: ΔH < 0 (hệ tỏa năng lượng ra môi trường)' },
-    { t: 'num', q: 'Nhiệt đốt cháy của C thành CO₂ là -394 kJ/mol. Đốt 12g C sinh ra bao nhiêu kJ? (số nguyên)', ans: '394', exp: '12g C = 1mol → tỏa 394 kJ' },
-  ],
-  'equilib': [
-    { t: 'mcq', q: 'Nguyên lý Le Chatelier phát biểu về:', opts: ['Tốc độ phản ứng', 'Chiều dịch chuyển cân bằng khi bị tác động', 'Năng lượng hoạt hóa', 'Trật tự phản ứng'], ans: 1, exp: 'Le Chatelier: khi cân bằng bị phá vỡ, hệ tự điều chỉnh để chống lại sự thay đổi đó' },
-    { t: 'mcq', q: 'Tăng nồng độ chất phản ứng sẽ làm cân bằng:', opts: ['Dịch chuyển sang trái', 'Dịch chuyển sang phải', 'Không thay đổi', 'Phụ thuộc nhiệt độ'], ans: 1, exp: 'Tăng nồng độ chất đầu → cân bằng chuyển sang phải (tạo thêm sản phẩm)' },
-  ],
-};
+async function loadCompetitionData() {
+  try {
+    const res = await fetch('questions.json');
+    if (!res.ok) throw new Error('Không thể tải questions.json');
+    const data = await res.json();
+    
+    if (data.TOPICS) {
+      TOPICS = Object.entries(data.TOPICS).map(([id, info]) => ({
+        id,
+        name: info.name,
+        icon: info.icon
+      }));
+    }
+    
+    if (data.QUESTION_BANK) {
+      QUESTION_BANK = {};
+      for (const [tid, qs] of Object.entries(data.QUESTION_BANK)) {
+        QUESTION_BANK[tid] = qs.map(q => ({
+          t: q.type || 'mcq',
+          q: q.q,
+          opts: q.opts,
+          ans: q.correct !== undefined ? q.correct : 0,
+          exp: q.exp,
+          topicId: tid
+        }));
+      }
+    }
+    console.log('?? D? li?u Arena t? questions.json d du?c t?i:', TOPICS.length, 'ch? d?');
+  } catch (e) {
+    console.error('?? L?i loadCompetitionData:', e);
+    // Fallback n?u fetch l?i
+    TOPICS = [
+      { id: 'acid-base', name: 'Axit  Baz?', icon: '??' },
+      { id: 'redox', name: 'Oxi ha kh?', icon: '??' },
+      { id: 'electro', name: 'Di?n ha', icon: '??' },
+      { id: 'organic', name: 'Ha h?u c?', icon: '??' }
+    ];
+  }
+}
+
+
 
 // ══════════════════════════════════════════════════════
 //   ARENA STATE
@@ -1201,10 +1188,10 @@ let AR = {
   oppId: null, oppProfile: null,
   selectedTopics: [], ready: false,
   oppReady: false, oppTopics: [],
-  lobbyTimer: null, lobbySec: 30,
+  lobbyTimer: null, lobbySec: 90,
   questions: [], qIndex: 0,
   myScore: 0, oppScore: 0,
-  battleTimer: null, battleSec: 60,
+  battleTimer: null, battleSec: 30,
   answered: false,
   oppAnswered: false,
   waitTimer: null, waitSec: 0,
@@ -1261,13 +1248,13 @@ function cleanupRoom() {
     oppReady: false,
     oppTopics: [],
     lobbyTimer: null,
-    lobbySec: 30,
+    lobbySec: 90,
     questions: [],
     qIndex: 0,
     myScore: 0,
     oppScore: 0,
     battleTimer: null,
-    battleSec: 60,
+    battleSec: 30,
     answered: false,
     oppAnswered: false,
     waitTimer: null,
@@ -1419,7 +1406,7 @@ async function handleRoomUpdate(payload) {
 
 function startLobbyCountdown(seconds) {
 
-  if (!seconds || isNaN(seconds)) seconds = 30;
+  if (!seconds || isNaN(seconds)) seconds = 90;
 
   let time = seconds;
   const el = G('lobby-countdown');
@@ -1484,22 +1471,44 @@ function enterLobby() {
   }
 
   // Chọn chủ đề (giống nhau cho cả 2 mode)
+  // Nhóm chủ đề theo khối lớp để dễ chọn
+  const cats = {
+    "Lớp 10": ["atomic", "periodic", "chemical-bonds", "redox", "thermo", "speed", "halogens", "equilib"],
+    "Lớp 11": ["nitrogen", "sulfur", "organic", "hydrocarbon", "halogen-deriv", "alcohol-phenol", "carbonyl", "carboxylic"],
+    "Lớp 12": ["ester-lipid", "carbohydrate", "nitrogen-compounds", "polymer", "electro", "metals", "alkali-alkaline", "aluminum", "transition-complex"]
+  };
+
   const tg = G('topic-grid');
   tg.innerHTML = '';
-  TOPICS.forEach(tp => {
-    const btn = document.createElement('button');
-    btn.className = 'topic-btn';
-    btn.innerHTML = `${tp.icon}<br>${tp.name}`;
-    btn.dataset.id = tp.id;
-    btn.onclick = () => toggleTopic(tp.id, btn);
-    tg.appendChild(btn);
-  });
+  
+  for (const catName in cats) {
+    const sectionTitle = document.createElement('div');
+    sectionTitle.className = 'topic-cat-title';
+    sectionTitle.textContent = catName;
+    tg.appendChild(sectionTitle);
+
+    const grid = document.createElement('div');
+    grid.className = 'topic-grid';
+    
+    const catTopicIds = cats[catName];
+    const catTopics = TOPICS.filter(t => catTopicIds.includes(t.id));
+    
+    catTopics.forEach(tp => {
+      const btn = document.createElement('button');
+      btn.className = 'topic-btn';
+      btn.innerHTML = `<span class="topic-btn-icon">${tp.icon}</span><span class="topic-btn-name">${tp.name}</span>`;
+      btn.dataset.id = tp.id;
+      btn.onclick = () => toggleTopic(tp.id, btn);
+      grid.appendChild(btn);
+    });
+    tg.appendChild(grid);
+  }
 
   AR.selectedTopics = [];
   AR.ready = false;
   AR.oppReady = false;
   G('topic-count').textContent = '0';
-  startLobbyCountdown(AR.lobbySec || 30);
+  startLobbyCountdown(AR.lobbySec || 90);
 }
 
 
@@ -1598,7 +1607,7 @@ function startBattle(questionsJson) {
   clearInterval(AR.lobbyTimer);
   let qs;
   try { qs = typeof questionsJson === 'string' ? JSON.parse(questionsJson) : questionsJson; }
-  catch (e) { qs = buildQuestions(AR.selectedTopics.length ? AR.selectedTopics : ['acid-base', 'redox']); }
+  catch (e) { qs = buildQuestions(AR.selectedTopics.length ? AR.selectedTopics : ['atomic', 'periodic']); }
   AR.questions = qs;
   AR.qIndex = 0; AR.myScore = 0; AR.oppScore = 0;
 
