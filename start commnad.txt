@@ -1,0 +1,1 @@
+gunicorn -w 1 --threads 4 serverapp --bind 0.0.0.0$PORT --timeout 120
