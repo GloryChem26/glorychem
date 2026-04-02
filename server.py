@@ -1189,6 +1189,474 @@ def load_questions_database():
 TOPICS, QUESTION_BANK = load_questions_database()
 
 
+
+
+
+
+
+
+
+
+import random as _random
+import string  as _string
+
+# ══════════════════════════════════════
+#   QUIZ ROOMS (in-memory)
+# ══════════════════════════════════════
+# quiz_rooms[pin] = {
+#   "pin": str,
+#   "host_sid": str,
+#   "teacher_id": str,
+#   "set_id": str,
+#   "title": str,
+#   "questions": [...],         # full questions with correct answers
+#   "state": "waiting|playing|ended",
+#   "current_q": int,
+#   "players": {userId: {"name": str, "sid": str, "avatarUrl": str}},
+#   "scores": {userId: int},
+#   "answers_this_round": {userId: answer},  # reset each question
+#   "_q_timer": Timer | None,
+# }
+quiz_rooms: dict = {}
+_used_pins: set = set()
+
+
+def _gen_pin() -> str:
+    """Generate unique 6-digit PIN."""
+    while True:
+        pin = "".join(_random.choices(_string.digits, k=6))
+        if pin not in _used_pins:
+            _used_pins.add(pin)
+            return pin
+
+
+def _qz_sanitize(q: dict) -> dict:
+    """Remove correct answer before sending to players."""
+    return {k: v for k, v in q.items() if k not in ("correct", "correct_answer", "exp", "explanation")}
+
+
+def _qz_broadcast_count(pin: str):
+    room = quiz_rooms.get(pin)
+    if not room:
+        return
+    socketio.emit(
+        "quiz_player_count",
+        {"count": len(room["players"])},
+        room=pin,
+    )
+
+
+def _qz_leaderboard_payload(room: dict) -> list:
+    return sorted(
+        [{"userId": uid, "name": room["players"][uid]["name"], "score": room["scores"].get(uid, 0)}
+         for uid in room["players"]],
+        key=lambda x: x["score"], reverse=True,
+    )
+
+
+def _qz_scores_dict(room: dict) -> dict:
+    return {uid: room["scores"].get(uid, 0) for uid in room["players"]}
+
+
+def _qz_players_dict(room: dict) -> dict:
+    return {uid: {"name": p["name"], "avatarUrl": p.get("avatarUrl", "")}
+            for uid, p in room["players"].items()}
+
+
+def _qz_send_question(pin: str):
+    room = quiz_rooms.get(pin)
+    if not room or room["state"] != "playing":
+        return
+
+    q_idx = room["current_q"]
+    questions = room["questions"]
+
+    if q_idx >= len(questions):
+        _qz_end_game(pin)
+        return
+
+    q = questions[q_idx]
+    room["answers_this_round"] = {}
+    room["question_revealed"]  = False
+
+    # Send to players (without correct answer)
+    sanitized = _qz_sanitize(q)
+    sanitized["time"]      = q.get("time_limit", q.get("time", 20))
+    sanitized["timeLimit"] = sanitized["time"]
+    sanitized["points"]    = q.get("points", 1000)
+
+    socketio.emit(
+        "quiz_question",
+        {
+            "question": sanitized,
+            "index":    q_idx + 1,
+            "total":    len(questions),
+            "timeLimit": sanitized["time"],
+        },
+        room=pin,
+    )
+
+    # Also notify host
+    socketio.emit(
+        "quiz_host_question_sent",
+        {"questionIdx": q_idx, "timeLimit": sanitized["time"]},
+        room=room["host_sid"],
+    )
+
+    # Auto-advance timer (server-side safety net)
+    time_limit = sanitized["time"]
+    def _on_timeout():
+        r = quiz_rooms.get(pin)
+        if r and r["state"] == "playing" and r["current_q"] == q_idx and not r.get("question_revealed"):
+            r["question_revealed"] = True
+            _qz_reveal_and_scores(pin, q_idx)
+            socketio.emit("quiz_question_timeout", {}, room=pin)
+
+    t = _schedule(time_limit + 2, _on_timeout)  # +2s grace
+    room["_q_timer"] = t
+
+
+def _qz_reveal_and_scores(pin: str, q_idx: int):
+    """Send answer results to each player, update scores."""
+    room = quiz_rooms.get(pin)
+    if not room:
+        return
+    q = room["questions"][q_idx]
+    correct = str(q.get("correct_answer", q.get("correct", "")))
+    time_limit = q.get("time_limit", q.get("time", 20))
+    base_points = q.get("points", 1000)
+
+    answered_this = room.get("answers_this_round", {})
+
+    # Calculate scores and send per-player result
+    for uid, p in list(room["players"].items()):
+        p_sid = p.get("sid")
+        if not p_sid:
+            continue
+
+        player_ans_data = answered_this.get(uid)
+
+        if player_ans_data is None:
+            # No answer — 0 points
+            socketio.emit("quiz_answer_result", {
+                "correct":       False,
+                "points":        0,
+                "explanation":   q.get("exp", q.get("explanation", "")),
+                "correctAnswer": correct,
+                "myScore":       room["scores"].get(uid, 0),
+                "myRank":        0,
+            }, room=p_sid)
+        else:
+            ans      = str(player_ans_data["answer"]).strip().lower()
+            is_mcq   = (q.get("type", "mcq") == "mcq")
+            is_correct = (ans == correct.lower()) if not is_mcq else (ans == correct)
+
+            if is_correct:
+                time_bonus  = int(player_ans_data.get("timeBonus", 0))
+                earned      = min(base_points + time_bonus, base_points * 2)
+                room["scores"][uid] = room["scores"].get(uid, 0) + earned
+            else:
+                earned = 0
+
+            socketio.emit("quiz_answer_result", {
+                "correct":       is_correct,
+                "points":        earned,
+                "explanation":   q.get("exp", q.get("explanation", "")),
+                "correctAnswer": correct,
+                "myScore":       room["scores"].get(uid, 0),
+                "myRank":        0,  # will update below
+            }, room=p_sid)
+
+    # Build ranked list and update myRank
+    ranked = _qz_leaderboard_payload(room)
+    rank_map = {e["userId"]: i + 1 for i, e in enumerate(ranked)}
+
+    for uid, p in list(room["players"].items()):
+        p_sid = p.get("sid")
+        if p_sid:
+            socketio.emit("quiz_rank_update", {
+                "myRank":  rank_map.get(uid, 0),
+                "myScore": room["scores"].get(uid, 0),
+            }, room=p_sid)
+
+    # Send leaderboard to everyone
+    socketio.emit(
+        "quiz_leaderboard",
+        {"scores": _qz_scores_dict(room), "players": _qz_players_dict(room)},
+        room=pin,
+    )
+
+    # Notify host of current scores
+    socketio.emit(
+        "quiz_host_scores",
+        {"scores": _qz_scores_dict(room), "players": _qz_players_dict(room)},
+        room=room["host_sid"],
+    )
+
+
+def _qz_end_game(pin: str):
+    room = quiz_rooms.get(pin)
+    if not room:
+        return
+    room["state"] = "ended"
+    cancel_timer(room, "_q_timer")
+
+    final_scores  = _qz_scores_dict(room)
+    final_players = _qz_players_dict(room)
+
+    socketio.emit(
+        "quiz_ended",
+        {"scores": final_scores, "players": final_players},
+        room=pin,
+    )
+
+    # Clean up after 5 min
+    def _cleanup():
+        quiz_rooms.pop(pin, None)
+        _used_pins.discard(pin)
+
+    _schedule(300, _cleanup)
+
+
+# ══════════════════════════════════════
+#   SOCKET.IO — HOST EVENTS
+# ══════════════════════════════════════
+
+@socketio.on("quiz_host_create")
+def handle_quiz_host_create(data):
+    """Giáo viên tạo phòng quiz."""
+    sid        = request.sid
+    set_id     = data.get("setId")
+    title      = data.get("title", "Quiz")
+    q_count    = data.get("questionCount", 0)
+    teacher_id = data.get("userId")
+
+    pin = _gen_pin()
+
+    quiz_rooms[pin] = {
+        "pin":               pin,
+        "host_sid":          sid,
+        "teacher_id":        teacher_id,
+        "set_id":            set_id,
+        "title":             title,
+        "questions":         [],   # questions loaded on start
+        "state":             "waiting",
+        "current_q":         -1,
+        "players":           {},
+        "scores":            {},
+        "answers_this_round":{},
+        "question_revealed": False,
+        "_q_timer":          None,
+    }
+
+    join_room(pin)
+    emit("quiz_room_created", {"pin": pin, "title": title})
+    print(f"[Quiz] Room created: PIN={pin} by {teacher_id}")
+
+
+@socketio.on("quiz_host_start")
+def handle_quiz_host_start(data):
+    """Giáo viên bắt đầu quiz (sau khi có đủ người)."""
+    sid = request.sid
+    pin = data.get("pin")
+    room = quiz_rooms.get(pin)
+
+    if not room or room["host_sid"] != sid:
+        emit("error", {"msg": "Không có quyền bắt đầu phòng này."}); return
+
+    if room["state"] != "waiting":
+        emit("error", {"msg": "Phòng đã bắt đầu rồi."}); return
+
+    # Load questions from Supabase
+    try:
+        res = supabase.table("quiz_questions") \
+            .select("*") \
+            .eq("set_id", room["set_id"]) \
+            .order("order_num") \
+            .execute()
+        questions = res.data or []
+    except Exception as e:
+        print(f"[Quiz] Load questions error: {e}")
+        emit("error", {"msg": "Không tải được câu hỏi."}); return
+
+    if not questions:
+        emit("error", {"msg": "Bộ đề không có câu hỏi nào."}); return
+
+    room["questions"] = questions
+    room["state"]     = "playing"
+    room["current_q"] = 0
+    room["scores"]    = {uid: 0 for uid in room["players"]}
+
+    # Notify all players
+    socketio.emit("quiz_starting", {"total": len(questions)}, room=pin)
+
+    # Small delay then first question
+    def _send_first():
+        _qz_send_question(pin)
+
+    _schedule(1.5, _send_first)
+    print(f"[Quiz] Game started: PIN={pin} | {len(questions)} Qs | {len(room['players'])} players")
+
+
+@socketio.on("quiz_host_next")
+def handle_quiz_host_next(data):
+    """Host bấm Câu Tiếp Theo."""
+    sid = request.sid
+    pin = data.get("pin")
+    room = quiz_rooms.get(pin)
+
+    if not room or room["host_sid"] != sid: return
+    if room["state"] != "playing": return
+
+    cancel_timer(room, "_q_timer")
+
+    next_idx = data.get("questionIdx", room["current_q"] + 1)
+    room["current_q"] = next_idx
+
+    if next_idx >= len(room["questions"]):
+        _qz_end_game(pin)
+        return
+
+    _qz_send_question(pin)
+
+
+@socketio.on("quiz_host_reveal")
+def handle_quiz_host_reveal(data):
+    """Host bấm Hiện Đáp Án trước khi hết giờ."""
+    sid = request.sid
+    pin = data.get("pin")
+    room = quiz_rooms.get(pin)
+
+    if not room or room["host_sid"] != sid: return
+    if room.get("question_revealed"): return
+
+    cancel_timer(room, "_q_timer")
+    room["question_revealed"] = True
+    q_idx = data.get("questionIdx", room["current_q"])
+    _qz_reveal_and_scores(pin, q_idx)
+
+
+@socketio.on("quiz_host_end")
+def handle_quiz_host_end(data):
+    """Host kết thúc quiz sớm."""
+    sid = request.sid
+    pin = data.get("pin")
+    room = quiz_rooms.get(pin)
+
+    if not room or room["host_sid"] != sid: return
+    cancel_timer(room, "_q_timer")
+    _qz_end_game(pin)
+
+
+# ══════════════════════════════════════
+#   SOCKET.IO — PLAYER EVENTS
+# ══════════════════════════════════════
+
+@socketio.on("quiz_player_join")
+def handle_quiz_player_join(data):
+    """Học sinh tham gia phòng bằng PIN."""
+    sid       = request.sid
+    pin       = str(data.get("pin", "")).strip()
+    user_id   = data.get("userId")
+    name      = data.get("name", "Học sinh")
+    avatar_url = data.get("avatarUrl", "")
+
+    room = quiz_rooms.get(pin)
+    if not room:
+        emit("quiz_join_error", {"msg": f"Không tìm thấy phòng với mã PIN {pin}."}); return
+    if room["state"] != "waiting":
+        emit("quiz_join_error", {"msg": "Phòng đã bắt đầu thi. Không thể tham gia."}); return
+    if not user_id:
+        emit("quiz_join_error", {"msg": "Bạn cần đăng nhập để tham gia."}); return
+
+    # Register player
+    room["players"][user_id] = {"name": name, "sid": sid, "avatarUrl": avatar_url}
+    room["scores"][user_id]  = 0
+    join_room(pin)
+
+    emit("quiz_joined", {
+        "pin":         pin,
+        "setTitle":    room["title"],
+        "playerCount": len(room["players"]),
+    })
+
+    # Notify host
+    socketio.emit(
+        "quiz_player_joined",
+        {
+            "userId":  user_id,
+            "name":    name,
+            "players": {
+                uid: {"name": p["name"], "avatarUrl": p.get("avatarUrl", "")}
+                for uid, p in room["players"].items()
+            },
+        },
+        room=room["host_sid"],
+    )
+
+    # Broadcast updated count to all in room
+    _qz_broadcast_count(pin)
+    print(f"[Quiz] Player joined: {name} → PIN={pin} ({len(room['players'])} total)")
+
+
+@socketio.on("quiz_player_answer")
+def handle_quiz_player_answer(data):
+    """Học sinh gửi đáp án."""
+    sid       = request.sid
+    pin       = data.get("pin")
+    user_id   = data.get("userId")
+    answer    = data.get("answer")
+    time_bonus = data.get("timeBonus", 0)
+
+    room = quiz_rooms.get(pin)
+    if not room or room["state"] != "playing": return
+    if user_id not in room["players"]: return
+    if user_id in room["answers_this_round"]: return  # already answered
+
+    room["answers_this_round"][user_id] = {
+        "answer":    answer,
+        "timeBonus": time_bonus,
+        "sid":       sid,
+    }
+
+    answered_count = len(room["answers_this_round"])
+    total_players  = len(room["players"])
+
+    # Notify host of answer progress
+    socketio.emit(
+        "quiz_answer_received",
+        {
+            "userId":       user_id,
+            "answerCount":  answered_count,
+            "totalPlayers": total_players,
+            "scores":       _qz_scores_dict(room),
+        },
+        room=room["host_sid"],
+    )
+
+    # Auto-reveal when everyone answered
+    if answered_count >= total_players and not room.get("question_revealed"):
+        cancel_timer(room, "_q_timer")
+        room["question_revealed"] = True
+        _qz_reveal_and_scores(pin, room["current_q"])
+
+
+# ══════════════════════════════════════
+#   STATIC ROUTES (add to server.py)
+# ══════════════════════════════════════
+
+@app.route("/teacher")
+def teacher_page():
+    return send_file("teacher.html")
+
+@app.route("/play")
+def play_page():
+    return send_file("play.html")
+
+
+
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     print(f"🚀 GloryChem server on port {port}")

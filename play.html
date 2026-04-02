@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>GloryChem — Tham Gia Giải Đấu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&family=Lexend:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/quiz.css">
+  <style>
+    * { box-sizing: border-box; }
+    :root { 
+      --pl-bg: radial-gradient(circle at 50% 50%, #0f172a 0%, #020617 100%); 
+      --nav-h: 66px;
+    }
+    body { 
+      margin: 0; padding: 0; 
+      background: var(--pl-bg); 
+      min-height: 100vh;
+      color: #fff;
+      font-family: 'Be Vietnam Pro', sans-serif;
+      overflow-x: hidden;
+    }
+    #pl-app {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 100vh;
+      padding: 1.5rem;
+      padding-top: calc(var(--nav-h) + 1rem);
+    }
+    #pl-app > div {
+      transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      width: 100%;
+      max-width: 100%;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+    }
+    .pl-opt-btn {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+    .pl-opt-btn:hover {
+      transform: translateY(-4px) scale(1.02) !important;
+    }
+    /* Simple glass effect for cards */
+    .glass {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+  </style>
+  <script>
+    (function () {
+      const t = localStorage.getItem('glorychem-theme');
+      if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches))
+        document.documentElement.setAttribute('data-theme', 'dark');
+    })();
+  </script>
+</head>
+<body>
+
+<!-- ═══ CANVAS BACKGROUND ═══ -->
+<canvas id="pc" style="position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.6"></canvas>
+
+<!-- ═══ NAV (minimal) ═══ -->
+<nav style="background:rgba(11,17,33,.8);backdrop-filter:blur(24px);border-bottom:1px solid rgba(255,255,255,.05);height:66px;display:flex;align-items:center;padding:0 4%">
+  <div class="logo" onclick="window.location='/'" style="flex:1;display:flex;align-items:center;gap:10px;cursor:pointer">
+    <div class="lmark" style="background:linear-gradient(135deg,var(--teal),#0891b2);width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.1rem;box-shadow:0 4px 12px rgba(13,148,136,.3)">⚗️</div>
+    <span class="ltext" style="font-family:var(--font-h);font-weight:700;font-size:1.1rem;color:#fff;letter-spacing:-0.4px">Glory<span style="color:var(--teal)">Chem</span></span>
+  </div>
+  <div style="flex:1"></div>
+  <div id="nav-user-info" style="font-size:.82rem;color:rgba(255,255,255,.6);padding:0 1.25rem;display:none;background:rgba(255,255,255,.05);padding:.4rem 1rem;border-radius:100px;border:1px solid rgba(255,255,255,.1)">
+    <span id="nav-player-name"></span>
+  </div>
+</nav>
+
+<!-- ═══ APP ROOT ═══ -->
+<div id="pl-app">
+
+  <!-- ── SCREEN: AUTH CHECK ── -->
+  <div id="screen-auth" style="text-align:center;max-width:420px;width:100%">
+    <div style="font-size:3rem;margin-bottom:.75rem">⚗️</div>
+    <div style="font-family:var(--font-h);font-weight:800;font-size:1.3rem;color:#fff;margin-bottom:.5rem">GloryChem Quiz</div>
+    <div style="font-size:.85rem;color:rgba(255,255,255,.45);margin-bottom:1.5rem">Đang xác thực...</div>
+    <div><span class="spin" style="color:var(--teal);font-size:1.5rem">↻</span></div>
+  </div>
+
+  <!-- ── SCREEN: JOIN (Enter PIN) ── -->
+  <div id="screen-join" class="pl-join-card" style="display:none">
+    <div class="pl-join-badge">LIVE QUIZ</div>
+    <div class="pl-join-logo">🏆</div>
+    <div class="pl-join-title">Vào Phòng Thi Đấu</div>
+    <div class="pl-join-sub" id="join-sub">Nhập mã PIN 6 chữ số để bắt đầu</div>
+
+    <div class="pl-pin-wrapper">
+      <input class="pl-input pl-pin-input" id="pl-pin" type="text" maxlength="6"
+        placeholder="      " autocomplete="off" inputmode="numeric"
+        oninput="this.value=this.value.replace(/[^0-9]/g,'');onPinChange()"
+        onfocus="onPinChange()" onblur="onPinChange()"
+        onkeydown="if(event.key==='Enter')joinRoom()">
+      <div class="pl-pin-slots">
+        <span></span><span></span><span></span><span></span><span></span><span></span>
+      </div>
+    </div>
+
+    <div class="pl-err" id="join-err" style="display:none"></div>
+
+    <button class="pl-join-btn" id="join-btn" onclick="joinRoom()" disabled>
+      <span id="join-btn-txt" style="display:flex;align-items:center;justify-content:center;gap:10px">
+        <span>Tham Gia Ngay</span>
+        <span style="font-size:1.2rem">⚡</span>
+      </span>
+    </button>
+
+    <div class="pl-join-hint">
+      Bạn sẽ thi đấu thời gian thực cùng các học sinh khác
+    </div>
+  </div>
+
+  <!-- ── SCREEN: WAITING ── -->
+  <div id="screen-waiting" style="display:none;text-align:center;max-width:500px;width:100%;animation:fadeIn .5s ease">
+    <div class="pl-waiting">
+      <div class="pl-waiting-visual">
+         <div class="pl-waiting-glow"></div>
+         <div class="pl-waiting-icon">⚗️</div>
+      </div>
+      <div class="pl-waiting-title" id="wait-title">Sẵn Sàng Chưa?</div>
+      <div class="pl-waiting-sub" id="wait-sub">Chờ giáo viên khai hỏa đấu trường...</div>
+      <div class="pl-waiting-dots"><span></span><span></span><span></span></div>
+    </div>
+    
+    <div class="pl-wait-stats">
+      <div class="pl-ws-item">
+        <div class="pl-ws-label">Họ tên</div>
+        <div class="pl-ws-val" id="my-name-wait">---</div>
+      </div>
+      <div class="pl-ws-divider"></div>
+      <div class="pl-ws-item">
+        <div class="pl-ws-label">Phòng</div>
+        <div class="pl-ws-val" style="color:var(--teal);font-family:var(--font-m)" id="wait-pin-display">#000000</div>
+      </div>
+    </div>
+
+    <div class="pl-wait-footer">
+      <div style="display:flex;align-items:center;justify-content:center;gap:.6rem;margin-bottom:1rem">
+        <div class="pl-joined-avatars" id="joined-dots"></div>
+        <div style="font-size:.85rem;font-weight:700;color:#fff" id="wait-joined">0 học sinh</div>
+      </div>
+      <div style="padding:1rem;background:rgba(255,255,255,.03);border-radius:12px;border:1px solid rgba(255,255,255,.05)">
+        <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.3);margin-bottom:.4rem">Nội dung giải đấu</div>
+        <div style="font-family:var(--font-h);font-weight:700;font-size:.95rem;color:rgba(255,255,255,.8)" id="wait-set-title">---</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SCREEN: QUESTION ── -->
+  <div id="screen-question" class="pl-q-screen" style="display:none">
+    <div class="pl-q-meta">
+      <div class="pl-q-num">Câu <span id="pl-q-num">1</span> / <span id="pl-q-total">10</span></div>
+      <div style="font-family:var(--font-m);font-size:.82rem;color:var(--teal)" id="pl-q-pts">1000 điểm</div>
+    </div>
+    <div class="pl-timer-bar"><div class="pl-timer-fill" id="pl-timer-fill"></div></div>
+    <div class="pl-q-text" id="pl-q-text">...</div>
+
+    <!-- MCQ options -->
+    <div class="pl-opts-grid" id="pl-mcq-opts" style="display:none"></div>
+
+    <!-- Short answer form -->
+    <div class="pl-sa-form" id="pl-sa-form" style="display:none">
+      <input class="pl-sa-input" id="pl-sa-input" type="text"
+        placeholder="Nhập câu trả lời của bạn..."
+        autocomplete="off"
+        onkeydown="if(event.key==='Enter')submitSA()">
+      <button class="pl-sa-submit" id="pl-sa-btn" onclick="submitSA()">✓ Gửi Đáp Án</button>
+    </div>
+  </div>
+
+  <!-- ── SCREEN: RESULT (after answering) ── -->
+  <div id="screen-result" style="display:none;max-width:420px;width:100%">
+    <div class="pl-result-card" id="pl-result-card">
+      <div class="pl-result-icon" id="res-icon">✅</div>
+      <div class="pl-result-label" id="res-label">Đúng rồi!</div>
+      <div class="pl-result-points" id="res-pts">+1000 điểm</div>
+      <div style="font-size:.85rem;color:rgba(255,255,255,.45);margin-top:.75rem;line-height:1.5" id="res-exp"></div>
+      <div class="pl-result-rank" id="res-rank"></div>
+    </div>
+    <div style="margin-top:1.5rem;font-size:.8rem;color:rgba(255,255,255,.3);text-align:center">Đợi giáo viên chuyển câu tiếp theo...</div>
+    <div class="pl-waiting-dots" style="margin-top:.75rem;justify-content:center"><span></span><span></span><span></span></div>
+  </div>
+
+  <!-- ── SCREEN: LEADERBOARD (between Q) ── -->
+  <div id="screen-lb" class="pl-lb-screen" style="display:none">
+    <div class="pl-lb-title">🏆 Bảng Xếp Hạng</div>
+    <div id="pl-lb-list"></div>
+    <div style="margin-top:1rem;text-align:center;font-size:.8rem;color:rgba(255,255,255,.3)">Đợi câu hỏi tiếp theo...</div>
+  </div>
+
+  <!-- ── SCREEN: END ── -->
+  <div id="screen-end" class="pl-end-screen" style="display:none">
+    <div id="end-trophy" class="pl-end-trophy">🏆</div>
+    <div class="pl-end-title" id="end-title">Kết Thúc!</div>
+    <div class="pl-end-rank-badge" id="end-badge">Hạng #1</div>
+    <div id="pl-end-lb"></div>
+    <div style="margin-top:1.5rem;display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap">
+      <button class="pl-join-btn" style="width:auto;padding:.85rem 2rem" onclick="resetToJoin()">Chơi Lại</button>
+      <button class="pl-join-btn" style="width:auto;padding:.85rem 2rem;background:rgba(255,255,255,.1);box-shadow:none" onclick="window.location='/'">Trang Chủ</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="/script.js"></script>
+<script>
+/* ══════════════════════════════════════════════════
+   play.js — inlined
+══════════════════════════════════════════════════ */
+
+// ── Supabase ──
+const P_SURL = 'https://cmrbsiuzrpsglynnfund.supabase.co';
+const P_SKEY = 'sb_publishable_-4uRGeYYYeJAvSMKnwZr5Q_LOSAr_dZ';
+let psb;
+try { psb = (typeof sb !== 'undefined') ? sb : supabase.createClient(P_SURL, P_SKEY); }
+catch(e) { psb = supabase.createClient(P_SURL, P_SKEY); }
+
+let pUser = null;       // logged-in player
+let pSocket = null;     // socket
+let pState = 'auth';    // current screen
+let pTimerHandle = null;
+let pTimeLeft = 20;
+let pTimeTotal = 20;
+let pHasAnswered = false;
+let pCurrentQ = null;
+let pMyScore = 0;
+let pMyRank = 0;
+let pPin = null;
+let pSetTitle = '';
+
+const LETTERS = ['A','B','C','D'];
+const OPT_CLASSES = ['pl-opt-a','pl-opt-b','pl-opt-c','pl-opt-d'];
+
+// ── Screen control ──
+function showScreen(name) {
+  ['auth','join','waiting','question','result','lb','end'].forEach(s => {
+    const el = document.getElementById('screen-' + s);
+    if (el) el.style.display = s === name ? (name === 'question' ? 'block' : (name === 'lb' ? 'block' : 'flex')) : 'none';
+  });
+  // Fix display for question/result
+  const q = document.getElementById('screen-question');
+  const r = document.getElementById('screen-result');
+  if (q) q.style.display = name === 'question' ? 'block' : 'none';
+  if (r) r.style.display = name === 'result' ? 'flex' : 'none';
+  pState = name;
+}
+
+// ── Auth ──
+async function checkAuth() {
+  showScreen('auth');
+  const { data: { session } } = await psb.auth.getSession();
+  if (!session) {
+    // Not logged in — show message in join screen
+    document.getElementById('join-sub').textContent = 'Bạn cần đăng nhập để tham gia. Hãy đăng nhập tại trang chủ.';
+    document.getElementById('pl-pin').style.display = 'none';
+    document.getElementById('join-btn').style.display = 'none';
+    showScreen('join');
+    // Add link to homepage
+    setTimeout(() => {
+      const card = document.querySelector('.pl-join-card');
+      if (card) card.insertAdjacentHTML('beforeend', `<a href="/" style="display:inline-block;margin-top:1rem;color:var(--teal);font-size:.88rem;font-weight:600">→ Đến trang đăng nhập</a>`);
+    }, 100);
+    return;
+  }
+
+  pUser = session.user;
+  const { data: profile } = await psb.from('profiles').select('full_name,username,avatar_url').eq('id', pUser.id).single();
+  pUser.profile = profile;
+
+  const displayName = profile?.full_name || profile?.username || pUser.email?.split('@')[0] || 'Học sinh';
+  document.getElementById('nav-user-info').style.display = 'block';
+  document.getElementById('nav-player-name').textContent = '👤 ' + displayName;
+
+  // Check URL for PIN
+  const urlPin = new URLSearchParams(window.location.search).get('pin');
+  if (urlPin) {
+    document.getElementById('pl-pin').value = urlPin;
+    onPinChange();
+  }
+
+  showScreen('join');
+  connectSocket();
+}
+
+// ── Socket ──
+function connectSocket() {
+  if (pSocket && pSocket.connected) return;
+  pSocket = io(window.location.origin, { transports: ['websocket','polling'] });
+
+  pSocket.on('connect', () => console.log('Player socket connected:', pSocket.id));
+
+  pSocket.on('quiz_joined', ({ setTitle, playerCount }) => {
+    pSetTitle = setTitle || 'Giải đấu';
+    document.getElementById('wait-set-title').textContent = pSetTitle;
+    document.getElementById('wait-joined').textContent = playerCount + ' học sinh';
+    document.getElementById('wait-pin-display').textContent = '#' + pPin;
+    const name = pUser?.profile?.full_name || pUser?.profile?.username || pUser?.email?.split('@')[0] || 'Học sinh';
+    document.getElementById('my-name-wait').textContent = name;
+    renderJoinedDots(playerCount);
+    showScreen('waiting');
+  });
+
+  pSocket.on('quiz_player_count', ({ count }) => {
+    document.getElementById('wait-joined').textContent = count + ' học sinh';
+  });
+
+  pSocket.on('quiz_join_error', ({ msg }) => {
+    showErr('join-err', msg || 'Không thể tham gia phòng này.');
+    document.getElementById('join-btn').disabled = false;
+    document.getElementById('join-btn-txt').textContent = '→ Tham Gia';
+  });
+
+  pSocket.on('quiz_question', ({ question, index, total, timeLimit }) => {
+    pCurrentQ = question;
+    pHasAnswered = false;
+    pTimeLeft = timeLimit || 20;
+    pTimeTotal = timeLimit || 20;
+    renderQuestion(question, index, total);
+  });
+
+  pSocket.on('quiz_answer_result', ({ correct, points, explanation, correctAnswer, myScore, myRank, totalPlayers }) => {
+    pHasAnswered = true;
+    pMyScore = myScore || pMyScore;
+    pMyRank = myRank || pMyRank;
+    clearInterval(pTimerHandle);
+    showAnswerResult(correct, points, explanation, correctAnswer);
+  });
+
+  pSocket.on('quiz_leaderboard', ({ scores, players }) => {
+    showLeaderboard(scores, players);
+  });
+
+  pSocket.on('quiz_ended', ({ scores, players }) => {
+    showEndScreen(scores, players);
+  });
+
+  pSocket.on('disconnect', () => {
+    if (pState !== 'end') {
+      showErr('join-err', 'Mất kết nối với server.');
+    }
+  });
+
+  pSocket.on('quiz_player_count', ({ count }) => {
+    document.getElementById('wait-joined').textContent = count + ' học sinh';
+    renderJoinedDots(count);
+  });
+}
+
+function renderJoinedDots(count) {
+  const el = document.getElementById('joined-dots');
+  if(!el) return;
+  el.innerHTML = '';
+  const n = Math.min(count, 8);
+  for(let i=0; i<n; i++) {
+    const s = document.createElement('span');
+    el.appendChild(s);
+  }
+}
+
+// ── Join room ──
+function onPinChange() {
+  const el = document.getElementById('pl-pin');
+  const val = el.value;
+  const wrapper = document.querySelector('.pl-pin-wrapper');
+  
+  const slots = document.querySelectorAll('.pl-pin-slots span');
+  slots.forEach((s, i) => {
+    s.textContent = val[i] || '';
+    
+    // Toggle active class for the next empty slot
+    s.classList.toggle('active', i === val.length);
+    // Toggle filled class for non-empty slots
+    s.classList.toggle('filled', i < val.length);
+  });
+
+  if (wrapper) {
+    wrapper.className = 'pl-pin-wrapper filled-' + val.length;
+  }
+
+  document.getElementById('join-btn').disabled = val.length < 6;
+  if (document.getElementById('join-err').style.display !== 'none') hideErr('join-err');
+}
+
+function joinRoom() {
+  const pin = document.getElementById('pl-pin').value.trim();
+  if (pin.length < 6) return;
+
+  const displayName = pUser?.profile?.full_name || pUser?.profile?.username || pUser?.email?.split('@')[0] || 'Học sinh';
+
+  document.getElementById('join-btn').disabled = true;
+  document.getElementById('join-btn-txt').textContent = 'Đang kết nối...';
+  hideErr('join-err');
+
+  pPin = pin;
+
+  if (!pSocket || !pSocket.connected) {
+    connectSocket();
+    setTimeout(() => joinRoom(), 600);
+    return;
+  }
+
+  pSocket.emit('quiz_player_join', {
+    pin,
+    userId: pUser.id,
+    name:   displayName,
+    avatarUrl: pUser.profile?.avatar_url || '',
+  });
+}
+
+function resetToJoin() {
+  pMyScore = 0; pMyRank = 0; pPin = null; pCurrentQ = null; pHasAnswered = false;
+  clearInterval(pTimerHandle);
+  document.getElementById('pl-pin').value = '';
+  document.getElementById('join-btn').disabled = true;
+  document.getElementById('join-btn-txt').textContent = '→ Tham Gia';
+  showScreen('join');
+}
+
+// ── Render question ──
+function renderQuestion(q, index, total) {
+  showScreen('question');
+  document.getElementById('pl-q-num').textContent = index;
+  document.getElementById('pl-q-total').textContent = total;
+  document.getElementById('pl-q-pts').textContent = (q.points || 1000) + ' điểm';
+  document.getElementById('pl-q-text').textContent = q.text || q.question || '';
+
+  const mcqEl = document.getElementById('pl-mcq-opts');
+  const saEl  = document.getElementById('pl-sa-form');
+
+  if (q.type === 'mcq') {
+    mcqEl.style.display = 'grid';
+    saEl.style.display  = 'none';
+    renderMCQOpts(q);
+  } else {
+    mcqEl.style.display = 'none';
+    saEl.style.display  = 'flex';
+    document.getElementById('pl-sa-input').value = '';
+    document.getElementById('pl-sa-input').disabled = false;
+    document.getElementById('pl-sa-btn').disabled = false;
+  }
+
+  startPlayerTimer(q.time || q.timeLimit || 20);
+}
+
+function renderMCQOpts(q) {
+  const opts = q.opts || [];
+  document.getElementById('pl-mcq-opts').innerHTML = opts.map((opt, i) => `
+    <button class="pl-opt-btn ${OPT_CLASSES[i]}" id="pl-opt-${i}" onclick="submitMCQ(${i})">
+      <span class="pl-opt-letter">${LETTERS[i]}</span>
+      <span style="flex:1;text-align:left">${escH(opt)}</span>
+    </button>
+  `).join('');
+}
+
+// ── Timer ──
+function startPlayerTimer(sec) {
+  pTimeLeft = sec; pTimeTotal = sec;
+  clearInterval(pTimerHandle);
+  updateTimerBar();
+  pTimerHandle = setInterval(() => {
+    pTimeLeft--;
+    updateTimerBar();
+    if (pTimeLeft <= 0) {
+      clearInterval(pTimerHandle);
+      if (!pHasAnswered) {
+        // Time out — disable inputs
+        disableAnswerInputs();
+        showAnswerResult(false, 0, '', null);
+      }
+    }
+  }, 1000);
+}
+
+function updateTimerBar() {
+  const fill = document.getElementById('pl-timer-fill');
+  if (!fill) return;
+  const pct = Math.max(0, (pTimeLeft / pTimeTotal) * 100);
+  fill.style.width = pct + '%';
+  fill.classList.toggle('urgent', pTimeLeft <= 5);
+}
+
+function disableAnswerInputs() {
+  document.querySelectorAll('.pl-opt-btn').forEach(b => b.disabled = true);
+  const saInput = document.getElementById('pl-sa-input');
+  const saBtn   = document.getElementById('pl-sa-btn');
+  if (saInput) saInput.disabled = true;
+  if (saBtn)   saBtn.disabled = true;
+}
+
+// ── Submit answers ──
+function submitMCQ(idx) {
+  if (pHasAnswered) return;
+  pHasAnswered = true;
+  clearInterval(pTimerHandle);
+  disableAnswerInputs();
+
+  // Highlight selected
+  const btn = document.getElementById('pl-opt-' + idx);
+  if (btn) btn.style.opacity = '1';
+  document.querySelectorAll('.pl-opt-btn').forEach((b, i) => {
+    if (i !== idx) b.style.opacity = '.4';
+  });
+
+  const timeBonus = Math.round((pTimeLeft / pTimeTotal) * 500);
+
+  pSocket.emit('quiz_player_answer', {
+    pin: pPin,
+    userId: pUser.id,
+    answer: String(idx),
+    type: 'mcq',
+    timeLeft: pTimeLeft,
+    timeBonus,
+  });
+}
+
+function submitSA() {
+  const val = document.getElementById('pl-sa-input').value.trim();
+  if (!val || pHasAnswered) return;
+  pHasAnswered = true;
+  clearInterval(pTimerHandle);
+  disableAnswerInputs();
+
+  const timeBonus = Math.round((pTimeLeft / pTimeTotal) * 500);
+
+  pSocket.emit('quiz_player_answer', {
+    pin: pPin,
+    userId: pUser.id,
+    answer: val,
+    type: 'sa',
+    timeLeft: pTimeLeft,
+    timeBonus,
+  });
+}
+
+// ── Show results ──
+function showAnswerResult(correct, points, explanation, correctAnswer) {
+  showScreen('result');
+  const icon  = document.getElementById('res-icon');
+  const label = document.getElementById('res-label');
+  const pts   = document.getElementById('res-pts');
+  const exp   = document.getElementById('res-exp');
+  const rank  = document.getElementById('res-rank');
+
+  if (correct) {
+    icon.textContent = '✅';
+    label.textContent = 'Đúng rồi! 🎉';
+    label.className = 'pl-result-label correct';
+    pts.textContent  = '+' + (points || 0) + ' điểm';
+  } else {
+    icon.textContent = '❌';
+    label.textContent = pHasAnswered ? 'Sai mất rồi!' : 'Hết giờ!';
+    label.className = 'pl-result-label wrong';
+    pts.textContent  = '+0 điểm';
+    if (correctAnswer !== null && correctAnswer !== undefined) {
+      const correctLabel = pCurrentQ?.type === 'mcq'
+        ? `${LETTERS[parseInt(correctAnswer)]}. ${pCurrentQ?.opts?.[parseInt(correctAnswer)] || ''}`
+        : correctAnswer;
+      exp.textContent = `Đáp án đúng: ${correctLabel}${explanation ? ' — ' + explanation : ''}`;
+    }
+  }
+
+  if (explanation && correct) exp.textContent = explanation;
+  rank.textContent = pMyRank ? `Hạng hiện tại: #${pMyRank}` : '';
+}
+
+// ── Leaderboard (between Q) ──
+function showLeaderboard(scores, players) {
+  showScreen('lb');
+  const entries = Object.entries(scores || {})
+    .map(([uid, score]) => ({ uid, name: players?.[uid]?.name || uid, score }))
+    .sort((a,b) => b.score - a.score);
+
+  const medals = ['🥇','🥈','🥉'];
+  const myIdx = entries.findIndex(e => e.uid === pUser?.id);
+
+  document.getElementById('pl-lb-list').innerHTML = entries.slice(0, 8).map((e, i) => `
+    <div class="pl-lb-item ${i===0?'top1':i===1?'top2':i===2?'top3':''} ${e.uid === pUser?.id ? 'me' : ''}">
+      <div class="pl-lb-rank">${medals[i] || (i+1)}</div>
+      <div class="pl-lb-name">${escH(e.name)}${e.uid === pUser?.id ? ' <span style="font-size:.7rem;color:var(--teal)">(bạn)</span>' : ''}</div>
+      <div class="pl-lb-score">${e.score}</div>
+    </div>
+  `).join('');
+}
+
+// ── End screen ──
+function showEndScreen(scores, players) {
+  showScreen('end');
+  clearInterval(pTimerHandle);
+
+  const entries = Object.entries(scores || {})
+    .map(([uid, score]) => ({ uid, name: players?.[uid]?.name || uid, score }))
+    .sort((a,b) => b.score - a.score);
+
+  const myIdx = entries.findIndex(e => e.uid === pUser?.id);
+  const myScore = scores?.[pUser?.id] || 0;
+  const myRank = myIdx + 1;
+
+  const TROPHIES = ['🥇','🥈','🥉','🏅'];
+  const trophy = TROPHIES[Math.min(myRank - 1, 3)] || '🎖️';
+
+  document.getElementById('end-trophy').textContent = myRank === 1 ? '🏆' : trophy;
+  document.getElementById('end-title').textContent = myRank === 1 ? 'Xuất Sắc! Bạn Dẫn Đầu!' : `Bạn Hoàn Thành #${myRank}!`;
+  document.getElementById('end-badge').textContent = `Hạng #${myRank} · ${myScore} điểm`;
+
+  const medals = ['🥇','🥈','🥉'];
+  document.getElementById('pl-end-lb').innerHTML = entries.map((e, i) => `
+    <div class="pl-lb-item ${i===0?'top1':i===1?'top2':i===2?'top3':''} ${e.uid === pUser?.id ? 'me' : ''}">
+      <div class="pl-lb-rank">${medals[i] || (i+1)}</div>
+      <div class="pl-lb-name">${escH(e.name)}${e.uid === pUser?.id ? ' <span style="font-size:.7rem;color:var(--teal)">(bạn)</span>' : ''}</div>
+      <div class="pl-lb-score">${e.score}</div>
+    </div>
+  `).join('');
+}
+
+// ── Utils ──
+function escH(s) { if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function showErr(id, msg) { const el = document.getElementById(id); if (el) { el.textContent = msg; el.style.display = 'block'; } }
+function hideErr(id) { const el = document.getElementById(id); if (el) el.style.display = 'none'; }
+
+// ── Init ──
+document.addEventListener('DOMContentLoaded', () => {
+  checkAuth();
+  initParticles();
+});
+
+// ── Particles (Atoms & Bonds) ──
+function initParticles() {
+  const canvas = document.getElementById('pc');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let W, H, pts = [];
+  const COLS = ['#0d9488', '#2563eb', '#7c3aed', '#0891b2'];
+
+  function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; pts = []; for(let i=0; i<40; i++) pts.push(mkPt()); }
+  function mkPt() { return { x: Math.random()*W, y: Math.random()*H, vx: (Math.random()-.5)*0.5, vy: (Math.random()-.5)*0.5, r: Math.random()*2+1, col: COLS[Math.floor(Math.random()*COLS.length)], a: Math.random()*0.3+0.1 }; }
+
+  function draw() {
+    ctx.clearRect(0,0,W,H);
+    for(let i=0; i<pts.length; i++) {
+       const p = pts[i];
+       p.x += p.vx; p.y += p.vy;
+       if(p.x<0||p.x>W) p.vx*=-1; if(p.y<0||p.y>H) p.vy*=-1;
+       ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+       ctx.fillStyle = p.col + Math.round(p.a*255).toString(16).padStart(2,'0');
+       ctx.fill();
+       for(let j=i+1; j<pts.length; j++) {
+         const q = pts[j];
+         const d = Math.sqrt((p.x-q.x)**2 + (p.y-q.y)**2);
+         if(d<120) {
+           ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y);
+           const alpha = (1 - d/120) * 0.15;
+           ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
+           ctx.stroke();
+         }
+       }
+    }
+    requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize', resize);
+  resize(); draw();
+}
+</script>
+</body>
+</html>

@@ -65,9 +65,26 @@ function closeCreateRoomForm() {
   document.getElementById('ov-create-room').classList.remove('open');
   document.body.style.overflow = '';
 }
+function openTournamentModal() {
+  const ov = document.getElementById('ov-tournament');
+  if (ov) {
+    ov.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+}
+function closeTournamentModal() {
+  const ov = document.getElementById('ov-tournament');
+  if (ov) {
+    ov.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+}
 document.addEventListener('DOMContentLoaded', () => {
   const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
   updateThemeIcon(currentTheme);
+
+  const ovTournament = document.getElementById('ov-tournament');
+  if (ovTournament) ovTournament.addEventListener('click', e => { if (e.target === ovTournament) closeTournamentModal(); });
 
   const ov = document.getElementById('ov-create-room');
   if (ov) ov.addEventListener('click', e => { if (e.target === ov) closeCreateRoomForm(); });
@@ -159,7 +176,7 @@ function startLobbyBattle() {
 
 // ── INIT ──
 async function init() {
-  await loadCompetitionData(); 
+  await loadCompetitionData();
   if (!sb) return;
 
   // ① Kiểm tra URL từ email link (cả hash lẫn query param – PKCE)
@@ -1142,7 +1159,7 @@ async function loadCompetitionData() {
     const res = await fetch('questions.json');
     if (!res.ok) throw new Error('Không thể tải questions.json');
     const data = await res.json();
-    
+
     if (data.TOPICS) {
       TOPICS = Object.entries(data.TOPICS).map(([id, info]) => ({
         id,
@@ -1150,12 +1167,12 @@ async function loadCompetitionData() {
         icon: info.icon
       }));
     }
-    
+
     if (data.QUESTION_BANK) {
       QUESTION_BANK = {};
       for (const [tid, qs] of Object.entries(data.QUESTION_BANK)) {
         QUESTION_BANK[tid] = qs.map(q => ({
-          t: q.type || 'mcq',
+          type: q.type || 'mcq',
           q: q.q,
           opts: q.opts,
           ans: q.correct !== undefined ? q.correct : 0,
@@ -1301,12 +1318,39 @@ function mkIni(name) {
 function buildQuestions(topics) {
   const pool = [];
   topics.forEach(tid => {
+    // Collect from local AR_QUESTION_BANK (question.js)
+    if (window.AR_QUESTION_BANK && window.AR_QUESTION_BANK[tid]) {
+      const localQs = window.AR_QUESTION_BANK[tid].map(q => ({
+        type: q.type || 'mcq',
+        q: q.q,
+        opts: q.opts,
+        ans: q.ans,
+        exp: q.explain || q.exp,
+        topicId: tid
+      }));
+      pool.push(...localQs);
+    }
+    // Collect from fetched QUESTION_BANK (questions.json)
     const qs = QUESTION_BANK[tid] || [];
     pool.push(...qs);
   });
+
+  // Remove duplicates based on question text
+  const uniquePool = [];
+  const seen = new Set();
+  pool.forEach(q => {
+    if (!seen.has(q.q)) {
+      seen.add(q.q);
+      uniquePool.push(q);
+    }
+  });
+
   // Shuffle & take 10
-  for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[pool[i], pool[j]] = [pool[j], pool[i]]; }
-  return pool.slice(0, 10);
+  for (let i = uniquePool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [uniquePool[i], uniquePool[j]] = [uniquePool[j], uniquePool[i]];
+  }
+  return uniquePool.slice(0, 10);
 }
 
 
@@ -1480,7 +1524,7 @@ function enterLobby() {
 
   const tg = G('topic-grid');
   tg.innerHTML = '';
-  
+
   for (const catName in cats) {
     const sectionTitle = document.createElement('div');
     sectionTitle.className = 'topic-cat-title';
@@ -1489,10 +1533,10 @@ function enterLobby() {
 
     const grid = document.createElement('div');
     grid.className = 'topic-grid';
-    
+
     const catTopicIds = cats[catName];
     const catTopics = TOPICS.filter(t => catTopicIds.includes(t.id));
-    
+
     catTopics.forEach(tp => {
       const btn = document.createElement('button');
       btn.className = 'topic-btn';
@@ -1764,7 +1808,7 @@ function renderQuestion() {
   G('battle-q-topic').textContent = topicName;
 
   const typeBadge = G('battle-q-type');
-  if (q.type === 'mcq') {
+  if (q.type === 'mcq' || q.t === 'mcq') {
     typeBadge.textContent = 'Trắc nghiệm'; typeBadge.className = 'q-type-badge mcq';
     G('battle-mcq').style.display = 'grid';
     G('battle-input').style.display = 'none';
@@ -1791,6 +1835,12 @@ function submitMCQ(i, btn, q) {
 
   // Vô hiệu hóa các nút tạm thời
   document.querySelectorAll('.mcq-btn').forEach(b => b.disabled = true);
+
+  // Chế độ AI: xử lý trực tiếp, không gửi lên server
+  if (AR.isAI) {
+    handleAIBattleAction('battle_action', { answer: i });
+    return;
+  }
 
   socket.emit('battle_action', {
     roomId: currentRoomId,
@@ -3346,10 +3396,273 @@ function initScrollReveal() {
   });
 }
 
+
+// ── AI BOT ARENA ──
+let AI_ARENA = {
+  diff: 'medium',
+  topic: 'atomic',
+  botName: 'GloryBot Core',
+  botElo: 1500,
+  isBattle: false,
+  qIndex: 0,
+  questions: [],
+  myScore: 0,
+  botScore: 0,
+  timer: null,
+  botTimeout: null
+};
+
+function openAIArenaModal() {
+  if (!U) { openM('login'); return; }
+  const ov = G('ov-ai-arena');
+  if (ov) {
+    ov.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    renderAITopics();
+  }
+}
+
+function closeAIArenaModal() {
+  const ov = G('ov-ai-arena');
+  if (ov) {
+    ov.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+}
+
+function renderAITopics() {
+  const grid = G('ai-topic-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  // Nhóm theo lớp — giống hệt chế độ Tốc chiến
+  const cats = {
+    "Lớp 10": ["atomic", "periodic", "chemical-bonds", "redox", "thermo", "speed", "halogens", "equilib"],
+    "Lớp 11": ["nitrogen", "sulfur", "organic", "hydrocarbon", "halogen-deriv", "alcohol-phenol", "carbonyl", "carboxylic"],
+    "Lớp 12": ["ester-lipid", "carbohydrate", "nitrogen-compounds", "polymer", "electro", "metals", "alkali-alkaline", "aluminum", "transition-complex"]
+  };
+
+  for (const catName in cats) {
+    const sectionTitle = document.createElement('div');
+    sectionTitle.className = 'topic-cat-title';
+    sectionTitle.textContent = catName;
+    grid.appendChild(sectionTitle);
+
+    const row = document.createElement('div');
+    row.className = 'topic-grid';
+
+    const catTopics = TOPICS.filter(t => cats[catName].includes(t.id));
+    catTopics.forEach(tp => {
+      const btn = document.createElement('button');
+      btn.className = 'topic-btn' + (AI_ARENA.topic === tp.id ? ' selected' : '');
+      btn.innerHTML = `<span class="topic-btn-icon">${tp.icon}</span><span class="topic-btn-name">${tp.name}</span>`;
+      btn.onclick = () => {
+        AI_ARENA.topic = tp.id;
+        renderAITopics();
+      };
+      row.appendChild(btn);
+    });
+    grid.appendChild(row);
+  }
+}
+
+function selectAIDiff(diff, btn) {
+  AI_ARENA.diff = diff;
+  document.querySelectorAll('.ai-diff-btn').forEach(b => b.classList.remove('selected'));
+  if (btn) btn.classList.add('selected');
+}
+
+async function startAIBattle() {
+  closeAIArenaModal();
+
+  // Setup AR state for AI mode
+  AR.isAI = true;
+  AR.isFFA = false;
+  AR.myScore = 0;
+  AR.oppScore = 0;
+  AR.qIndex = 0;
+  AR.oppId = 'glorybot';
+  AR.oppProfile = { full_name: 'GloryBot Core', username: 'glorybot', elo: 1500, avatar_url: '' };
+
+  // Build local questions
+  const qs = buildQuestions([AI_ARENA.topic]);
+  if (!qs || qs.length === 0) {
+    toast('err', '❌ Không tìm thấy câu hỏi cho chủ đề này.');
+    return;
+  }
+  AR.questions = qs;
+
+  // Start First Question
+  renderAIQuestion(0);
+}
+
+function renderAIQuestion(idx) {
+  if (idx >= AR.questions.length) {
+    endAIBattle();
+    return;
+  }
+
+  AR.qIndex = idx;
+  const q = AR.questions[idx];
+
+  // Prepare data for the existing renderBattleQuestion function
+  const data = {
+    question: q,
+    index: idx + 1,
+    total: AR.questions.length,
+    timeout: 30
+  };
+
+  renderBattleQuestion(data);
+
+  // Start Bot Thinking
+  simulateBot(q);
+}
+
+function simulateBot(q) {
+  if (AR.botTimeout) clearTimeout(AR.botTimeout);
+
+  // Difficulty settings
+  let config = {
+    easy: { accuracy: 1.0, minTime: 12, maxTime: 25 },
+    medium: { accuracy: 1.0, minTime: 6, maxTime: 18 },
+    hard: { accuracy: 1.0, minTime: 3, maxTime: 10 },
+    insane: { accuracy: 1.0, minTime: 1.5, maxTime: 5 }
+  }[AI_ARENA.diff];
+
+  const thinkTime = (Math.random() * (config.maxTime - config.minTime) + config.minTime) * 1000;
+
+  AR.botTimeout = setTimeout(() => {
+    if (AR.questionFinished || !AR.isAI) return;
+
+    const isCorrect = Math.random() < config.accuracy;
+    AR.oppAnswered = true;
+
+    if (isCorrect) {
+      AR.oppScore++;
+      updateBattleScore();
+      G('opp-name-ind').textContent = 'GloryBot Core';
+      G('opp-answered').style.display = 'block';
+      // Bot trả lời đúng trước => Người dùng bị lỡ câu này
+      revealAIAnswer();
+    } else {
+      // Bot trả lời sai => Chỉ hiện trạng thái đã trả lời
+      G('opp-name-ind').textContent = 'GloryBot Core';
+      G('opp-answered').style.display = 'block';
+      // Nếu mình cũng đã trả lời rồi thì kết thúc câu
+      if (AR.answered) revealAIAnswer();
+    }
+  }, thinkTime);
+}
+
+function revealAIAnswer() {
+  if (AR.questionFinished) return;
+  AR.questionFinished = true;
+  clearInterval(AR.battleTimer);
+
+  // Xóa cooldown nếu đang bị đóng băng
+  AR.answerCooldown = false;
+  if (AR.cooldownTimer) clearTimeout(AR.cooldownTimer);
+  if (AR.cooldownInterval) clearInterval(AR.cooldownInterval);
+  const overlay = G('cooldown-overlay');
+  if (overlay) overlay.style.display = 'none';
+
+  const q = AR.questions[AR.qIndex];
+  const correctIdx = q.ans; // index of correct answer in opts
+
+  // Show highlights on buttons
+  const btns = document.querySelectorAll('.mcq-btn');
+  btns.forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === correctIdx) btn.classList.add('reveal');
+  });
+
+  showFeedback(AR.lastMyCorrect, q.exp || '');
+
+  setTimeout(() => {
+    renderAIQuestion(AR.qIndex + 1);
+  }, 3500);
+}
+
+function endAIBattle() {
+  const win = AR.myScore > AR.oppScore;
+  const data = {
+    scores: { [U.id]: AR.myScore, 'glorybot': AR.oppScore },
+    winnerUserId: win ? U.id : (AR.myScore === AR.oppScore ? null : 'glorybot'),
+    elo_change: { [U.id]: 0 }, // No ELO for practice
+    mode: '1v1'
+  };
+
+  AR.isAI = false; // Reset flag before calling endBattle
+  endBattle(data);
+  G('result-sub').textContent = 'Trận luyện tập với AI đã kết thúc. Bạn không nhận được ELO trong chế độ này.';
+}
+
+
+function handleAIBattleAction(event, data) {
+  if (event === 'battle_action') {
+    // Reset waiting flag because we intercepted it locally
+    AR.waitingResponse = false;
+
+    if (AR.questionFinished || AR.answerCooldown) return;
+
+    const q = AR.questions[AR.qIndex];
+    const isCorrect = data.answer === q.ans;
+    AR.lastMyCorrect = isCorrect;
+
+    // Highlight local button
+    const btns = document.querySelectorAll('.mcq-btn');
+    if (btns[data.answer]) {
+      btns[data.answer].classList.add(isCorrect ? 'correct' : 'wrong');
+      if (!isCorrect) {
+        // Chỉ disable tạm thời, sau 3s nếu ok thì cho thử lại (nếu mode cho phép)
+        // Tuy nhiên Arena chuẩn thường khóa luôn câu này nếy đã sai?
+        // Ở đây mình sẽ CHO THỬ LẠI như user yêu cầu ("chuột bị vô hiệu hóa")
+      } else {
+        btns[data.answer].disabled = true;
+      }
+    }
+
+    if (isCorrect) {
+      AR.answered = true;
+      AR.myScore++;
+      updateBattleScore();
+      revealAIAnswer();
+    } else {
+      // Trả lời sai => Đóng băng 3 giây
+      AR.answerCooldown = true;
+      if (typeof showCooldownOverlay === 'function') {
+        showCooldownOverlay(3, () => {
+          if (AR.questionFinished) return; // Bot đã kết thúc câu trong lúc đóng băng
+          AR.answerCooldown = false;
+          // Xóa class 'wrong' khỏi nút vừa chọn sai
+          if (btns[data.answer]) {
+            btns[data.answer].classList.remove('wrong');
+          }
+          // Bật lại TẤT CẢ các nút để người dùng có thể chọn lại
+          disableBattleInputs(false);
+        });
+      } else {
+        // Fallback nếu không tìm thấy hàm
+        setTimeout(() => {
+          if (!AR.questionFinished) {
+            AR.answerCooldown = false;
+            disableBattleInputs(false);
+          }
+        }, 3000);
+      }
+    }
+  }
+}
+
 // ── Boot ──
 document.addEventListener('DOMContentLoaded', () => {
   initCounters();
   initProgressBars();
   initTilt();
   initScrollReveal();
+
+  // Close AI modal on backdrop click
+  const ovAI = G('ov-ai-arena');
+  if (ovAI) ovAI.addEventListener('click', e => { if (e.target === ovAI) closeAIArenaModal(); });
 });

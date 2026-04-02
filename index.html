@@ -14,6 +14,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/lesson.css">
+  <script src="/question.js"></script>
   <script>
     (function () {
       const storedTheme = localStorage.getItem('glorychem-theme');
@@ -629,15 +630,15 @@
           <div class="mt">Phòng thi đấu</div>
           <div class="md">Công khai · Tối đa 5 người</div>
         </button>
-        <div class="mc" style="opacity:.5;cursor:not-allowed">
+        <div class="mc" onclick="openTournamentModal()">
           <span class="mc-icon">🏆</span>
           <div class="mt">Giải Đấu</div>
-          <div class="md">Sắp ra mắt...</div>
+          <div class="md">Tham gia hoặc tổ chức giải đấu real-time</div>
         </div>
-        <div class="mc" style="opacity:.5;cursor:not-allowed">
-          <span class="mc-icon">📊</span>
-          <div class="mt">Thống Kê</div>
-          <div class="md">Sắp ra mắt...</div>
+        <div class="mc" onclick="openAIArenaModal()">
+          <span class="mc-icon">🤖</span>
+          <div class="mt">Thử Thách AI</div>
+          <div class="md">Đấu 1v1 với GloryBot · Tùy chỉnh độ khó</div>
         </div>
       </div>
 
@@ -862,7 +863,7 @@
 
     <!-- Overlay đóng băng -->
     <div id="cooldown-overlay"
-      style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.75); backdrop-filter:blur(8px); z-index:1000; display:flex; align-items:center; justify-content:center; flex-direction:column;">
+      style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.75); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; flex-direction:column;">
       <div style="position:relative; width:120px; height:120px;">
         <svg viewBox="0 0 100 100" style="width:100%; height:100%; transform:rotate(-90deg);">
           <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="6" />
@@ -1491,6 +1492,55 @@
     </div>
   </div>
 
+  <!-- ════════════════════════════════════════
+     TOURNAMENT SELECTION MODAL
+════════════════════════════════════════ -->
+  <div class="overlay" id="ov-tournament">
+    <div class="modal" style="max-width:540px">
+      <button class="mcl" onclick="closeTournamentModal()">✕</button>
+      <div class="mtop" style="border-bottom:none;padding-bottom:0">
+        <div class="mlogo">
+          <div class="mk">🏆</div>
+          <div class="mn">Glory<span>Chem</span></div>
+          <div class="ms">Hệ Thống Giải Đấu Quiz</div>
+        </div>
+      </div>
+      <div class="mbody" style="padding-top:1.25rem">
+        <div class="tour-choice-grid">
+          <div class="tour-choice-card tour-student" onclick="window.location='/play'">
+            <div class="tcc-glow"></div>
+            <div class="tcc-icon">🎒</div>
+            <div class="tcc-content">
+              <div class="tcc-title">Tham Gia</div>
+              <p class="tcc-desc">Dành cho học sinh. Nhập mã PIN và bắt đầu chinh phục đấu trường.</p>
+            </div>
+            <div class="tcc-foot">
+              <span>Bắt đầu ngay</span>
+              <span class="tcc-arrow">→</span>
+            </div>
+          </div>
+          <div class="tour-choice-card tour-teacher" onclick="window.location='/teacher'">
+            <div class="tcc-glow"></div>
+            <div class="tcc-icon">👨‍🏫</div>
+            <div class="tcc-content">
+              <div class="tcc-title">Tổ Chức</div>
+              <p class="tcc-desc">Dành cho giáo viên, người chủ trì. Soạn câu hỏi và quản lý giải đấu..</p>
+            </div>
+            <div class="tcc-foot">
+              <span>Vào quản lý</span>
+              <span class="tcc-arrow">→</span>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:1.25rem;text-align:center">
+          <p style="font-size:.78rem;color:var(--text-4);line-height:1.6;max-width:380px;margin:0 auto">
+            GloryChem Tournament mang đến trải nghiệm học tập kịch tính bám sát chương trình THPT mới.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ═══ RESET PASSWORD MODAL (từ email link) ═══ -->
   <div class="overlay" id="ov-reset" style="display:none;align-items:center;justify-content:center">
     <div class="modal" id="mo-reset" role="dialog" aria-modal="true" aria-label="Đặt mật khẩu mới"
@@ -1638,6 +1688,62 @@
     </button>
 
   </nav>
+
+  <!-- ═══ AI ARENA MODAL ═══ -->
+  <div class="overlay" id="ov-ai-arena">
+    <div class="modal" id="mo-ai-arena" style="max-width:480px">
+      <button class="mcl" type="button" onclick="closeAIArenaModal()">✕</button>
+      <div class="mtop">
+        <div class="mlogo">
+          <div class="mk">🤖</div>
+          <div class="mn">AI Bot<span>Arena</span></div>
+          <div class="ms">Luyện tập cùng trí tuệ nhân tạo</div>
+        </div>
+      </div>
+      <div class="mbody">
+        <div class="ai-bot-card">
+          <div class="ai-bot-av">🤖</div>
+          <div style="flex:1">
+            <div class="ai-bot-name">GloryBot Core</div>
+            <div class="ai-bot-version">NEURAL NETWORK v2.5</div>
+          </div>
+        </div>
+
+        <div class="fg" style="margin-bottom:1.2rem">
+          <label style="display:block;margin-bottom:0.5rem;font-weight:700">1. Chọn Chủ Đề Ôn Luyện</label>
+          <div class="ai-topic-grid" id="ai-topic-grid">
+            <!-- Topics will be injected here via JS -->
+          </div>
+        </div>
+
+        <div class="fg">
+          <label style="display:block;margin-bottom:0.5rem;font-weight:700">2. Chọn Độ Khó</label>
+          <div class="ai-diff-grid">
+            <button class="ai-diff-btn selected" data-diff="easy" onclick="selectAIDiff('easy', this)">
+              <div class="ad-title">Dễ</div>
+              <div class="ad-desc">Bot phản xạ chậm</div>
+            </button>
+            <button class="ai-diff-btn" data-diff="medium" onclick="selectAIDiff('medium', this)">
+              <div class="ad-title">Thường</div>
+              <div class="ad-desc">Cân bằng</div>
+            </button>
+            <button class="ai-diff-btn" data-diff="hard" onclick="selectAIDiff('hard', this)">
+              <div class="ad-title">Khó</div>
+              <div class="ad-desc">Bot trả lời cực nhanh</div>
+            </button>
+            <button class="ai-diff-btn" data-diff="insane" onclick="selectAIDiff('insane', this)">
+              <div class="ad-title">Cực Khó</div>
+              <div class="ad-desc">Thử thách giới hạn</div>
+            </button>
+          </div>
+        </div>
+
+        <button class="asub" style="margin-top:1.5rem" onclick="startAIBattle()">
+          <span class="bt">Bắt Đầu Thử Thách ⚔️</span>
+        </button>
+      </div>
+    </div>
+  </div>
 
 </body>
 
