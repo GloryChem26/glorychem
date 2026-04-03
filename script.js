@@ -1,6 +1,6 @@
 // ══ SUPABASE ══
 const SURL = 'https://cmrbsiuzrpsglynnfund.supabase.co';
-const SKEY = 'sb_publishable_-4uRGeYYYeJAvSMKnwZr5Q_LOSAr_dZ';
+const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNtcmJzaXV6cnBzZ2x5bm5mdW5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NDg2NzMsImV4cCI6MjA5MDQyNDY3M30.XI3522qFOCGCaN3qWhtGBvezxnXrtbxiJtxgkVzm8Es';
 const { createClient } = supabase;
 let sb;
 try { sb = createClient(SURL, SKEY); console.log('✅ GloryChem connected'); }
@@ -42,12 +42,16 @@ function escapeHtml(str) {
 }
 
 // ── Lấy danh sách phòng ──
+let _lobbyRetryCount = 0;
 function loadLobbyRooms() {
   if (!socket || !socket.connected) {
-    // retry once socket is ready
-    setTimeout(() => loadLobbyRooms(), 500);
+    if (_lobbyRetryCount < 10) {
+      _lobbyRetryCount++;
+      setTimeout(() => loadLobbyRooms(), 3000); // 3 giây thay vì 0.5 giây để tránh quá tải
+    }
     return;
   }
+  _lobbyRetryCount = 0;
   socket.emit('list_lobby_rooms');
 }
 
@@ -94,6 +98,14 @@ document.addEventListener('DOMContentLoaded', () => {
   if (ovDetail) ovDetail.addEventListener('click', e => { if (e.target === ovDetail) leaveLobbyRoom(); });
   const ovPw = document.getElementById('ov-room-password');
   if (ovPw) ovPw.addEventListener('click', e => { if (e.target === ovPw) closeRoomPasswordModal(); });
+  const nav = document.querySelector('nav');
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 20) {
+      nav?.classList.add('nav-scrolled');
+    } else {
+      nav?.classList.remove('nav-scrolled');
+    }
+  });
 });
 
 function selectRoomType(type) {
@@ -667,7 +679,6 @@ function renderIn() {
       <span class="chv">▾</span>
       <div class="dmenu">
         <a href="#" onclick="openProfile();return false">👤 Hồ Sơ</a>
-        <a href="#">📊 Thống Kê</a>
         <button class="lo" onclick="doLogout()">🚪 Đăng Xuất</button>
       </div>
     </div>`;
@@ -924,26 +935,40 @@ function gp(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   G('page-' + id).classList.add('active');
   document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
-  const m = { home: 'nl-home', challenge: 'nl-challenge', leaderboard: 'nl-leaderboard', lesson: 'nl-lesson' };
+  const m = { home: 'nl-home', challenge: 'nl-challenge', leaderboard: 'nl-leaderboard', lesson: 'nl-lesson', forum: 'nl-forum' };
   if (m[id]) G(m[id])?.classList.add('active');
   // Sync bottom nav
   document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('active'));
-  const bm = { home: 'bn-home', challenge: 'bn-challenge', leaderboard: 'bn-leaderboard', profile: 'bn-profile', lesson: 'bn-lesson' };
+  const bm = { home: 'bn-home', challenge: 'bn-challenge', leaderboard: 'bn-leaderboard', profile: 'bn-profile', lesson: 'bn-lesson', forum: 'bn-forum' };
   if (bm[id]) G(bm[id])?.classList.add('active');
 
   // Load leaderboard khi chuyển tab
-  if (id === 'leaderboard') { loadLeaderboard(); }
+  if (id === 'leaderboard') {
+    // Chỉ load lại nếu dữ liệu cũ hơn 30 giây để tránh làm lag web
+    const now = Date.now();
+    if (!gp._lastLbLoad || now - gp._lastLbLoad > 30000) {
+      gp._lastLbLoad = now;
+      loadLeaderboard();
+    }
+  }
   // Nếu chuyển về trang chủ và đã đăng nhập, làm mới dữ liệu
   if (id === 'home' && U) {
     renderIn();
   }
   // Khởi tạo trang bài học (lazy — chỉ lần đầu)
+  if (id === 'forum') {
+    if (typeof initForum === 'function') initForum();
+  }
+
   if (id === 'lesson') {
     if (typeof initLessonPage === 'function' && !gp._lessonInited) {
       gp._lessonInited = true;
       initLessonPage();
     }
   }
+
+
+
 }
 
 // ══ PROFILE PAGE ══
@@ -1247,11 +1272,22 @@ function closeArena() {
 }
 
 function cleanupRoom() {
+  // === GIẢI PHÁP TỔNG LỰC: QUÉT SẠCH TẤT CẢ KÊNH ĐANG TREO ===
+  if (typeof sb !== 'undefined' && sb.removeAllChannels) {
+    sb.removeAllChannels();
+  }
+  
   if (AR.lobbyTimer) clearInterval(AR.lobbyTimer);
   if (AR.battleTimer) clearInterval(AR.battleTimer);
   if (AR.cooldownTimer) clearTimeout(AR.cooldownTimer);
-  if (AR.waitTimer) clearInterval(AR.waitTimer);   // ← thêm dòng này
+  if (AR.waitTimer) clearInterval(AR.waitTimer); 
   AR.waitTimer = null;
+
+  // Reset cache bảng xếp hạng để có thể load lại ngay sau trận đấu
+  if (typeof gp !== 'undefined') {
+    if (!gp._hiddenData) gp._hiddenData = {}; // dùng cái này để ko pollute gp gốc quá nhiều
+    gp._lastLbLoad = 0; 
+  }
 
   AR = {
     roomId: null,
@@ -1319,8 +1355,9 @@ function buildQuestions(topics) {
   const pool = [];
   topics.forEach(tid => {
     // Collect from local AR_QUESTION_BANK (question.js)
-    if (window.AR_QUESTION_BANK && window.AR_QUESTION_BANK[tid]) {
-      const localQs = window.AR_QUESTION_BANK[tid].map(q => ({
+    const _arqb = (typeof AR_QUESTION_BANK !== 'undefined' ? AR_QUESTION_BANK : window.AR_QUESTION_BANK);
+    if (_arqb && _arqb[tid]) {
+      const localQs = _arqb[tid].map(q => ({
         type: q.type || 'mcq',
         q: q.q,
         opts: q.opts,
@@ -1395,6 +1432,12 @@ function cancelSearch() {
 }
 // ── SUBSCRIBE TO ROOM — broadcast + presence realtime ──
 function subscribeToRoom(roomId) {
+  // === DỌN DẸP KÊNH CŨ TRƯỚC KHI MỞ KÊNH MỚI ===
+  if (AR.channel) {
+    sb.removeChannel(AR.channel);
+    AR.channel = null;
+  }
+
   AR.channel = sb.channel('room:' + roomId, {
     config: { broadcast: { self: false }, presence: { key: U.id } }
   })
@@ -2250,6 +2293,9 @@ function cancelInvite() {
 
 function subscribeToInvites() {
   if (!U) return;
+  // === NGĂN CHẶN RÒ RỈ KẾT NỐI (DOUBLE SUBSCRIPTION) ===
+  if (FA.inviteChannel) return;
+
   FA.inviteChannel = sb.channel('invites:' + U.id)
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'battle_invites', filter: `to_id=eq.${U.id}` },
       async ({ new: inv }) => {
@@ -2832,7 +2878,9 @@ function initSocket() {
   });
 
   socket.on('opponent_left', () => {
-    toast('err', 'Đối thủ đã thoát trận');
+    toast('err', 'Đối thủ đã thoát trận hoặc mất kết nối');
+    // Dọn dẹp triệt để trước khi đóng
+    cleanupRoom();
     closeArena();
   });
 
@@ -3401,7 +3449,7 @@ function initScrollReveal() {
 let AI_ARENA = {
   diff: 'medium',
   topic: 'atomic',
-  botName: 'GloryBot Core',
+  botName: 'GloryChem Bot',
   botElo: 1500,
   isBattle: false,
   qIndex: 0,
@@ -3482,7 +3530,7 @@ async function startAIBattle() {
   AR.oppScore = 0;
   AR.qIndex = 0;
   AR.oppId = 'glorybot';
-  AR.oppProfile = { full_name: 'GloryBot Core', username: 'glorybot', elo: 1500, avatar_url: '' };
+  AR.oppProfile = { full_name: 'GloryChem Bot', username: 'glorybot', elo: 1500, avatar_url: '' };
 
   // Build local questions
   const qs = buildQuestions([AI_ARENA.topic]);
@@ -3541,13 +3589,13 @@ function simulateBot(q) {
     if (isCorrect) {
       AR.oppScore++;
       updateBattleScore();
-      G('opp-name-ind').textContent = 'GloryBot Core';
+      G('opp-name-ind').textContent = 'GloryChem Bot';
       G('opp-answered').style.display = 'block';
       // Bot trả lời đúng trước => Người dùng bị lỡ câu này
       revealAIAnswer();
     } else {
       // Bot trả lời sai => Chỉ hiện trạng thái đã trả lời
-      G('opp-name-ind').textContent = 'GloryBot Core';
+      G('opp-name-ind').textContent = 'GloryChem Bot';
       G('opp-answered').style.display = 'block';
       // Nếu mình cũng đã trả lời rồi thì kết thúc câu
       if (AR.answered) revealAIAnswer();

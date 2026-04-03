@@ -13,7 +13,11 @@
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/forum.css">
   <link rel="stylesheet" href="/lesson.css">
+  <link rel="stylesheet" href="/periodic.css">
+  <link rel="stylesheet" href="/nav-redesign.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="/question.js"></script>
   <script>
     (function () {
@@ -38,7 +42,9 @@
     <ul class="nav-links">
       <li><a href="#" id="nl-home" class="active" onclick="gp('home');return false">Trang Chủ</a></li>
       <li><a href="#" id="nl-challenge" onclick="gp('challenge');return false">Thách Đấu</a></li>
+      <li><a href="#" id="nl-periodic" onclick="gp('periodic');return false">Bảng Tuần Hoàn</a></li>
       <li><a href="#" id="nl-lesson" onclick="gp('lesson');return false">Kiến Thức</a></li>
+      <li><a href="#" id="nl-forum" onclick="gp('forum');return false">Diễn Đàn</a></li>
       <li><a href="#" id="nl-leaderboard" onclick="gp('leaderboard');return false">Bảng Xếp Hạng</a></li>
 
     </ul>
@@ -569,6 +575,31 @@
           <div class="lb-spin">⚗️</div>
           <div>Đang tải dữ liệu...</div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ BẢNG TUẦN HOÀN ═══ -->
+  <div id="page-periodic" class="page">
+    <div class="lb-head" style="margin-bottom: 2rem;">
+      <div class="slabel" style="justify-content:center;display:flex">⚛️ Khám Phá Nguyên Tố</div>
+      <h1>Bảng Tuần Hoàn</h1>
+      <p> Click vào từng nguyên tố để khám phá chi tiết. Cấu tạo nguyên tử theo mô hình cổ điển</p>
+    </div>
+
+    <!-- Mobile Tabs (Chỉ mọc ra ở mobile) -->
+    <div id="pt-mobile-tabs" class="pt-mobile-tabs">
+      <button class="pt-m-tab active" onclick="switchPtMode('sp', this)">Khối S & P (Nhóm chính)</button>
+      <button class="pt-m-tab" onclick="switchPtMode('d', this)">Khối D (Chuyển tiếp)</button>
+      <button class="pt-m-tab" onclick="switchPtMode('f', this)">Khối F</button>
+    </div>
+
+    <div id="periodic-wrap">
+      <div id="periodic-table-container" class="pt-mode-sp"></div>
+      <div id="element-detail-overlay">
+        <!-- 3D Atom canvas -->
+        <div id="atom-3d-container"></div>
+        <div id="ed-content"></div>
       </div>
     </div>
   </div>
@@ -1665,6 +1696,8 @@
   <script src="/data11.js"></script>
   <script src="/data12.js"></script>
   <script src="/lesson.js"></script>
+  <script src="/elements.js"></script>
+  <script src="/periodic.js"></script>
 
   <!-- ═══ BOTTOM NAV (Mobile) ═══ -->
   <nav class="bottom-nav" id="bottom-nav">
@@ -1677,9 +1710,21 @@
       <span class="bn-label">Thách Đấu</span>
     </button>
 
+
+    <button class="bn-item" id="bn-periodic" onclick="gp('periodic')">
+      <span class="bn-icon">⚛️</span>
+      <span class="bn-label">Bảng TH</span>
+    </button>
+
+
     <button class="bn-item" id="bn-lesson" onclick="gp('lesson')">
       <span class="bn-icon">📚</span>
       <span class="bn-label">Kiến Thức</span>
+    </button>
+
+    <button class="bn-item" id="bn-forum" onclick="gp('forum')">
+      <span class="bn-icon">💬</span>
+      <span class="bn-label">Diễn Đàn</span>
     </button>
 
     <button class="bn-item" id="bn-leaderboard" onclick="gp('leaderboard')">
@@ -1744,6 +1789,236 @@
       </div>
     </div>
   </div>
+
+
+
+  <div id="page-forum" class="page">
+
+    <!-- Header -->
+    <div class="fr-header">
+      <div class="fr-header-inner">
+        <div class="fr-header-left">
+          <div class="fr-overline">
+            <span class="fr-overline-bar"></span>
+            <span>CỘNG ĐỒNG GLORYCHEM</span>
+          </div>
+          <h1 class="fr-title">Diễn Đàn <em>Hóa Học</em></h1>
+          <p class="fr-sub">Chia sẻ mẹo học · Cách ghi nhớ · Hỏi đáp kiến thức THPT</p>
+        </div>
+        <button class="fr-btn-new" onclick="frOpenNewPost()">
+          <span class="fr-btn-icon">✏️</span> Đăng Bài Mới
+        </button>
+      </div>
+    </div>
+
+    <!-- Filter tabs -->
+    <div class="fr-tabs">
+      <button class="fr-tab active" data-cat="all" onclick="frSetTab('all')">
+        🗂️ Tất Cả <span class="fr-tab-count" id="fr-tab-count-all">0</span>
+      </button>
+      <button class="fr-tab" data-cat="tip" onclick="frSetTab('tip')">
+        💡 Mẹo Học <span class="fr-tab-count" id="fr-tab-count-tip">0</span>
+      </button>
+      <button class="fr-tab" data-cat="memory" onclick="frSetTab('memory')">
+        🧠 Ghi Nhớ <span class="fr-tab-count" id="fr-tab-count-memory">0</span>
+      </button>
+      <button class="fr-tab" data-cat="question" onclick="frSetTab('question')">
+        ❓ Câu Hỏi <span class="fr-tab-count" id="fr-tab-count-question">0</span>
+      </button>
+    </div>
+
+    <!-- List view -->
+    <div id="fr-list-view">
+      <div class="fr-body">
+        <!-- Posts -->
+        <div class="fr-posts">
+          <div id="fr-posts-list" class="fr-posts">
+            <!-- Rendered by forum.js -->
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <aside class="fr-sidebar">
+          <div class="fr-sidebar-card">
+            <div class="fr-sidebar-title">📋 Nội Quy Diễn Đàn</div>
+            <div class="fr-rule-item">
+              <span class="fr-rule-num">1</span>
+              <span>Chia sẻ kiến thức Hóa học THPT chính xác, có nguồn gốc rõ ràng</span>
+            </div>
+            <div class="fr-rule-item">
+              <span class="fr-rule-num">2</span>
+              <span>Đặt câu hỏi cụ thể, nêu rõ chỗ chưa hiểu để được hỗ trợ tốt nhất</span>
+            </div>
+            <div class="fr-rule-item">
+              <span class="fr-rule-num">3</span>
+              <span>Tôn trọng và khuyến khích lẫn nhau, không spam hay nội dung tiêu cực</span>
+            </div>
+            <div class="fr-rule-item">
+              <span class="fr-rule-num">4</span>
+              <span>Mẹo học / ghi nhớ phải gắn với chương trình Hóa học</span>
+            </div>
+            <div class="fr-rule-item">
+              <span class="fr-rule-num">5</span>
+              <span>Nếu có hành vi thô tục hoặc không phù hợp sẽ bị khóa tài khoản</span>
+            </div>
+          </div>
+
+          <div class="fr-sidebar-card">
+            <div class="fr-sidebar-title">🗂️ Danh Mục</div>
+            <div class="fr-cat-item" onclick="frSetTab('all')">
+              <div class="fr-cat-left">🗂️ Tất Cả Bài Viết</div>
+              <span class="fr-cat-count" id="fr-cat-count-all">0</span>
+            </div>
+            <div class="fr-cat-item" onclick="frSetTab('tip')">
+              <div class="fr-cat-left">💡 Mẹo Học</div>
+              <span class="fr-cat-count" id="fr-cat-count-tip">0</span>
+            </div>
+            <div class="fr-cat-item" onclick="frSetTab('memory')">
+              <div class="fr-cat-left">🧠 Ghi Nhớ</div>
+              <span class="fr-cat-count" id="fr-cat-count-memory">0</span>
+            </div>
+            <div class="fr-cat-item" onclick="frSetTab('question')">
+              <div class="fr-cat-left">❓ Câu Hỏi</div>
+              <span class="fr-cat-count" id="fr-cat-count-question">0</span>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- Detail view -->
+    <div class="fr-detail" id="fr-detail-view">
+      <button class="fr-back-btn" onclick="frBackToList()">← Quay lại diễn đàn</button>
+      <div class="fr-detail-inner">
+        <div>
+          <!-- Post detail -->
+          <div class="fr-post-detail" id="fr-post-detail-wrap">
+            <!-- Rendered by forum.js -->
+          </div>
+
+          <!-- Comments section -->
+          <div class="fr-comments">
+            <div class="fr-comments-title">
+              Bình Luận
+              <span class="fr-comments-count" id="fr-comments-count-badge">0</span>
+            </div>
+
+            <!-- Comment form hoặc login prompt -->
+            <div id="fr-comment-form-wrap">
+              <!-- Rendered by forum.js -->
+            </div>
+
+            <!-- Comment list -->
+            <div class="fr-comment-list" id="fr-comment-list">
+              <!-- Rendered by forum.js -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <aside class="fr-sidebar">
+          <div class="fr-sidebar-card">
+            <div class="fr-sidebar-title">💡 Gợi Ý Trả Lời</div>
+            <div class="fr-rule-item">
+              <span class="fr-rule-num">✓</span>
+              <span>Giải thích rõ ràng, có ví dụ minh họa cụ thể</span>
+            </div>
+            <div class="fr-rule-item">
+              <span class="fr-rule-num">✓</span>
+              <span>Nêu phương trình hóa học nếu có liên quan</span>
+            </div>
+            <div class="fr-rule-item">
+              <span class="fr-rule-num">✓</span>
+              <span>Có thể gợi ý thêm tài liệu tham khảo</span>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ NEW POST MODAL ═══ -->
+  <div class="fr-modal-overlay" id="fr-post-overlay" onclick="if(event.target===this)frCloseNewPost()">
+    <div class="fr-modal">
+      <div class="fr-modal-head">
+        <div class="fr-modal-icon">✏️</div>
+        <div class="fr-modal-head-text">
+          <h3>Đăng Bài Mới</h3>
+          <p>Chia sẻ kiến thức với cộng đồng GloryChem</p>
+        </div>
+        <button class="fr-modal-close" onclick="frCloseNewPost()">✕</button>
+      </div>
+      <div class="fr-modal-body">
+        <!-- Category -->
+        <div class="fg">
+          <label>Loại Bài Viết</label>
+          <div class="fr-cat-selector">
+            <div class="fr-cat-opt selected" data-val="tip" onclick="frSelectCat('tip')">
+              <span class="fr-cat-opt-icon">💡</span>
+              <span class="fr-cat-opt-label">Mẹo Học</span>
+              <span class="fr-cat-opt-desc">Chiến thuật ôn tập</span>
+            </div>
+            <div class="fr-cat-opt" data-val="memory" onclick="frSelectCat('memory')">
+              <span class="fr-cat-opt-icon">🧠</span>
+              <span class="fr-cat-opt-label">Ghi Nhớ</span>
+              <span class="fr-cat-opt-desc">Cách nhớ nhanh</span>
+            </div>
+            <div class="fr-cat-opt" data-val="question" onclick="frSelectCat('question')">
+              <span class="fr-cat-opt-icon">❓</span>
+              <span class="fr-cat-opt-label">Câu Hỏi</span>
+              <span class="fr-cat-opt-desc">Hỏi đáp kiến thức</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Title -->
+        <div class="fg">
+          <label>Tiêu Đề <span style="color:var(--rose)">*</span></label>
+          <input class="fr-inp-title" id="fr-inp-title" type="text"
+            placeholder="VD: Mẹo nhớ bảng tuần hoàn chỉ trong 1 tuần..." maxlength="200">
+        </div>
+
+        <!-- Content -->
+        <div class="fg">
+          <label>Nội Dung <span style="color:var(--rose)">*</span></label>
+          <textarea class="fr-inp-content" id="fr-inp-content"
+            placeholder="Chia sẻ chi tiết mẹo học, cách ghi nhớ hoặc câu hỏi của bạn..." maxlength="3000"
+            oninput="frUpdateCharCount()"></textarea>
+          <div class="fr-char-count" id="fr-char-count">0 / 3000</div>
+        </div>
+
+        <!-- Alert -->
+        <div class="fr-modal-alert" id="fr-post-alert"></div>
+
+        <!-- Submit -->
+        <button class="asub" id="fr-post-submit-btn" onclick="frSubmitPost()">
+          <span id="fr-post-submit-text">🚀 Đăng Bài →</span>
+          <span id="fr-post-submit-load" style="display:none">
+            <span class="spin">↻</span> Đang đăng...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ DELETE CONFIRM MODAL ═══ -->
+  <div class="fr-modal-overlay" id="fr-delete-confirm-overlay" onclick="if(event.target===this)frCloseDeleteConfirm()">
+    <div class="fr-modal sm">
+      <div class="fr-modal-body" style="text-align:center; padding: 2.8rem 2rem;">
+        <div class="fr-modal-delete-icon">🗑️</div>
+        <h3 class="fr-modal-delete-title">Xác Nhận Xóa?</h3>
+        <p class="fr-modal-delete-sub">Bài viết này sẽ bị xóa vĩnh viễn và không thể khôi phục. Bạn có chắc chắn muốn tiếp tục?</p>
+        
+        <div class="fr-modal-delete-btns">
+          <button class="fr-btn-cancel-del" onclick="frCloseDeleteConfirm()">Hủy Bỏ</button>
+          <button class="fr-btn-confirm-do-del" id="fr-btn-do-delete" onclick="frExecuteDelete()">Đúng, Xóa Nó!</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <script src="/forum.js"></script>
 
 </body>
 
