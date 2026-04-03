@@ -1275,6 +1275,16 @@ function cleanupRoom() {
   // === GIẢI PHÁP TỔNG LỰC: QUÉT SẠCH TẤT CẢ KÊNH ĐANG TREO ===
   if (typeof sb !== 'undefined' && sb.removeAllChannels) {
     sb.removeAllChannels();
+    
+    // Đặt lại các tham chiếu kênh toàn cục (vì removeAllChannels đã giết chúng)
+    if (typeof PRESENCE_CH !== 'undefined') PRESENCE_CH = null;
+    if (typeof FA !== 'undefined') FA.inviteChannel = null;
+
+    // Khởi động lại các kết nối cơ bản sau 100ms
+    setTimeout(() => {
+      if (typeof joinGlobalPresence === 'function') joinGlobalPresence();
+      if (typeof subscribeToInvites === 'function') subscribeToInvites();
+    }, 100);
   }
   
   if (AR.lobbyTimer) clearInterval(AR.lobbyTimer);
@@ -1285,7 +1295,6 @@ function cleanupRoom() {
 
   // Reset cache bảng xếp hạng để có thể load lại ngay sau trận đấu
   if (typeof gp !== 'undefined') {
-    if (!gp._hiddenData) gp._hiddenData = {}; // dùng cái này để ko pollute gp gốc quá nhiều
     gp._lastLbLoad = 0; 
   }
 
@@ -3209,18 +3218,13 @@ function lbSetFilter(f, btn) {
 }
 
 async function loadLeaderboard() {
-  if (!sb) return;
   const listEl = G('lb-list');
   listEl.innerHTML = '<div class="lb-loading"><div class="lb-spin">⚗️</div><div>Đang tải dữ liệu...</div></div>';
 
   try {
-    const { data, error } = await sb
-      .from('profiles')
-      .select('id, full_name, username, elo, wins, losses, avatar_url')
-      .order('elo', { ascending: false })
-      .limit(100);
-
-    if (error) throw error;
+    const res = await fetch('/api/leaderboard');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
 
     LB.data = data || [];
 

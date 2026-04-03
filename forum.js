@@ -104,21 +104,14 @@ async function frLoadPosts() {
   frRenderSkeletons();
 
   try {
-    let query = sb
-      .from('forum_posts')
-      .select(`
-        id, user_id, title, content, category, comment_count, created_at,
-        profiles:user_id ( full_name, avatar_url )
-      `)
-      .order('created_at', { ascending: false })
-      .limit(50);
+    const cat = FR.currentCat;
+    const url = cat === 'all'
+      ? '/api/forum/posts'
+      : `/api/forum/posts?category=${encodeURIComponent(cat)}`;
 
-    if (FR.currentCat !== 'all') {
-      query = query.eq('category', FR.currentCat);
-    }
-
-    const { data, error } = await query;
-    if (error) throw error;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
 
     FR.posts = data || [];
     frRenderPosts();
@@ -132,18 +125,12 @@ async function frLoadPosts() {
 
 async function frLoadCounts() {
   try {
-    const { data, error } = await sb
-      .from('forum_posts')
-      .select('category');
-    if (error) throw error;
+    const res = await fetch('/api/forum/counts');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const counts = await res.json();
 
-    FR.counts = { all: 0, tip: 0, memory: 0, question: 0 };
-    (data || []).forEach(r => {
-      FR.counts.all++;
-      if (FR.counts[r.category] !== undefined) FR.counts[r.category]++;
-    });
+    FR.counts = { all: counts.all || 0, tip: counts.tip || 0, memory: counts.memory || 0, question: counts.question || 0 };
 
-    // Cập nhật counts trên tabs
     ['all', 'tip', 'memory', 'question'].forEach(cat => {
       const el = frG(`fr-tab-count-${cat}`);
       if (el) el.textContent = FR.counts[cat];
@@ -333,28 +320,19 @@ async function frLoadComments(postId) {
   const container = frG('fr-comment-list');
   if (!container) return;
 
-  // Loading
   container.innerHTML = `
     <div class="fr-comments-loading">
       <span class="spin">↻</span> Đang tải bình luận...
     </div>
   `;
 
-  // Cập nhật count header
   const countEl = frG('fr-comments-count-badge');
   if (countEl) countEl.textContent = '...';
 
   try {
-    const { data, error } = await sb
-      .from('forum_comments')
-      .select(`
-        id, content, created_at,
-        profiles:user_id ( full_name, avatar_url )
-      `)
-      .eq('post_id', postId)
-      .order('created_at', { ascending: true });
-
-    if (error) throw error;
+    const res = await fetch(`/api/forum/posts/${encodeURIComponent(postId)}/comments`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
 
     FR.comments = data || [];
     if (countEl) countEl.textContent = FR.comments.length;
@@ -393,17 +371,91 @@ function frCommentHTML(c) {
   const av     = frAvatar(c.profiles);
 
   return `
-    <div class="fr-comment">
+    <div class="fr-comment" id="comment-${c.id}">
       <div class="fr-comment-avatar">${av}</div>
       <div class="fr-comment-bubble">
         <div class="fr-comment-head">
-          <span class="fr-comment-name">${frEsc(author)}</span>
-          <span class="fr-comment-ts">${frTimeAgo(c.created_at)}</span>
+          <div style="display:flex;justify-content:space-between;width:100%;align-items:center">
+            <div>
+              <span class="fr-comment-name">${frEsc(author)}</span>
+              <span class="fr-comment-ts">${frTimeAgo(c.created_at)}</span>
+            </div>
+            ${(U && c.user_id === U.id) ? `
+              <button class="fr-comment-del-btn" onclick="frDeleteComment('${frEsc(c.id)}')">🗑️</button>
+            ` : ''}
+          </div>
         </div>
         <div class="fr-comment-text">${frEsc(c.content)}</div>
       </div>
     </div>
   `;
+}
+
+let frCommentIdToDelete = null;
+
+function frDeleteComment(commentId) {
+  if (!FR.currentPost || !U) return;
+  frCommentIdToDelete = commentId;
+  const ov = frG('fr-del-comment-overlay');
+  if (ov) {
+    ov.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function frCloseDelComment() {
+  frCommentIdToDelete = null;
+  const ov = frG('fr-del-comment-overlay');
+  if (ov) {
+    ov.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+}
+
+async function frExecuteDelComment() {
+  if (!frCommentIdToDelete || !FR.currentPost || !U) return;
+
+  const btn = frG('fr-btn-do-del-comment');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '...';
+  }
+
+  try {
+    const url = `/api/forum/posts/${encodeURIComponent(FR.currentPost.id)}/comments/${encodeURIComponent(frCommentIdToDelete)}?user_id=${encodeURIComponent(U.id)}`;
+    const res = await fetch(url, {
+      method:  'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `HTTP ${res.status}`);
+    }
+
+    // Cập nhật state cục bộ
+    FR.comments = FR.comments.filter(c => c.id !== frCommentIdToDelete);
+    FR.currentPost.comment_count = Math.max(0, (FR.currentPost.comment_count || 1) - 1);
+    
+    // Cập nhật UI
+    const countEl = frG('fr-comments-count-badge');
+    if (countEl) countEl.textContent = FR.comments.length;
+
+    // Cập nhật card trong list view
+    const card = document.querySelector(`.fr-card[onclick*="${FR.currentPost.id}"] .fr-card-stat span:last-child`);
+    if (card) card.textContent = `${FR.currentPost.comment_count} bình luận`;
+
+    frRenderComments();
+    frCloseDelComment();
+  } catch (e) {
+    console.error('[Forum] deleteComment:', e);
+    alert('Không thể xóa bình luận: ' + e.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Xóa Ngay';
+    }
+  }
 }
 
 function frRenderCommentForm() {
@@ -482,44 +534,30 @@ async function frSubmitComment() {
   if (btnText) btnText.textContent = '↻ Đang gửi...';
 
   try {
-    const { data, error } = await sb
-      .from('forum_comments')
-      .insert({
-        post_id: FR.currentPost.id,
-        user_id: U.id,
-        content: content,
-      })
-      .select(`
-        id, content, created_at,
-        profiles:user_id ( full_name, avatar_url )
-      `)
-      .single();
+    const res = await fetch(`/api/forum/posts/${encodeURIComponent(FR.currentPost.id)}/comments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: U.id, content }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `HTTP ${res.status}`);
+    }
+    const data = await res.json();
 
-    if (error) throw error;
+    // Cập nhật comment_count local
+    FR.currentPost.comment_count = (FR.currentPost.comment_count || 0) + 1;
+    const card = document.querySelector(`.fr-card[onclick*="${FR.currentPost.id}"] .fr-card-stat span:last-child`);
+    if (card) card.textContent = `${FR.currentPost.comment_count} bình luận`;
 
-    // Cập nhật comment_count trong DB (best effort)
-    sb.from('forum_posts')
-      .update({ comment_count: (FR.currentPost.comment_count || 0) + 1 })
-      .eq('id', FR.currentPost.id)
-      .then(() => {
-        FR.currentPost.comment_count = (FR.currentPost.comment_count || 0) + 1;
-        // Cập nhật lại card trong list nếu có
-        const card = document.querySelector(`.fr-card[onclick*="${FR.currentPost.id}"] .fr-card-stat span:last-child`);
-        if (card) card.textContent = `${FR.currentPost.comment_count} bình luận`;
-      });
-
-    // Thêm comment mới vào đầu danh sách UI
     FR.comments.push(data);
     if (input) input.value = '';
 
-    // Cập nhật count
     const countEl = frG('fr-comments-count-badge');
     if (countEl) countEl.textContent = FR.comments.length;
 
-    // Re-render comments
     frRenderComments();
 
-    // Scroll xuống comment cuối
     setTimeout(() => {
       const list = frG('fr-comment-list');
       if (list) list.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -625,31 +663,23 @@ async function frSubmitPost() {
   if (btnLoad) btnLoad.style.display = 'inline-flex';
 
   try {
-    const { data, error } = await sb
-      .from('forum_posts')
-      .insert({
-        user_id:       U.id,
-        title:         title,
-        content:       content,
-        category:      cat,
-        comment_count: 0,
-      })
-      .select(`
-        id, user_id, title, content, category, comment_count, created_at,
-        profiles:user_id ( full_name, avatar_url )
-      `)
-      .single();
-
-    if (error) throw error;
+    const res = await fetch('/api/forum/posts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: U.id, title, content, category: cat }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `HTTP ${res.status}`);
+    }
+    const data = await res.json();
 
     frSetAlert('fr-post-alert', 'ok', '✅ Đăng bài thành công!');
 
-    // Thêm bài mới vào đầu danh sách
     FR.posts.unshift(data);
     FR.counts.all++;
     if (FR.counts[cat] !== undefined) FR.counts[cat]++;
 
-    // Nếu tab hiện tại là 'all' hoặc đúng category, re-render
     if (FR.currentCat === 'all' || FR.currentCat === cat) {
       frRenderPosts();
     }
@@ -702,23 +732,21 @@ async function frExecuteDelete() {
   }
 
   try {
-    const { error } = await sb
-      .from('forum_posts')
-      .delete()
-      .eq('id', frPostIdToDelete)
-      .eq('user_id', U.id);
+    const url = `/api/forum/posts/${encodeURIComponent(frPostIdToDelete)}?user_id=${encodeURIComponent(U.id)}`;
+    const res = await fetch(url, {
+      method:  'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `HTTP ${res.status}`);
+    }
 
-    if (error) throw error;
-
-    // Nếu đang xem bài này thì quay về list
     if (FR.currentPost && FR.currentPost.id === frPostIdToDelete) {
       frBackToList();
     }
 
-    // Xóa khỏi cache local
     FR.posts = FR.posts.filter(p => p.id !== frPostIdToDelete);
-    
-    // Render lại list
     frRenderPosts();
     frLoadCounts();
     frCloseDeleteConfirm();
@@ -733,4 +761,3 @@ async function frExecuteDelete() {
     }
   }
 }
-

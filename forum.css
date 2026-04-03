@@ -1455,3 +1455,127 @@
     padding: 1.4rem 1.2rem;
   }
 }
+
+/* Delete comment button */
+.fr-comment-del-btn {
+  background: none;
+  border: none;
+  font-size: 0.8rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  opacity: 0.4;
+  transition: all 0.2s;
+  color: var(--text-4);
+}
+
+.fr-comment:hover .fr-comment-del-btn {
+  opacity: 0.7;
+}
+
+.fr-comment-del-btn:hover {
+  opacity: 1 !important;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.fr-btn-delete-md {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: .45rem 1rem;
+    background: #fee2e2;
+    color: #ef4444;
+    font-family: var(--font-h);
+    font-weight: 700;
+    font-size: .75rem;
+    letter-spacing: -.01em;
+    border: 1px solid #fecaca;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: all .2s;
+    white-space: nowrap;
+    margin-left: auto;
+}
+
+.fr-btn-delete-md:hover {
+    background: #fecaca;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, .15);
+}
+
+/* ── MODAL DELETE STYLES ── */
+.fr-modal-delete-icon {
+  font-size: 3rem;
+  margin-bottom: 1.2rem;
+  text-align: center;
+  display: block;
+}
+
+.fr-modal-delete-title {
+  font-family: var(--font-h);
+  font-weight: 800;
+  font-size: 1.35rem;
+  color: var(--text-2);
+  margin-bottom: .6rem;
+  letter-spacing: -.03em;
+  text-align: center;
+}
+
+.fr-modal-delete-sub {
+  font-size: .88rem;
+  color: var(--text-3);
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  max-width: 320px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+.fr-modal-delete-btns {
+  display: flex;
+  gap: .8rem;
+  justify-content: center;
+}
+
+.fr-btn-cancel-del {
+  padding: .7rem 1.4rem;
+  border-radius: 11px;
+  font-family: var(--font-b);
+  font-weight: 700;
+  font-size: .85rem;
+  background: var(--bg-soft);
+  border: 1.5px solid var(--border-2);
+  color: var(--text-3);
+  cursor: pointer;
+  transition: all .18s;
+}
+
+.fr-btn-cancel-del:hover {
+  background: var(--border-2);
+  color: var(--text-2);
+}
+
+.fr-btn-confirm-do-del {
+  padding: .7rem 1.4rem;
+  border-radius: 11px;
+  font-family: var(--font-h);
+  font-weight: 700;
+  font-size: .85rem;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  transition: all .18s;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, .3);
+}
+
+.fr-btn-confirm-do-del:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, .45);
+}
+
+.fr-btn-confirm-do-del:active {
+  transform: translateY(0);
+}

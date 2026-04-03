@@ -11,8 +11,9 @@ import uuid
 import random
 import threading
 import json
+import time
 
-from flask import Flask, send_file, send_from_directory, request
+from flask import Flask, send_file, send_from_directory, request, jsonify
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from supabase import create_client, Client
@@ -60,6 +61,24 @@ pending_invites: dict = {}   # key -> invite metadata
 lobby_rooms:    dict  = {}   # room_id -> lobby_room_data
 
 _state_lock = threading.Lock()
+
+# ══════════════════════════════════════
+#   API CACHE — leaderboard & forum
+# ══════════════════════════════════════
+_cache: dict = {}   # key -> {"data": ..., "ts": float}
+
+def _cache_get(key: str, ttl: int):
+    """Trả về data nếu còn hạn, ngược lại None."""
+    entry = _cache.get(key)
+    if entry and (time.time() - entry["ts"]) < ttl:
+        return entry["data"]
+    return None
+
+def _cache_set(key: str, data):
+    _cache[key] = {"data": data, "ts": time.time()}
+
+def _cache_invalidate(key: str):
+    _cache.pop(key, None)
 
 
 # ══════════════════════════════════════
@@ -389,6 +408,323 @@ def end_battle_and_update(room_id):
             socketio.emit("lobby_battle_ended", {"roomId": l_id}, room=l_id)
             broadcast_lobby_rooms_list()
             break
+
+
+# ══════════════════════════════════════
+#   REST API — LEADERBOARD
+# ══════════════════════════════════════
+LB_TTL = 30   # giây — cache leaderboard
+
+@app.route("/api/leaderboard")
+def api_leaderboard():
+    """Trả top-100 profiles sắp xếp theo ELO, cache 30 giây."""
+    cached = _cache_get("leaderboard", LB_TTL)
+    if cached is not None:
+        return jsonify(cached)
+
+    try:
+        res = (
+            supabase.table("profiles")
+            .select("id, full_name, username, elo, wins, losses, avatar_url")
+            .order("elo", desc=True)
+            .limit(100)
+            .execute()
+        )
+        data = res.data or []
+        _cache_set("leaderboard", data)
+        return jsonify(data)
+    except Exception as e:
+        print(f"[API] /api/leaderboard error: {e}")
+        return jsonify({"error": "Không thể tải bảng xếp hạng"}), 500
+
+
+# ══════════════════════════════════════
+#   REST API — FORUM
+# ══════════════════════════════════════
+FORUM_POSTS_TTL  = 20   # giây — cache danh sách bài viết
+FORUM_COUNTS_TTL = 30   # giây — cache counts theo category
+FORUM_COMMENTS_TTL = 15 # giây — cache comments từng bài
+
+@app.route("/api/forum/posts")
+def api_forum_posts():
+    """Trả 50 bài viết mới nhất, lọc theo ?category=tip|memory|question."""
+    cat = request.args.get("category", "all")
+    cache_key = f"forum_posts_{cat}"
+
+    cached = _cache_get(cache_key, FORUM_POSTS_TTL)
+    if cached is not None:
+        return jsonify(cached)
+
+    try:
+        # Thử lấy data có kèm join profile
+        try:
+            query = (
+                supabase.table("forum_posts")
+                .select("id, user_id, title, content, category, comment_count, created_at, profiles:user_id(full_name, avatar_url)")
+                .order("created_at", desc=True)
+                .limit(50)
+            )
+            if cat != "all":
+                query = query.eq("category", cat)
+            res = query.execute()
+            data = res.data or []
+        except Exception as join_err:
+            print(f"[Forum] Join failed, falling back to manual fetch: {join_err}")
+            # Fallback: lấy bài trước, sau đó lấy profile
+            query = (
+                supabase.table("forum_posts")
+                .select("id, user_id, title, content, category, comment_count, created_at")
+                .order("created_at", desc=True)
+                .limit(50)
+            )
+            if cat != "all":
+                query = query.eq("category", cat)
+            res = query.execute()
+            data = res.data or []
+            
+            if data:
+                uids = list(set(p["user_id"] for p in data))
+                profiles = _fetch_profiles_safe(uids)
+                for p in data:
+                    p["profiles"] = profiles.get(p["user_id"])
+
+        _cache_set(cache_key, data)
+        return jsonify(data)
+    except Exception as e:
+        print(f"[API] /api/forum/posts error: {e}")
+        return jsonify({"error": "Không thể tải bài viết"}), 500
+
+
+@app.route("/api/forum/counts")
+def api_forum_counts():
+    """Trả số lượng bài theo từng category."""
+    cached = _cache_get("forum_counts", FORUM_COUNTS_TTL)
+    if cached is not None:
+        return jsonify(cached)
+
+    try:
+        res  = supabase.table("forum_posts").select("category").execute()
+        rows = res.data or []
+        counts = {"all": 0, "tip": 0, "memory": 0, "question": 0}
+        for r in rows:
+            counts["all"] += 1
+            c = r.get("category")
+            if c in counts:
+                counts[c] += 1
+        _cache_set("forum_counts", counts)
+        return jsonify(counts)
+    except Exception as e:
+        print(f"[API] /api/forum/counts error: {e}")
+        return jsonify({"error": "Không thể tải thống kê"}), 500
+
+
+@app.route("/api/forum/posts/<post_id>/comments")
+def api_forum_comments(post_id):
+    """Trả comments của một bài viết."""
+    cache_key = f"forum_comments_{post_id}"
+    cached = _cache_get(cache_key, FORUM_COMMENTS_TTL)
+    if cached is not None:
+        return jsonify(cached)
+
+    try:
+        data = []
+        try:
+            res = (
+                supabase.table("forum_comments")
+                .select("id, content, created_at, profiles:user_id(full_name, avatar_url)")
+                .eq("post_id", post_id)
+                .order("created_at", desc=False)
+                .execute()
+            )
+            data = res.data or []
+        except Exception as join_err:
+            print(f"[Forum] Comments join failed: {join_err}")
+            res = (
+                supabase.table("forum_comments")
+                .select("id, user_id, content, created_at")
+                .eq("post_id", post_id)
+                .order("created_at", desc=False)
+                .execute()
+            )
+            data = res.data or []
+            if data:
+                uids = list(set(c["user_id"] for c in data))
+                profiles = _fetch_profiles_safe(uids)
+                for c in data:
+                    c["profiles"] = profiles.get(c["user_id"])
+
+        _cache_set(cache_key, data)
+        return jsonify(data)
+    except Exception as e:
+        print(f"[API] /api/forum/comments error: {e}")
+        return jsonify({"error": "Không thể tải bình luận"}), 500
+
+
+@app.route("/api/forum/posts", methods=["POST"])
+def api_forum_post_create():
+    """Tạo bài viết mới, xóa cache liên quan."""
+    try:
+        body    = request.get_json(force=True) or {}
+        user_id = body.get("user_id", "").strip()
+        title   = (body.get("title") or "").strip()
+        content = (body.get("content") or "").strip()
+        cat     = body.get("category", "tip")
+
+        if not user_id or not title or not content:
+            return jsonify({"error": "Thiếu thông tin bắt buộc"}), 400
+        if cat not in ("tip", "memory", "question"):
+            return jsonify({"error": "Category không hợp lệ"}), 400
+        if len(title) > 200 or len(content) > 3000:
+            return jsonify({"error": "Nội dung vượt giới hạn ký tự"}), 400
+
+        try:
+            res = (
+                supabase.table("forum_posts")
+                .insert({"user_id": user_id, "title": title,
+                         "content": content, "category": cat, "comment_count": 0})
+                .execute()
+            )
+            # data is usually a list of dicts from .insert().execute()
+            data = res.data[0] if res.data and isinstance(res.data, list) else res.data
+        except Exception as err:
+            print(f"[Forum] Post create failed: {err}")
+            return jsonify({"error": "Đăng bài thất bại"}), 500
+
+        # Nếu data có, thử lấy thêm profile (best-effort)
+        if data and isinstance(data, dict):
+            profile = _fetch_profiles_safe([user_id]).get(user_id)
+            data["profiles"] = profile
+
+        # Xóa cache
+        _cache_invalidate("forum_posts_all")
+        _cache_invalidate(f"forum_posts_{cat}")
+        _cache_invalidate("forum_counts")
+        return jsonify(data), 201
+    except Exception as e:
+        print(f"[API] POST /api/forum/posts error: {e}")
+        return jsonify({"error": str(e) or "Đăng bài thất bại"}), 500
+
+
+@app.route("/api/forum/posts/<post_id>", methods=["DELETE"])
+def api_forum_post_delete(post_id):
+    """Xóa bài viết (chỉ chủ bài), xóa cache liên quan."""
+    user_id = request.args.get("user_id", "").strip()
+
+    if not user_id:
+        return jsonify({"error": "user_id required"}), 400
+
+    try:
+        res = (
+            supabase.table("forum_posts")
+            .delete()
+            .eq("id", post_id)
+            .eq("user_id", user_id)   # Đảm bảo chỉ chủ bài xóa được
+            .execute()
+        )
+        # Xóa toàn bộ cache forum
+        for k in list(_cache.keys()):
+            if k.startswith("forum_"):
+                _cache_invalidate(k)
+        return jsonify({"ok": True}), 200
+    except Exception as e:
+        print(f"[API] DELETE /api/forum/posts error: {e}")
+        return jsonify({"error": "Xóa bài thất bại"}), 500
+
+
+@app.route("/api/forum/posts/<post_id>/comments", methods=["POST"])
+def api_forum_comment_create(post_id):
+    """Thêm bình luận, cập nhật comment_count, xóa cache."""
+    try:
+        body    = request.get_json(force=True) or {}
+        user_id = body.get("user_id", "").strip()
+        content = (body.get("content") or "").strip()
+
+        if not user_id or not content:
+            return jsonify({"error": "Thiếu thông tin bắt buộc"}), 400
+        if len(content) > 1000:
+            return jsonify({"error": "Bình luận vượt 1000 ký tự"}), 400
+
+        try:
+            res = (
+                supabase.table("forum_comments")
+                .insert({"post_id": post_id, "user_id": user_id, "content": content})
+                .execute()
+            )
+            # data is usually a list of dicts from .insert().execute()
+            data = res.data[0] if res.data and isinstance(res.data, list) else res.data
+        except Exception as err:
+            print(f"[Forum] Comment create failed: {err}")
+            return jsonify({"error": "Gửi bình luận thất bại"}), 500
+
+        # Thêm profile info (best effort)
+        if data and isinstance(data, dict):
+            profile = _fetch_profiles_safe([user_id]).get(user_id)
+            data["profiles"] = profile
+
+        # Cập nhật comment_count (re-count để luôn chính xác nếu không dùng trigger)
+        try:
+            r_res = supabase.table("forum_comments").select("id", count="exact").eq("post_id", post_id).execute()
+            new_count = r_res.count if r_res.count is not None else 0
+            supabase.table("forum_posts").update({"comment_count": new_count}).eq("id", post_id).execute()
+        except Exception as up_err:
+            print(f"[Forum] Update count failed: {up_err}")
+
+        # Xóa cache
+        _cache_invalidate(f"forum_comments_{post_id}")
+        _cache_invalidate("forum_posts_all")
+        _cache_invalidate("forum_counts")
+        return jsonify(data), 201
+    except Exception as e:
+        print(f"[API] POST /api/forum/comments error: {e}")
+        return jsonify({"error": str(e) or "Gửi bình luận thất bại"}), 500
+
+
+@app.route("/api/forum/posts/<post_id>/comments/<comment_id>", methods=["GET", "DELETE"])
+def api_forum_comment_delete(post_id, comment_id):
+    """Xóa bình luận, cập nhật lại comment_count. Hỗ trợ GET để test."""
+    if request.method == "GET":
+        return jsonify({"msg": f"Route reached for comment {comment_id} on post {post_id}"})
+        
+    """Xóa bình luận, cập nhật lại comment_count."""
+    # Lấy user_id từ query param (chuẩn hơn cho DELETE)
+    user_id = request.args.get("user_id", "").strip()
+
+    if not user_id:
+        return jsonify({"error": "user_id required (as query param)"}), 400
+
+    try:
+        print(f"[API] Deleting comment {comment_id} on post {post_id} by user {user_id}")
+        # Xóa comment (chỉ được xóa comment của mình)
+        res = (
+            supabase.table("forum_comments")
+            .delete()
+            .eq("id", comment_id)
+            .eq("post_id", post_id)
+            .eq("user_id", user_id)
+            .execute()
+        )
+        
+        if not res.data:
+            print(f"[Forum] No comment deleted. Check if comment exists and user matches.")
+            return jsonify({"error": "Không tìm thấy bình luận hoặc bạn không có quyền xóa"}), 404
+
+        print(f"[Forum] Comment {comment_id} deleted successfully.")
+        
+        # Cập nhật lại số lượng
+        try:
+            r_res = supabase.table("forum_comments").select("id", count="exact").eq("post_id", post_id).execute()
+            new_count = r_res.count if r_res.count is not None else 0
+            supabase.table("forum_posts").update({"comment_count": new_count}).eq("id", post_id).execute()
+        except Exception as upd_err:
+            print(f"[Forum] Re-count after delete failed: {upd_err}")
+
+        # Xóa cache
+        _cache_invalidate(f"forum_comments_{post_id}")
+        _cache_invalidate("forum_posts_all")
+        return jsonify({"ok": True}), 200
+    except Exception as e:
+        print(f"[API] DELETE /api/forum/comments error: {e}")
+        return jsonify({"error": "Xóa bình luận thất bại"}), 500
 
 
 # ══════════════════════════════════════
@@ -1659,5 +1995,5 @@ def play_page():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    print(f"🚀 GloryChem server on port {port}")
-    socketio.run(app, host="0.0.0.0", port=port, debug=False)
+    print(f"[Server] GloryChem starting on port {port}")
+    socketio.run(app, host="0.0.0.0", port=port, debug=False, allow_unsafe_werkzeug=True)

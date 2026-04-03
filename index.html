@@ -2001,7 +2001,7 @@
     </div>
   </div>
 
-  <!-- ═══ DELETE CONFIRM MODAL ═══ -->
+  <!-- ═══ DELETE POST CONFIRM MODAL ═══ -->
   <div class="fr-modal-overlay" id="fr-delete-confirm-overlay" onclick="if(event.target===this)frCloseDeleteConfirm()">
     <div class="fr-modal sm">
       <div class="fr-modal-body" style="text-align:center; padding: 2.8rem 2rem;">
@@ -2012,6 +2012,22 @@
         <div class="fr-modal-delete-btns">
           <button class="fr-btn-cancel-del" onclick="frCloseDeleteConfirm()">Hủy Bỏ</button>
           <button class="fr-btn-confirm-do-del" id="fr-btn-do-delete" onclick="frExecuteDelete()">Đúng, Xóa Nó!</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ DELETE COMMENT CONFIRM MODAL ═══ -->
+  <div class="fr-modal-overlay" id="fr-del-comment-overlay" onclick="if(event.target===this)frCloseDelComment()">
+    <div class="fr-modal sm">
+      <div class="fr-modal-body" style="text-align:center; padding: 2.5rem 1.8rem;">
+        <div class="fr-modal-delete-icon" style="font-size:2.4rem;margin-bottom:0.8rem">💬🗑️</div>
+        <h3 class="fr-modal-delete-title" style="font-size:1.15rem">Xóa Bình Luận?</h3>
+        <p class="fr-modal-delete-sub" style="font-size:.84rem;margin-bottom:1.5rem">Bình luận của bạn sẽ biến mất mãi mãi. Bạn chắc chứ?</p>
+        
+        <div class="fr-modal-delete-btns">
+          <button class="fr-btn-cancel-del" onclick="frCloseDelComment()">Quay Lại</button>
+          <button class="fr-btn-confirm-do-del" id="fr-btn-do-del-comment" onclick="frExecuteDelComment()">Xóa Ngay</button>
         </div>
       </div>
     </div>
