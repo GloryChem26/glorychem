@@ -55,7 +55,8 @@ function frEsc(str) {
   if (!str) return '';
   return String(str)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function frAvatar(profile, size = 'sm') {
@@ -422,10 +423,16 @@ async function frExecuteDelComment() {
   }
 
   try {
-    const url = `/api/forum/posts/${encodeURIComponent(FR.currentPost.id)}/comments/${encodeURIComponent(frCommentIdToDelete)}?user_id=${encodeURIComponent(U.id)}`;
+    const session = (await sb.auth.getSession()).data.session;
+    const token = session?.access_token;
+    
+    const url = `/api/forum/posts/${encodeURIComponent(FR.currentPost.id)}/comments/${encodeURIComponent(frCommentIdToDelete)}`;
     const res = await fetch(url, {
       method:  'DELETE',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
     });
 
     if (!res.ok) {
@@ -534,10 +541,16 @@ async function frSubmitComment() {
   if (btnText) btnText.textContent = '↻ Đang gửi...';
 
   try {
+    const session = (await sb.auth.getSession()).data.session;
+    const token = session?.access_token;
+
     const res = await fetch(`/api/forum/posts/${encodeURIComponent(FR.currentPost.id)}/comments`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: U.id, content }),
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ content }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
@@ -663,10 +676,16 @@ async function frSubmitPost() {
   if (btnLoad) btnLoad.style.display = 'inline-flex';
 
   try {
+    const session = (await sb.auth.getSession()).data.session;
+    const token = session?.access_token;
+
     const res = await fetch('/api/forum/posts', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: U.id, title, content, category: cat }),
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ title, content, category: cat }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
@@ -732,10 +751,16 @@ async function frExecuteDelete() {
   }
 
   try {
-    const url = `/api/forum/posts/${encodeURIComponent(frPostIdToDelete)}?user_id=${encodeURIComponent(U.id)}`;
+    const session = (await sb.auth.getSession()).data.session;
+    const token = session?.access_token;
+
+    const url = `/api/forum/posts/${encodeURIComponent(frPostIdToDelete)}`;
     const res = await fetch(url, {
       method:  'DELETE',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));

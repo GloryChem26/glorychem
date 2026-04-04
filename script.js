@@ -1,10 +1,19 @@
-// ══ SUPABASE ══
-const SURL = 'https://cmrbsiuzrpsglynnfund.supabase.co';
-const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNtcmJzaXV6cnBzZ2x5bm5mdW5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NDg2NzMsImV4cCI6MjA5MDQyNDY3M30.XI3522qFOCGCaN3qWhtGBvezxnXrtbxiJtxgkVzm8Es';
+// ══ SUPABASE (Dynamically loaded via /api/config) ══
+let sb = null;
 const { createClient } = supabase;
-let sb;
-try { sb = createClient(SURL, SKEY); console.log('✅ GloryChem connected'); }
-catch (e) { console.warn('Supabase:', e.message); }
+
+async function initSupabase() {
+  try {
+    const res = await fetch('/api/config');
+    const config = await res.json();
+    if (!config.url || !config.anonKey) throw new Error('Missing config');
+    sb = createClient(config.url, config.anonKey);
+    console.log('✅ GloryChem connected');
+  } catch (e) {
+    console.warn('❌ Supabase setup failed:', e.message);
+  }
+}
+// Init will be called inside common init()
 let U = null;
 
 // ── THEME TOGGLE ──
@@ -35,10 +44,15 @@ let currentLobbyRoom = null;
 let lobbyRoomsList = [];
 let _pendingJoinRoomId = null; // for password prompt flow
 
-// ── Escape HTML to prevent XSS ──
+// ── Escape HTML to prevent XSS (Fix: added single quote escape) ──
 function escapeHtml(str) {
   if (!str) return '';
-  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 // ── Lấy danh sách phòng ──
@@ -188,6 +202,7 @@ function startLobbyBattle() {
 
 // ── INIT ──
 async function init() {
+  await initSupabase(); // Load config first
   await loadCompetitionData();
   if (!sb) return;
 

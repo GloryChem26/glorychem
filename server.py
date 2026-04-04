@@ -12,6 +12,7 @@ import random
 import threading
 import json
 import time
+import functools
 
 from flask import Flask, send_file, send_from_directory, request, jsonify
 from flask_cors import CORS
@@ -19,7 +20,14 @@ from flask_socketio import SocketIO, emit, join_room, leave_room
 from supabase import create_client, Client
 from dotenv import load_dotenv
 
-load_dotenv()
+# Tải biến môi trường từ .env nằm cùng thư mục với server.py
+_env_path = os.path.join(os.path.dirname(__file__), '.env')
+if os.path.exists(_env_path):
+    load_dotenv(_env_path)
+    print(f"📖 Loaded .env from {_env_path}")
+else:
+    load_dotenv() # Fallback to standard CWD search
+    print("⚠️ No .env file found at expected path, using defaults.")
 
 # ══════════════════════════════════════
 #   APP SETUP
@@ -42,12 +50,26 @@ socketio = SocketIO(
 # ══════════════════════════════════════
 #   SUPABASE
 # ══════════════════════════════════════
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://cmrbsiuzrpsglynnfund.supabase.co")
-SUPABASE_KEY = os.environ.get(
-    "SUPABASE_KEY",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNtcmJzaXV6cnBzZ2x5bm5mdW5kIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDg0ODY3MywiZXhwIjoyMDkwNDI0NjczfQ.plgqzEWW505FqZegHzCklxO-JKXFsXhjegfdrbvU-7E",
-)
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+def _sc(v):
+    """Sanitize config value — remove spaces and quotes."""
+    if not v: return v
+    return v.strip().strip("'").strip('"')
+
+SUPABASE_URL      = _sc(os.environ.get("SUPABASE_URL"))
+SUPABASE_KEY      = _sc(os.environ.get("SUPABASE_KEY"))
+SUPABASE_ANON_KEY = _sc(os.environ.get("SUPABASE_ANON_KEY"))
+
+# Kiểm tra các khóa bắt buộc
+_missing = []
+if not SUPABASE_URL: _missing.append("SUPABASE_URL")
+if not SUPABASE_KEY: _missing.append("SUPABASE_KEY (Service Role)")
+if not SUPABASE_ANON_KEY: _missing.append("SUPABASE_ANON_KEY (Public)")
+
+if _missing:
+    print(f"❌ ERROR: Missing target env variables: {', '.join(_missing)}")
+    print("👉 Hãy copy dán nội dung từ .env.example vào .env và điền các khóa từ Supabase Dashboard.")
+
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and SUPABASE_KEY else None
 
 # ══════════════════════════════════════
 #   IN-MEMORY STATE
@@ -118,7 +140,75 @@ def broadcast_presence():
     socketio.emit("presence_update", get_presence_payload())
 
 
-def make_user_payload(u):
+# ══════════════════════════════════════
+#   SECURITY & AUTH HELPERS
+# ══════════════════════════════════════
+def get_user_from_request():
+    """
+    Xác thực JWT từ client gửi lên (Authorization: Bearer <token>).
+    Sử dụng Supabase Auth để verify.
+    """
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return None
+    token = auth_header.split(" ")[1]
+    try:
+        # Supabase Python SDK can verify the JWT by fetching user
+        # Note: This is an API call, you might want to cache this or use a local JWT verify
+        # but for simplicity and reliability with Supabase, we use get_user.
+        res = supabase.auth.get_user(token)
+        if res and res.user:
+            return res.user
+    except Exception as e:
+        print(f"[AUTH] JWT Verify error: {e}")
+    return None
+
+# ══════════════════════════════════════
+#   SECURITY: RATE LIMITING
+# ══════════════════════════════════════
+_ratelimit_data = {} # (key, endpoint) -> (timestamp, count)
+
+def rate_limit(limit=10, period=60):
+    """
+    Decorator đơn giản để giới hạn số request từ 1 IP/user.
+    Mặc định 10 request / 60 giây.
+    """
+    def decorator(f):
+        @functools.wraps(f)
+        def wrapped(*args, **kwargs):
+            key = request.remote_addr
+            # Nếu user đã log in, ưu tiên dùng userId làm key
+            user = get_user_from_request()
+            if user:
+                key = user.id
+                
+            now = time.time()
+            rl_key = (key, request.path)
+            
+            if rl_key not in _ratelimit_data:
+                _ratelimit_data[rl_key] = [now, 1]
+            else:
+                last_time, count = _ratelimit_data[rl_key]
+                if now - last_time < period:
+                    if count >= limit:
+                        return jsonify({"error": "Quá nhiều yêu cầu. Vui lòng thử lại sau."}), 429
+                    _ratelimit_data[rl_key][1] += 1
+                else:
+                    _ratelimit_data[rl_key] = [now, 1]
+            return f(*args, **kwargs)
+        return wrapped
+    return decorator
+
+@app.after_request
+def add_security_headers(response):
+    """Thêm các headers bảo mật quan trọng."""
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    # Strict CORS configuration could be added here
+    return response
+
+def mk_user_payload(u):
     return {
         "userId":     u.get("userId"),
         "full_name":  u.get("full_name", ""),
@@ -410,6 +500,15 @@ def end_battle_and_update(room_id):
             break
 
 
+@app.route("/api/config")
+def api_config():
+    """Trả về URL và ANON_KEY cho frontend."""
+    return jsonify({
+        "url": SUPABASE_URL,
+        "anonKey": SUPABASE_ANON_KEY
+    })
+
+
 # ══════════════════════════════════════
 #   REST API — LEADERBOARD
 # ══════════════════════════════════════
@@ -561,16 +660,21 @@ def api_forum_comments(post_id):
 
 
 @app.route("/api/forum/posts", methods=["POST"])
+@rate_limit(limit=5, period=60) # Tối đa 5 bài / phút
 def api_forum_post_create():
     """Tạo bài viết mới, xóa cache liên quan."""
     try:
+        user = get_user_from_request()
+        if not user:
+            return jsonify({"error": "Unauthorized. Please log in again."}), 401
+            
         body    = request.get_json(force=True) or {}
-        user_id = body.get("user_id", "").strip()
+        user_id = user.id # Dùng user_id từ JWT thay vì body
         title   = (body.get("title") or "").strip()
         content = (body.get("content") or "").strip()
         cat     = body.get("category", "tip")
 
-        if not user_id or not title or not content:
+        if not title or not content:
             return jsonify({"error": "Thiếu thông tin bắt buộc"}), 400
         if cat not in ("tip", "memory", "question"):
             return jsonify({"error": "Category không hợp lệ"}), 400
@@ -607,18 +711,19 @@ def api_forum_post_create():
 
 @app.route("/api/forum/posts/<post_id>", methods=["DELETE"])
 def api_forum_post_delete(post_id):
-    """Xóa bài viết (chỉ chủ bài), xóa cache liên quan."""
-    user_id = request.args.get("user_id", "").strip()
-
-    if not user_id:
-        return jsonify({"error": "user_id required"}), 400
+    """Xóa bài viết (chỉ chủ bài), xóa cache liên quan. Đã fix IDOR bằng JWT verification."""
+    user = get_user_from_request()
+    if not user:
+        return jsonify({"error": "Unauthorized. Please log in again."}), 401
+        
+    user_id = user.id
 
     try:
         res = (
             supabase.table("forum_posts")
             .delete()
             .eq("id", post_id)
-            .eq("user_id", user_id)   # Đảm bảo chỉ chủ bài xóa được
+            .eq("user_id", user_id)   # Chỉ chủ bài thật (verified qua JWT) mới xóa được
             .execute()
         )
         # Xóa toàn bộ cache forum
@@ -632,15 +737,20 @@ def api_forum_post_delete(post_id):
 
 
 @app.route("/api/forum/posts/<post_id>/comments", methods=["POST"])
+@rate_limit(limit=10, period=60) # Tối đa 10 comment / phút
 def api_forum_comment_create(post_id):
     """Thêm bình luận, cập nhật comment_count, xóa cache."""
     try:
+        user = get_user_from_request()
+        if not user:
+            return jsonify({"error": "Unauthorized"}), 401
+            
         body    = request.get_json(force=True) or {}
-        user_id = body.get("user_id", "").strip()
+        user_id = user.id # Dùng từ JWT
         content = (body.get("content") or "").strip()
 
-        if not user_id or not content:
-            return jsonify({"error": "Thiếu thông tin bắt buộc"}), 400
+        if not content:
+            return jsonify({"error": "Thiếu nội dung bình luận"}), 400
         if len(content) > 1000:
             return jsonify({"error": "Bình luận vượt 1000 ký tự"}), 400
 
@@ -679,22 +789,18 @@ def api_forum_comment_create(post_id):
         return jsonify({"error": str(e) or "Gửi bình luận thất bại"}), 500
 
 
-@app.route("/api/forum/posts/<post_id>/comments/<comment_id>", methods=["GET", "DELETE"])
+@app.route("/api/forum/posts/<post_id>/comments/<comment_id>", methods=["DELETE"])
 def api_forum_comment_delete(post_id, comment_id):
-    """Xóa bình luận, cập nhật lại comment_count. Hỗ trợ GET để test."""
-    if request.method == "GET":
-        return jsonify({"msg": f"Route reached for comment {comment_id} on post {post_id}"})
-        
-    """Xóa bình luận, cập nhật lại comment_count."""
-    # Lấy user_id từ query param (chuẩn hơn cho DELETE)
-    user_id = request.args.get("user_id", "").strip()
-
-    if not user_id:
-        return jsonify({"error": "user_id required (as query param)"}), 400
+    """Xóa bình luận, cập nhật lại comment_count. Đã fix IDOR bằng JWT verification."""
+    user = get_user_from_request()
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    user_id = user.id
 
     try:
-        print(f"[API] Deleting comment {comment_id} on post {post_id} by user {user_id}")
-        # Xóa comment (chỉ được xóa comment của mình)
+        print(f"[API] Deleting comment {comment_id} on post {post_id} by verified user {user_id}")
+        # Xóa comment (chỉ được xóa comment của mình – verified qua JWT)
         res = (
             supabase.table("forum_comments")
             .delete()
@@ -754,16 +860,19 @@ MAX_AVATAR_BYTES = 3 * 1024 * 1024
 
 
 @app.route("/upload-avatar", methods=["POST"])
+@rate_limit(limit=3, period=300) # Tối đa 3 lần đổi ảnh / 5 phút
 def upload_avatar():
+    """Đã fix IDOR bằng JWT verification."""
     try:
+        user = get_user_from_request()
+        if not user:
+            return {"error": "Unauthorized"}, 401
+            
         import base64, time
         body    = request.get_json(force=True)
-        user_id = body.get("userId", "").strip()
+        user_id = user.id # Dùng từ JWT
         mime    = body.get("mime", "image/jpeg")
         b64data = body.get("data", "")
-
-        if not user_id:
-            return {"error": "userId required"}, 400
         if mime not in ALLOWED_MIME:
             return {"error": "Loại file không hỗ trợ (chỉ jpg/png/webp/gif)"}, 400
 
