@@ -341,12 +341,30 @@
        teacher.js — inlined
     ══════════════════════════════════════════════════ */
 
-    // ── Supabase (reuse from script.js if loaded, else init) ──
-    const T_SURL = 'https://cmrbsiuzrpsglynnfund.supabase.co';
-    const T_SKEY = 'sb_publishable_-4uRGeYYYeJAvSMKnwZr5Q_LOSAr_dZ';
-    let tsb;
-    try { tsb = (typeof sb !== 'undefined') ? sb : supabase.createClient(T_SURL, T_SKEY); }
-    catch (e) { tsb = supabase.createClient(T_SURL, T_SKEY); }
+    // ── Supabase — tải config từ server, không hardcode key ──
+    let tsb = null;
+
+    async function initTsb() {
+      // Nếu script.js đã khởi tạo sb (trang chủ mở trong cùng origin), tái sử dụng
+      if (typeof sb !== 'undefined' && sb) { tsb = sb; return; }
+      try {
+        const res = await fetch('/api/config');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const cfg = await res.json();
+        if (!cfg.url || !cfg.anonKey) throw new Error('Config thiếu url/anonKey');
+        tsb = supabase.createClient(cfg.url, cfg.anonKey);
+      } catch (e) {
+        console.error('❌ Teacher Supabase init failed:', e);
+        // Hiển thị lỗi thân thiện thay vì crash
+        document.getElementById('auth-gate').innerHTML = `
+          <div style="font-size:3rem">⚠️</div>
+          <div style="font-family:var(--font-h);font-weight:800;font-size:1.3rem;color:var(--text)">Không thể kết nối máy chủ</div>
+          <div style="font-size:.88rem;color:var(--text-3);max-width:360px;text-align:center">
+            Server chưa khởi động hoặc biến môi trường chưa cấu hình.<br>Hãy kiểm tra <code>.env</code> và khởi động lại <code>server.py</code>.
+          </div>
+          <button class="btn-qz-primary" onclick="window.location.reload()">↺ Thử lại</button>`;
+      }
+    }
 
     let tUser = null;       // logged-in teacher
     let quizSets = [];      // loaded quiz sets
@@ -1105,10 +1123,11 @@
     }
 
     // ── Init ──
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       const theme = document.documentElement.getAttribute('data-theme') || 'light';
       updateThemeIcon(theme);
-      checkAuth();
+      await initTsb();      // Khởi tạo Supabase trước (fetch /api/config)
+      if (tsb) checkAuth(); // Chỉ kiểm tra auth khi có client
     });
   </script>
 </body>

@@ -222,12 +222,21 @@
    play.js — inlined
 ══════════════════════════════════════════════════ */
 
-// ── Supabase ──
-const P_SURL = 'https://cmrbsiuzrpsglynnfund.supabase.co';
-const P_SKEY = 'sb_publishable_-4uRGeYYYeJAvSMKnwZr5Q_LOSAr_dZ';
-let psb;
-try { psb = (typeof sb !== 'undefined') ? sb : supabase.createClient(P_SURL, P_SKEY); }
-catch(e) { psb = supabase.createClient(P_SURL, P_SKEY); }
+// ── Supabase — tải config từ server, không hardcode key ──
+let psb = null;
+
+async function initPsb() {
+  if (typeof sb !== 'undefined' && sb) { psb = sb; return; }
+  try {
+    const res = await fetch('/api/config');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const cfg = await res.json();
+    if (!cfg.url || !cfg.anonKey) throw new Error('Config thiếu url/anonKey');
+    psb = supabase.createClient(cfg.url, cfg.anonKey);
+  } catch (e) {
+    console.error('❌ Play Supabase init failed:', e);
+  }
+}
 
 let pUser = null;       // logged-in player
 let pSocket = null;     // socket
@@ -632,8 +641,9 @@ function showErr(id, msg) { const el = document.getElementById(id); if (el) { el
 function hideErr(id) { const el = document.getElementById(id); if (el) el.style.display = 'none'; }
 
 // ── Init ──
-document.addEventListener('DOMContentLoaded', () => {
-  checkAuth();
+document.addEventListener('DOMContentLoaded', async () => {
+  await initPsb();       // Khởi tạo Supabase trước (fetch /api/config)
+  if (psb) checkAuth();  // Chỉ tiến hành khi có client
   initParticles();
 });
 

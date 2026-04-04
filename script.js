@@ -2597,12 +2597,13 @@ function initSocket() {
   if (socket && socket.connected) return; // Đã kết nối rồi, không init lại
   if (socket) { socket.removeAllListeners(); socket.disconnect(); }
 
-  socket = io({
+  socket = io(window.location.origin, {
     reconnection: true,
     reconnectionDelay: 1000,
     reconnectionDelayMax: 10000,
     reconnectionAttempts: Infinity,
     timeout: 20000,
+    transports: ['websocket', 'polling'],
   });
 
   socket.on('connect', () => {

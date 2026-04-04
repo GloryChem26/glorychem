@@ -789,8 +789,16 @@
   box-sizing: border-box;
 }
 
-.pl-input::placeholder { color: rgba(255,255,255,.3); }
+..pl-input::placeholder { color: rgba(255,255,255,.3); }
 .pl-input:focus { border-color: var(--teal); background: rgba(255,255,255,.12); }
+
+.modal-card .pl-input {
+  color: var(--text);
+  background: rgba(0,0,0,.04);
+  border-color: rgba(0,0,0,.08);
+}
+.modal-card .pl-input::placeholder { color: rgba(0,0,0,.35); }
+.modal-card .pl-input:focus { border-color: var(--teal); background: rgba(0,0,0,.06); }
 
 .pl-pin-input {
   font-family: var(--font-m);

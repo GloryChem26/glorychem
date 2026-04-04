@@ -34,7 +34,7 @@ else:
 # ══════════════════════════════════════
 app = Flask(__name__, static_folder=".", static_url_path="")
 CORS(app)
-app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "glorychem-secret-2025")
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
 
 socketio = SocketIO(
     app,
@@ -1166,7 +1166,7 @@ def handle_start_lobby_battle(data):
     room["state"] = "battle"
 
     # Payload danh sách tất cả player (để client hiển thị)
-    all_players_payload = [make_user_payload(all_users[s]) for s in all_sids]
+    all_players_payload = [mk_user_payload(all_users[s]) for s in all_sids]
 
     for p_sid in all_sids:
         my_uid = all_users[p_sid].get("userId")
@@ -1199,12 +1199,13 @@ def handle_presence_join(data):
         sid_to_uid.pop(old_sid, None)
 
     fresh = {}
-    try:
-        res = supabase.table("profiles").select("elo, wins, losses, full_name, username, avatar_url").eq("id", uid).single().execute()
-        if res.data:
-            fresh = res.data
-    except Exception as e:
-        print(f"[presence:join] DB error for {uid}: {e}")
+    if supabase:
+        try:
+            res = supabase.table("profiles").select("elo, wins, losses, full_name, username, avatar_url").eq("id", uid).single().execute()
+            if res.data:
+                fresh = res.data
+        except Exception as e:
+            print(f"[presence:join] DB error for {uid}: {e}")
 
     entry = {
         "sid":        sid,
@@ -1301,7 +1302,7 @@ def handle_invite_friend(data):
         pending_invites[invite_key] = {"from_sid": sid, "to_sid": to_sid, "room_id": room_id}
         socketio.emit("invite_received", {
             "roomId": room_id, "roomName": room["name"],
-            "from": make_user_payload(from_user), "isPrivate": room["is_private"],
+            "from": mk_user_payload(from_user), "isPrivate": room["is_private"],
         }, room=to_sid)
         emit("invite_sent", {"roomId": room_id, "toUserId": to_uid})
     else:
@@ -1310,7 +1311,7 @@ def handle_invite_friend(data):
         pending_invites[battle_room_id] = {"from_sid": sid, "to_sid": to_sid}
         socketio.emit("invite_received", {
             "roomId": battle_room_id, "roomName": None,
-            "from": make_user_payload(from_user),
+            "from": mk_user_payload(from_user),
         }, room=to_sid)
         emit("invite_sent", {"roomId": battle_room_id})
 
@@ -1516,8 +1517,8 @@ def handle_battle_action(data):
 def _create_room_and_notify(sid1, u1, sid2, u2):
     room_id = str(uuid.uuid4())
     _setup_room(room_id, sid1, u1, sid2, u2)
-    socketio.emit("match_found", {"roomId": room_id, "role": "host", "opponent": make_user_payload(u2)}, room=sid1)
-    socketio.emit("match_found", {"roomId": room_id, "role": "guest", "opponent": make_user_payload(u1)}, room=sid2)
+    socketio.emit("match_found", {"roomId": room_id, "role": "host", "opponent": mk_user_payload(u2)}, room=sid1)
+    socketio.emit("match_found", {"roomId": room_id, "role": "guest", "opponent": mk_user_payload(u1)}, room=sid2)
     broadcast_presence()
 
 
@@ -1913,6 +1914,9 @@ def handle_quiz_host_start(data):
         emit("error", {"msg": "Phòng đã bắt đầu rồi."}); return
 
     # Load questions from Supabase
+    if not supabase:
+        emit("error", {"msg": "Server chưa kết nối cơ sở dữ liệu."}); return
+
     try:
         res = supabase.table("quiz_questions") \
             .select("*") \
