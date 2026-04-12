@@ -1,0 +1,1189 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    user-select: none;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #0f111a;
+    touch-action: none;
+}
+
+#game-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: radial-gradient(circle at center, #1a2233 0%, #0a0d14 100%);
+}
+
+#game-canvas {
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 255, 204, 0.1);
+    background: url('images/ground.png') no-repeat center center;
+    background-size: cover;
+    border-radius: 8px;
+    image-rendering: auto;
+    max-width: 100vw;
+    max-height: 100vh;
+    cursor: default;
+}
+
+/* Glassmorphism Panels */
+.glass-panel {
+    background: rgba(20, 30, 40, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 25px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* UI Top Bar */
+#top-bar {
+    position: absolute;
+    top: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    z-index: 10;
+    width: 100%;
+    pointer-events: none;
+    /* Let clicks pass through gaps */
+}
+
+.inventory-box {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 8px 15px;
+    pointer-events: auto;
+}
+
+.inv-item {
+    font-size: 22px;
+    font-weight: 900;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.inv-icon {
+    font-size: 18px;
+}
+
+#cards-container {
+    display: flex;
+    gap: 12px;
+    pointer-events: auto;
+}
+
+.card {
+    width: 90px;
+    height: 110px;
+    background: rgba(30, 40, 50, 0.9);
+    border: 2px solid #555;
+    border-radius: 10px;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    border-color: #aaa;
+}
+
+.card.selected {
+    border-color: #00ffcc;
+    box-shadow: 0 0 15px rgba(0, 255, 204, 0.6);
+    background: rgba(40, 60, 50, 0.9);
+    transform: translateY(-4px) scale(1.05);
+}
+
+.card.disabled {
+    opacity: 0.4;
+    filter: grayscale(1);
+    cursor: not-allowed;
+    transform: none;
+    border-color: #333;
+}
+
+.card-img-wrap {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top: 5px;
+}
+
+.card img {
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5));
+}
+
+.card-info {
+    height: 32px;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 2px 5px;
+    font-size: 11px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.card-name {
+    color: #fff;
+    font-family: 'Lexend', sans-serif;
+    font-weight: bold;
+    white-space: nowrap;
+    font-size: 10px;
+}
+
+.card-cost {
+    font-weight: 900;
+    color: #ffcc00;
+    font-size: 11px;
+}
+
+.card-hotkey {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    background: rgba(0, 0, 0, 0.6);
+    color: #00ffcc;
+    font-size: 10px;
+    font-weight: 900;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 255, 204, 0.3);
+    pointer-events: none;
+    font-family: 'Lexend', sans-serif;
+}
+
+.score-container,
+.wave-container {
+    font-size: 22px;
+    color: #fff;
+    font-weight: bold;
+    padding: 8px 20px;
+    pointer-events: auto;
+}
+
+/* Overlays */
+.overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(5, 8, 12, 0.85);
+    backdrop-filter: blur(5px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    color: white;
+}
+
+.overlay.hidden {
+    display: none;
+}
+
+.main-title {
+    font-family: 'Lexend', sans-serif;
+    font-size: 64px;
+    margin-bottom: 5px;
+    color: #00ffcc;
+    text-shadow: 0 0 20px rgba(0, 255, 204, 0.5);
+    letter-spacing: 0px;
+}
+
+.subtitle {
+    font-size: 20px;
+    margin-bottom: 30px;
+    color: #aaccff;
+    font-weight: 300;
+}
+
+.instructions {
+    padding: 25px 35px;
+    margin-bottom: 40px;
+    max-width: 500px;
+}
+
+.mechanic-row {
+    font-size: 17px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    line-height: 1.4;
+}
+
+.mechanic-row b {
+    color: #fff;
+    margin: 0 4px;
+}
+
+.dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+.acid-dot {
+    background: #00ff00;
+    box-shadow: 0 0 8px #00ff00;
+}
+
+.base-dot {
+    background: #00aaff;
+    box-shadow: 0 0 8px #00aaff;
+}
+
+.water-dot {
+    background: #44ddff;
+    box-shadow: 0 0 8px #44ddff;
+}
+
+.btn-start {
+    font-family: 'Lexend', sans-serif;
+    padding: 16px 45px;
+    font-size: 24px;
+    font-weight: 900;
+    color: #001a14;
+    background: linear-gradient(135deg, #00ffcc, #00aa88);
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    box-shadow: 0 6px 0 #005544, 0 10px 20px rgba(0, 255, 204, 0.2);
+    transition: all 0.1s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn-start:hover {
+    filter: brightness(1.1);
+}
+
+.btn-start:active {
+    transform: translateY(6px);
+    box-shadow: 0 0 0 #005544, 0 5px 10px rgba(0, 255, 204, 0.2);
+}
+
+.final-score-text {
+    font-size: 24px;
+    margin-bottom: 30px;
+    font-weight: bold;
+}
+
+/* Combat Log - Refined and moved to top-left */
+#combat-log {
+    position: absolute;
+    top: 75px;
+    left: 15px;
+    width: 280px;
+    height: 140px;
+    background: rgba(10, 15, 25, 0.4);
+    border: 1px solid rgba(0, 255, 204, 0.2);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    color: #fff;
+    padding: 10px;
+    border-radius: 8px;
+    z-index: 100;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+}
+
+.log-title {
+    font-size: 13px;
+    font-weight: bold;
+    color: #ffcc00;
+    margin-bottom: 5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+#log-entries {
+    overflow-y: hidden;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.log-entry {
+    font-size: 12px;
+    margin-top: 4px;
+    animation: fadeIn 0.3s ease-out;
+    line-height: 1.2;
+}
+
+.log-success {
+    color: #00ffcc;
+    text-shadow: 0 0 3px rgba(0, 255, 204, 0.5);
+    font-weight: bold;
+}
+
+.log-error {
+    color: #ff3e3e;
+    text-shadow: 0 0 3px rgba(255, 62, 62, 0.5);
+    font-weight: bold;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* ── Shovel card ──────────────────────────────────────────────────── */
+.card-shovel {
+    border-color: #c8a020 !important;
+    background: rgba(35, 25, 5, 0.9) !important;
+}
+
+.card-shovel:hover {
+    border-color: #ffe066 !important;
+    box-shadow: 0 0 15px rgba(255, 210, 50, 0.5) !important;
+}
+
+.card-shovel.selected {
+    border-color: #ffe066 !important;
+    box-shadow: 0 0 22px rgba(255, 210, 50, 0.85) !important;
+    background: rgba(60, 42, 5, 0.95) !important;
+    transform: translateY(-4px) scale(1.05) !important;
+}
+
+/* Separator between plant cards and shovel */
+.card-separator {
+    width: 2px;
+    min-height: 70px;
+    background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.18), transparent);
+    align-self: center;
+    flex-shrink: 0;
+    margin: 0 2px;
+}
+
+/* Shovel cursor when mode active */
+.shovel-mode #game-canvas {
+    cursor: crosshair;
+}
+
+/* ── Lab Button ─────────────────────────────────────────────────────── */
+#lab-btn {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: linear-gradient(135deg, rgba(20, 30, 50, 0.92), rgba(10, 20, 40, 0.95));
+    border: 2px solid #ffe066;
+    border-radius: 14px;
+    padding: 12px 10px;
+    cursor: pointer;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    box-shadow: 0 0 18px rgba(255, 220, 80, 0.3), 0 4px 12px rgba(0, 0, 0, 0.5);
+    transition: all 0.2s ease;
+    min-width: 64px;
+    user-select: none;
+}
+
+#lab-btn:hover {
+    border-color: #fff07a;
+    box-shadow: 0 0 28px rgba(255, 220, 80, 0.55), 0 6px 18px rgba(0, 0, 0, 0.5);
+    transform: translateY(-50%) scale(1.05);
+}
+
+#lab-btn:active {
+    transform: translateY(-50%) scale(0.97);
+}
+
+.lab-icon {
+    font-size: 28px;
+    line-height: 1;
+}
+
+.lab-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #ffe066;
+    letter-spacing: 0.5px;
+    text-align: center;
+}
+
+.lab-hotkey {
+    background: #ffe066;
+    color: #1a1000;
+    font-size: 10px;
+    font-weight: 900;
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-top: 2px;
+    box-shadow: 0 0 8px rgba(255, 224, 102, 0.4);
+}
+
+.salt-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: #ff4444;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 900;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid #fff;
+}
+
+.salt-badge.hidden {
+    display: none;
+}
+
+/* ── Salt HUD (góc phải, dưới lab btn) ─────────────────────────────── */
+#salt-hud {
+    position: absolute;
+    left: 10px;
+    top: 225px;
+    width: 150px;
+    max-height: 200px;
+    padding: 8px 10px;
+    z-index: 15;
+    overflow-y: auto;
+    pointer-events: none;
+}
+
+.salt-hud-title {
+    font-size: 11px;
+    font-weight: bold;
+    color: #ffe066;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 5px;
+    padding-bottom: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.salt-item {
+    font-size: 11px;
+    color: #ddd;
+    margin-top: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.salt-item b {
+    color: #fff;
+}
+
+/* ── Electrolysis Panel ─────────────────────────────────────────────── */
+.electro-box {
+    width: min(620px, 92vw);
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: 28px 30px;
+    border-radius: 20px;
+    border: 1.5px solid rgba(255, 220, 80, 0.4);
+    box-shadow: 0 0 40px rgba(255, 220, 80, 0.15), 0 8px 30px rgba(0, 0, 0, 0.6);
+}
+
+.electro-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.electro-title {
+    font-size: 26px;
+    font-weight: 900;
+    color: #ffe066;
+    text-shadow: 0 0 12px rgba(255, 220, 80, 0.5);
+}
+
+.electro-close-btn {
+    background: rgba(255, 60, 60, 0.2);
+    border: 1px solid rgba(255, 60, 60, 0.5);
+    color: #ff6060;
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.electro-close-btn:hover {
+    background: rgba(255, 60, 60, 0.4);
+    color: #fff;
+}
+
+.electro-subtitle {
+    font-size: 13px;
+    color: #aaccff;
+    margin-bottom: 14px;
+}
+
+.electro-inventory {
+    display: flex;
+    gap: 18px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 8px 14px;
+    margin-bottom: 18px;
+    font-size: 14px;
+    color: #ccc;
+}
+
+.electro-inventory b {
+    color: #fff;
+    font-size: 16px;
+}
+
+.electro-recipes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+@media (max-width: 500px) {
+    .electro-recipes {
+        grid-template-columns: 1fr;
+    }
+}
+
+.electro-recipe-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    transition: border-color 0.2s;
+}
+
+.electro-recipe-card:hover {
+    border-color: rgba(255, 220, 80, 0.4);
+}
+
+.recipe-salt-name {
+    font-size: 15px;
+    font-weight: 900;
+    color: #fff;
+}
+
+.recipe-equation {
+    font-size: 10px;
+    color: #88aacc;
+    line-height: 1.3;
+    min-height: 28px;
+}
+
+.recipe-produces {
+    font-size: 12px;
+    color: #aaffcc;
+    font-weight: bold;
+}
+
+.electro-btn {
+    margin-top: 6px;
+    padding: 7px 0;
+    background: linear-gradient(135deg, #ffe066, #cc9900);
+    color: #1a1000;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 900;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.15s;
+    box-shadow: 0 3px 0 #886600;
+}
+
+.electro-btn:hover:not(:disabled) {
+    filter: brightness(1.15);
+}
+
+.electro-btn:active:not(:disabled) {
+    transform: translateY(3px);
+    box-shadow: none;
+}
+
+.electro-btn:disabled {
+    background: rgba(100, 100, 100, 0.3);
+    color: #666;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+.salt-stock {
+    font-weight: 400;
+    opacity: 0.8;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MINECRAFT-STYLE ELECTROLYSIS FURNACE UI
+   ══════════════════════════════════════════════════════════════ */
+
+.mc-furnace-wrap {
+    background: #1c1c1c;
+    border: 3px solid #555;
+    border-bottom-color: #222;
+    border-right-color: #222;
+    border-radius: 4px;
+    padding: 20px 24px 24px;
+    width: min(760px, 95vw);
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 0 0 2px #888 inset, 0 8px 40px rgba(0, 0, 0, 0.8);
+    font-family: 'Outfit', monospace;
+    color: #fff;
+}
+
+/* Header */
+.mc-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #333;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.mc-title {
+    font-family: 'Lexend', sans-serif;
+    font-size: 20px;
+    font-weight: 900;
+    color: #ffe066;
+    text-shadow: 2px 2px 0 #000;
+    letter-spacing: 1px;
+}
+
+.mc-inv-display {
+    font-size: 13px;
+    color: #ccc;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 4px 12px;
+    border-radius: 6px;
+    border: 1px solid #444;
+}
+
+.mc-inv-display b {
+    color: #fff;
+    font-size: 15px;
+}
+
+/* Body layout */
+.mc-body {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+/* Section labels */
+.mc-section-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+/* ── LEFT: Salt grid ─────────────────────────────── */
+.mc-left {
+    flex: 0 0 auto;
+}
+
+.mc-salt-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 56px);
+    gap: 4px;
+    max-height: 320px;
+    overflow-y: auto;
+    padding: 4px;
+    background: #111;
+    border: 2px solid #444;
+    border-radius: 4px;
+}
+
+/* ── MC Slot (shared) ────────────────────────────── */
+.mc-slot {
+    width: 56px;
+    height: 56px;
+    background: #373737;
+    border: 2px solid #555;
+    border-bottom-color: #888;
+    border-right-color: #888;
+    border-radius: 2px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    cursor: grab;
+    transition: background 0.15s, border-color 0.15s;
+    font-size: 11px;
+    text-align: center;
+}
+
+.mc-slot:hover {
+    background: #444;
+    border-color: #ffe066;
+}
+
+.mc-slot.empty {
+    cursor: default;
+    opacity: 0.4;
+}
+
+.mc-slot.dragging-over {
+    background: #2a3a2a;
+    border-color: #00ffcc;
+    box-shadow: 0 0 10px rgba(0, 255, 200, 0.4) inset;
+}
+
+.mc-slot.has-item {
+    cursor: grab;
+}
+
+.mc-slot .mc-slot-icon {
+    font-size: 22px;
+    line-height: 1;
+}
+
+.mc-slot .mc-slot-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+    text-shadow: 1px 1px 2px #000;
+    margin-top: 2px;
+    max-width: 52px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;
+}
+
+.mc-slot .mc-slot-count {
+    position: absolute;
+    bottom: 2px;
+    right: 4px;
+    font-size: 10px;
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 1px 1px 0 #000;
+}
+
+.mc-slot .mc-slot-hint {
+    font-size: 9px;
+    color: #666;
+    text-align: center;
+    line-height: 1.3;
+}
+
+/* Drag ghost */
+.mc-drag-ghost {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    font-size: 28px;
+    transform: translate(-50%, -50%);
+    filter: drop-shadow(0 0 6px rgba(255, 220, 80, 0.8));
+    opacity: 0.9;
+}
+
+/* ── CENTER: Machine ─────────────────────────────── */
+.mc-center {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    min-width: 200px;
+}
+
+.mc-machine {
+    background: #2a2a2a;
+    border: 2px solid #444;
+    border-radius: 6px;
+    padding: 14px 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.mc-input-slot {
+    width: 72px;
+    height: 72px;
+    background: #2a2a2a;
+    border: 2px dashed #555;
+    font-size: 10px;
+    cursor: default;
+}
+
+.mc-input-slot.has-item {
+    border-style: solid;
+    border-color: #ffe066;
+    background: #333;
+    cursor: pointer;
+}
+
+.mc-input-slot.dragging-over {
+    border-style: solid;
+}
+
+.mc-equation {
+    font-size: 11px;
+    color: #88aacc;
+    text-align: center;
+    min-height: 32px;
+    padding: 6px 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    border: 1px solid #333;
+    width: 100%;
+    line-height: 1.4;
+}
+
+.mc-progress-wrap {
+    width: 100%;
+}
+
+.mc-progress-label {
+    font-size: 10px;
+    color: #888;
+    margin-bottom: 4px;
+    text-align: center;
+}
+
+.mc-progress-bar {
+    height: 10px;
+    background: #111;
+    border: 1px solid #444;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.mc-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ffe066, #ffaa00);
+    box-shadow: 0 0 6px rgba(255, 180, 0, 0.6);
+    transition: width 0.08s linear;
+    border-radius: 3px;
+}
+
+.mc-arrow-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mc-arrow {
+    font-size: 28px;
+    color: #555;
+    transition: color 0.3s, text-shadow 0.3s;
+}
+
+.mc-arrow.active {
+    color: #ffe066;
+    text-shadow: 0 0 12px rgba(255, 220, 80, 0.8);
+    animation: arrowPulse 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes arrowPulse {
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(6px);
+    }
+}
+
+.mc-smelt-btn {
+    width: 100%;
+    padding: 10px 0;
+    background: linear-gradient(135deg, #ffe066, #cc9900);
+    color: #1a1000;
+    border: none;
+    border-bottom: 3px solid #886600;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 900;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: all 0.12s;
+}
+
+.mc-smelt-btn:hover:not(:disabled) {
+    filter: brightness(1.15);
+}
+
+.mc-smelt-btn:active:not(:disabled) {
+    transform: translateY(3px);
+    border-bottom-width: 0;
+}
+
+.mc-smelt-btn:disabled {
+    background: #333;
+    color: #555;
+    border-bottom-color: #222;
+    cursor: not-allowed;
+}
+
+/* ── RIGHT: Output ───────────────────────────────── */
+.mc-right {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-width: 90px;
+}
+
+.mc-output-slot {
+    width: 72px;
+    height: 72px;
+    background: #1a2a1a;
+    border: 2px solid #2a5a2a;
+    cursor: default;
+}
+
+.mc-output-slot.has-output {
+    border-color: #00ffcc;
+    box-shadow: 0 0 14px rgba(0, 255, 200, 0.4);
+    animation: outputGlow 1s ease-in-out infinite alternate;
+    cursor: pointer;
+}
+
+@keyframes outputGlow {
+    from {
+        box-shadow: 0 0 8px rgba(0, 255, 200, 0.3);
+    }
+
+    to {
+        box-shadow: 0 0 20px rgba(0, 255, 200, 0.7);
+    }
+}
+
+.mc-output-label {
+    font-size: 11px;
+    color: #00ffcc;
+    text-align: center;
+    font-weight: bold;
+    min-height: 28px;
+    line-height: 1.3;
+}
+
+.mc-result-equation {
+    font-size: 9px;
+    color: #88aacc;
+    text-align: center;
+    margin: 5px 0;
+    font-style: italic;
+    min-height: 12px;
+}
+
+.mc-collect-btn {
+    padding: 8px 14px;
+    background: linear-gradient(135deg, #00ffcc, #00aa88);
+    color: #001a14;
+    border: none;
+    border-bottom: 3px solid #005544;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: all 0.12s;
+}
+
+.mc-collect-btn:hover {
+    filter: brightness(1.1);
+}
+
+.mc-collect-btn:active {
+    transform: translateY(3px);
+    border-bottom-width: 0;
+}
+
+.mc-collect-btn.hidden {
+    display: none;
+}
+
+/* ── NEW INSTRUCTION GUIDE STYLES ───────────────────────────────── */
+.instructions-container {
+    width: min(720px, 95vw);
+    max-height: 55vh;
+    overflow-y: auto;
+    background: rgba(15, 23, 35, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 30px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.2) transparent;
+}
+
+.instructions-container::-webkit-scrollbar { width: 6px; }
+.instructions-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+
+.guide-title {
+    font-family: 'Lexend', sans-serif;
+    color: #ffe066;
+    text-align: center;
+    font-size: 20px;
+    letter-spacing: 2px;
+    margin-bottom: 25px;
+    font-weight: 800;
+}
+
+.guide-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+@media (max-width: 600px) {
+    .guide-grid { grid-template-columns: 1fr; }
+}
+
+.guide-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1.5px solid rgba(255, 255, 255, 0.06);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    gap: 15px;
+    transition: all 0.3s ease;
+}
+
+.guide-card:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+}
+
+.guide-card.full-width {
+    grid-column: 1 / -1;
+}
+
+.guide-card-icon {
+    flex: 0 0 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    box-shadow: inset 0 0 10px rgba(255,255,255,0.05);
+}
+
+.guide-card-body h4 {
+    font-family: 'Lexend', sans-serif;
+    font-size: 14px;
+    color: #fff;
+    margin-bottom: 8px;
+    font-weight: 700;
+}
+
+.guide-card-body p {
+    font-size: 12.5px;
+    color: #aaa;
+    line-height: 1.5;
+}
+
+.mechanic-mini-grid {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.m-item {
+    font-size: 12px;
+    color: #eee;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.m-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.warn-text {
+    margin-top: 12px;
+    color: #ff6060 !important;
+    font-style: italic;
+    font-size: 11px !important;
+}
+
+.guide-list {
+    padding-left: 18px;
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.guide-list li {
+    font-size: 12px;
+    color: #aaa;
+    line-height: 1.4;
+}
+
+.guide-list b {
+    color: #fff;
+}

@@ -42,7 +42,7 @@
     <ul class="nav-links">
       <li><a href="#" id="nl-home" class="active" onclick="gp('home');return false">Trang Chủ</a></li>
       <li><a href="#" id="nl-challenge" onclick="gp('challenge');return false">Thách Đấu</a></li>
-      <li><a href="#" id="nl-periodic" onclick="gp('periodic');return false">Bảng Tuần Hoàn</a></li>
+      <li><a href="#" id="nl-periodic" onclick="gp('periodic');return false">Khám Phá</a></li>
       <li><a href="#" id="nl-lesson" onclick="gp('lesson');return false">Kiến Thức</a></li>
       <li><a href="#" id="nl-forum" onclick="gp('forum');return false">Diễn Đàn</a></li>
       <li><a href="#" id="nl-leaderboard" onclick="gp('leaderboard');return false">Bảng Xếp Hạng</a></li>
@@ -581,11 +581,46 @@
 
   <!-- ═══ BẢNG TUẦN HOÀN ═══ -->
   <div id="page-periodic" class="page">
-    <div class="lb-head" style="margin-bottom: 2rem;">
-      <div class="slabel" style="justify-content:center;display:flex">⚛️ Khám Phá Nguyên Tố</div>
-      <h1>Bảng Tuần Hoàn</h1>
-      <p> Click vào từng nguyên tố để khám phá chi tiết. Cấu tạo nguyên tử theo mô hình cổ điển</p>
+    <div id="discovery-selection" class="discovery-grid">
+      <div class="lb-head" style="grid-column: 1 / -1; margin-bottom: 2rem;">
+        <div class="slabel" style="justify-content:center;display:flex">✨ Trung Tâm Khám Phá</div>
+        <h1>Khám Phá Cùng GloryChem</h1>
+        <p>Lựa chọn phương thức bạn muốn khám phá thế giới Hóa học diệu kỳ</p>
+      </div>
+
+      <!-- Card 1: Bảng tuần hoàn -->
+      <div class="disc-card" onclick="showPeriodicTable()">
+        <div class="disc-card-glow"></div>
+        <div class="disc-card-icon">⚛️</div>
+        <div class="disc-card-content">
+          <h3>Bảng Tuần Hoàn</h3>
+          <p>Tìm hiểu chi tiết về 118 nguyên tố, cấu tạo nguyên tử 3D và những sự thật thú vị.</p>
+          <div class="disc-card-badge">Tương tác 3D</div>
+        </div>
+        <button class="disc-card-btn">Bắt Đầu ←</button>
+      </div>
+
+      <!-- Card 2: Glory Chem Defense -->
+      <div class="disc-card disc-card-alt" onclick="window.open('/GloryDefense', '_blank')">
+        <div class="disc-card-glow"></div>
+        <div class="disc-card-icon">🧪</div>
+        <div class="disc-card-content">
+          <h3>Glory Chem Defense</h3>
+          <p>Trò chơi bảo vệ phòng thí nghiệm. Sử dụng các loại cây hóa học để tiêu diệt Zombie!</p>
+          <div class="disc-card-badge">Minigame</div>
+        </div>
+        <button class="disc-card-btn">Chơi Ngay ←</button>
+      </div>
     </div>
+
+    <!-- Container cho Bảng Tuần Hoàn (Ẩn mặc định) -->
+    <div id="periodic-content" style="display:none">
+      <div class="lb-head" style="margin-bottom: 2rem; position: relative;">
+        <button class="back-discovery" onclick="backToDiscovery()">← Quay lại Khám Phá</button>
+        <div class="slabel" style="justify-content:center;display:flex">⚛️ Khám Phá Nguyên Tố</div>
+        <h1>Bảng Tuần Hoàn</h1>
+        <p> Click vào từng nguyên tố để khám phá chi tiết. Cấu tạo nguyên tử theo mô hình cổ điển</p>
+      </div>
 
     <!-- Mobile Tabs (Chỉ mọc ra ở mobile) -->
     <div id="pt-mobile-tabs" class="pt-mobile-tabs">
@@ -601,6 +636,7 @@
         <div id="atom-3d-container"></div>
         <div id="ed-content"></div>
       </div>
+    </div>
     </div>
   </div>
 
@@ -1712,8 +1748,8 @@
 
 
     <button class="bn-item" id="bn-periodic" onclick="gp('periodic')">
-      <span class="bn-icon">⚛️</span>
-      <span class="bn-label">Bảng TH</span>
+      <span class="bn-icon">✨</span>
+      <span class="bn-label">Khám Phá</span>
     </button>
 
 

@@ -5,7 +5,6 @@ Run locally:  python server.py
 Deploy Render: uvicorn server:app --host 0.0.0.0 --port $PORT --workers 1
 """
 
-import asyncio
 import os
 import uuid
 import random
@@ -69,7 +68,12 @@ if _missing:
     print(f"❌ ERROR: Missing target env variables: {', '.join(_missing)}")
     print("👉 Hãy copy dán nội dung từ .env.example vào .env và điền các khóa từ Supabase Dashboard.")
 
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and SUPABASE_KEY else None
+# ── SUPABASE CLIENTS ──
+# supabase_admin: SERVICE_ROLE key, chỉ dùng cho DB ops (ELO, profiles)
+# supabase_auth:  dùng để verify JWT của user — TÁCH RIÊNG để không corrupt admin headers
+
+supabase: Client       = create_client(SUPABASE_URL, SUPABASE_KEY)      if SUPABASE_URL and SUPABASE_KEY      else None
+supabase_auth: Client  = create_client(SUPABASE_URL, SUPABASE_ANON_KEY) if SUPABASE_URL and SUPABASE_ANON_KEY else None
 
 # ══════════════════════════════════════
 #   IN-MEMORY STATE
@@ -144,19 +148,14 @@ def broadcast_presence():
 #   SECURITY & AUTH HELPERS
 # ══════════════════════════════════════
 def get_user_from_request():
-    """
-    Xác thực JWT từ client gửi lên (Authorization: Bearer <token>).
-    Sử dụng Supabase Auth để verify.
-    """
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
         return None
     token = auth_header.split(" ")[1]
     try:
-        # Supabase Python SDK can verify the JWT by fetching user
-        # Note: This is an API call, you might want to cache this or use a local JWT verify
-        # but for simplicity and reliability with Supabase, we use get_user.
-        res = supabase.auth.get_user(token)
+        # ✅ Dùng supabase_auth (ANON key) để verify JWT
+        # KHÔNG dùng supabase (SERVICE_ROLE) — tránh corrupt admin headers
+        res = supabase_auth.auth.get_user(token)
         if res and res.user:
             return res.user
     except Exception as e:
@@ -306,20 +305,18 @@ def cancel_timer(room, key):
 
 
 def _schedule(delay: float, fn, *args):
-    """Schedule fn(*args) sau delay giây, thread-safe."""
-    try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            async def _coro():
-                await asyncio.sleep(delay)
-                fn(*args)
-            return loop.create_task(_coro())
-    except RuntimeError:
-        pass
-    t = threading.Timer(delay, fn, args)
-    t.daemon = True
-    t.start()
-    return t
+    """Schedule fn(*args) sau delay giây — thread-safe với Flask-SocketIO threading mode.
+    Dùng socketio.start_background_task để đảm bảo đúng app context khi gọi supabase/emit.
+    """
+    def _runner():
+        import time as _time
+        _time.sleep(delay)
+        try:
+            fn(*args)
+        except Exception as e:
+            print(f"[_schedule] Error in {fn.__name__}: {e}")
+
+    return socketio.start_background_task(_runner)
 
 
 def calc_elo(elo1, elo2, score1, score2, k=32):
@@ -364,15 +361,20 @@ def calc_ffa_elo(players_data, k=32):
 
 def _fetch_profiles_safe(user_ids: list) -> dict:
     try:
+        print(f"[DB] Fetching profiles for user_ids: {user_ids}")
         res = (
             supabase.table("profiles")
             .select("id, elo, wins, losses, full_name, username, avatar_url")
             .in_("id", user_ids)
             .execute()
         )
-        return {p["id"]: p for p in (res.data or [])}
+        profiles_dict = {p["id"]: p for p in (res.data or [])}
+        print(f"[DB] ✅ Fetched {len(profiles_dict)} profiles: {profiles_dict}")
+        return profiles_dict
     except Exception as e:
-        print(f"[DB] fetch_profiles error: {e}")
+        print(f"[DB] ❌ fetch_profiles error: {e}")
+        import traceback
+        traceback.print_exc()
         return {}
 
 
@@ -390,6 +392,14 @@ def end_battle_and_update(room_id):
         return
 
     mode = room.get("mode", "1v1")
+    
+    # Log final scores
+    final_scores = scores_by_uid(room)
+    print(f"\n{'='*60}")
+    print(f"[END_BATTLE] Room {room_id} ({mode}) scores: {final_scores}")
+    print(f"[END_BATTLE] Raw room['scores']: {room['scores']}")
+    print(f"[END_BATTLE] Questions answered: {room['current_question']}/{len(room['questions'])}")
+    
     user_ids = [p["user"].get("userId") for _, p in players_items]
     profiles  = _fetch_profiles_safe(user_ids)
 
@@ -421,14 +431,20 @@ def end_battle_and_update(room_id):
                     "wins":   (profile.get("wins") or 0) + (1 if is_winner else 0),
                     "losses": (profile.get("losses") or 0) + (0 if is_winner else 1),
                 }
-                supabase.table("profiles").update(upd).eq("id", uid).execute()
+                print(f"[DB] FFA Attempting to update {uid} with {upd}")
+                r = supabase.table("profiles").update(upd).eq("id", uid).execute()
+                print(f"[DB] FFA ELO {uid}→{new_elo} (rows:{len(r.data)} | data:{r.data})")
+                if not r.data:
+                    print(f"[DB] ❌ FFA ERROR: 0 rows updated for {uid} — user không tồn tại hoặc RLS chặn update?")
                 with _state_lock:
                     s_sid = uid_to_sid.get(uid) or pd["sid"]
                     if s_sid and s_sid in online_users:
                         online_users[s_sid].update({"elo": new_elo, "wins": upd["wins"], "losses": upd["losses"]})
-            print(f"[DB] FFA ELO updated: {elo_changes}")
+            print(f"[DB] FFA ELO changes: {elo_changes}")
         except Exception as e:
-            print(f"[DB] FFA update error: {e}")
+            print(f"[DB] ❌ FFA update error: {e}")
+            import traceback
+            traceback.print_exc()
             db_ok = False
 
         broadcast_presence()
@@ -448,28 +464,57 @@ def end_battle_and_update(room_id):
         user2_id = u2.get("userId")
         score1   = room["scores"].get(sid1, 0)
         score2   = room["scores"].get(sid2, 0)
+        print(f"[END_BATTLE] 1v1: {user1_id}({score1} pts) vs {user2_id}({score2} pts)")
 
         p1_db = profiles.get(user1_id, {})
         p2_db = profiles.get(user2_id, {})
         elo1  = p1_db.get("elo") or u1.get("elo", 1200)
         elo2  = p2_db.get("elo") or u2.get("elo", 1200)
+        print(f"[END_BATTLE] Before: {user1_id}={elo1} ELO, {user2_id}={elo2} ELO")
 
         new_elo1, new_elo2 = calc_elo(elo1, elo2, score1, score2)
         new_elo1 = max(100, new_elo1)
         new_elo2 = max(100, new_elo2)
+        
+        print(f"[END_BATTLE] After calc_elo: {user1_id}={new_elo1} (+{new_elo1-elo1}), {user2_id}={new_elo2} (+{new_elo2-elo2})")
+        
         win1 = score1 > score2
         win2 = score2 > score1
 
         upd1 = {"elo": new_elo1, "wins": p1_db.get("wins", u1.get("wins", 0)) + (1 if win1 else 0), "losses": p1_db.get("losses", u1.get("losses", 0)) + (1 if win2 else 0)}
         upd2 = {"elo": new_elo2, "wins": p2_db.get("wins", u2.get("wins", 0)) + (1 if win2 else 0), "losses": p2_db.get("losses", u2.get("losses", 0)) + (1 if win1 else 0)}
 
+        print(f"[END_BATTLE] Update to DB: {user1_id}={upd1}, {user2_id}={upd2}")
+
         db_ok = True
         try:
-            supabase.table("profiles").update(upd1).eq("id", user1_id).execute()
-            supabase.table("profiles").update(upd2).eq("id", user2_id).execute()
-            print(f"[DB] ELO updated: {user1_id}→{new_elo1} | {user2_id}→{new_elo2}")
+            print(f"[DB] Attempting to update {user1_id} with {upd1}")
+            print(f"[DB] Attempting to update {user2_id} with {upd2}")
+            r1 = supabase.table("profiles").update(upd1).eq("id", user1_id).execute()
+            r2 = supabase.table("profiles").update(upd2).eq("id", user2_id).execute()
+            
+            print(f"[DB] Full r1 response: {r1}")
+            print(f"[DB] Full r2 response: {r2}")
+            
+            if hasattr(r1, 'data'):
+                print(f"[DB] r1.data: {r1.data}")
+            if hasattr(r1, 'error'):
+                print(f"[DB] r1.error: {r1.error}")
+            if hasattr(r2, 'data'):
+                print(f"[DB] r2.data: {r2.data}")
+            if hasattr(r2, 'error'):
+                print(f"[DB] r2.error: {r2.error}")
+            
+            print(f"[DB] ELO updated: {user1_id}→{new_elo1} (rows:{len(r1.data if r1.data else [])} | data:{r1.data if r1 else 'NONE'}) | {user2_id}→{new_elo2} (rows:{len(r2.data if r2.data else [])} | data:{r2.data if r2 else 'NONE'})")
+            if not r1.data:
+                print(f"[DB] ❌ ERROR: 0 rows updated for {user1_id} — user không tồn tại hoặc RLS chặn update?")
+            if not r2.data:
+                print(f"[DB] ❌ ERROR: 0 rows updated for {user2_id} — user không tồn tại hoặc RLS chặn update?")
         except Exception as e:
-            print(f"[DB] update error: {e}")
+            print(f"[DB] ❌ update error: {e}")
+            print(f"[DB] ❌ Exception type: {type(e).__name__}")
+            import traceback
+            traceback.print_exc()
             db_ok = False
 
         with _state_lock:
@@ -487,6 +532,8 @@ def end_battle_and_update(room_id):
              "db_updated": db_ok},
             room=room_id,
         )
+        print(f"[END_BATTLE] Emitted battle_result to room {room_id}")
+        print(f"{'='*60}\n")
 
     game_rooms.pop(room_id, None)
 
@@ -841,6 +888,11 @@ def index():
     return send_file("index.html")
 
 
+@app.route("/GloryDefense")
+def glory_defense():
+    return send_from_directory("28", "modern_index.html")
+
+
 @app.route("/<path:filename>")
 def static_files(filename):
     return send_from_directory(".", filename)
@@ -850,6 +902,55 @@ def static_files(filename):
 def health():
     return {"status": "ok", "app": "GloryChem", "online": len(online_users),
             "lobby_rooms": len(lobby_rooms), "game_rooms": len(game_rooms)}, 200
+
+
+@app.route("/api/diagnose-elo")
+def diagnose_elo():
+    """🔍 Kiểm tra vấn đề ELO update (Debug endpoint)"""
+    try:
+        user = get_user_from_request()
+        if not user:
+            return {"error": "Unauthorized"}, 401
+        
+        # Kiểm tra xem profile có tồn tại không
+        res = supabase.table("profiles").select("id,elo,wins,losses").eq("id", user.id).single()
+        if res:
+            if res.data:
+                return {
+                    "status": "ok",
+                    "user_id": user.id,
+                    "profile_found": True,
+                    "profile": res.data,
+                    "messages": [
+                        "✅ Profile tồn tại trong DB",
+                        "✅ Columns elo, wins, losses tồn tại",
+                        f"Current ELO: {res.data.get('elo', 'N/A')}"
+                    ]
+                }, 200
+            else:
+                return {
+                    "status": "error",
+                    "user_id": user.id,
+                    "profile_found": False,
+                    "messages": [
+                        "❌ Profile KHÔNG tồn tại trong DB!",
+                        "👉 Hãy tạo profile bằng cách đăng ký lại hoặc kiểm tra RLS policies"
+                    ]
+                }, 404
+        else:
+            return {
+                "status": "error",
+                "messages": ["❌ Supabase query failed"]
+            }, 500
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": str(e),
+            "messages": [
+                "❌ Lỗi khi kiểm tra: " + str(e),
+                "👉 Kiểm tra Supabase configuration & RLS policies"
+            ]
+        }, 500
 
 
 # ══════════════════════════════════════
@@ -1487,6 +1588,8 @@ def handle_battle_action(data):
 
     correct = (int(ans) == int(q["correct"])) if q["type"] == "mcq" else (str(ans).strip().lower() == str(q["correct"]).strip().lower())
 
+    print(f"[BATTLE] Q{q_idx+1}: {room['players'][sid]['user'].get('userId')} answered {ans} — correct={correct}")
+
     emit("answer_result", {
         "correct":       correct,
         "explanation":   q.get("exp", ""),
@@ -1499,12 +1602,14 @@ def handle_battle_action(data):
         room["player_correct"][sid]    = True
         room["question_finished"]      = True
         cancel_timer(room, "_q_timer")
+        print(f"[BATTLE] ✅ Correct! Scores updated: {scores_by_uid(room)}")
         socketio.emit("battle_update", {
             "playerAnsweredUserId": room["players"][sid]["user"].get("userId"),
             "correct": True, "scores": scores_by_uid(room),
         }, room=room_id)
         _schedule(1.0, _next_question, room_id)
     else:
+        print(f"[BATTLE] ❌ Wrong! Scores unchanged: {scores_by_uid(room)}")
         socketio.emit("battle_update", {
             "playerAnsweredUserId": room["players"][sid]["user"].get("userId"),
             "correct": False, "scores": scores_by_uid(room),
@@ -1564,6 +1669,8 @@ def _finalize_and_start_battle(room_id):
         all_topics = set(random.sample(list(TOPICS.keys()), 3))
 
     qs = _build_questions(list(all_topics), 10)
+    print(f"[BATTLE] Starting battle {room_id}: 10 questions from topics {all_topics}")
+    print(f"[BATTLE] Players: {list(room['players'].keys())}")
     room.update({"questions": qs, "state": "battle", "current_question": 0,
                  "scores": {sid: 0 for sid in room["players"]},
                  "answers_received": {sid: False for sid in room["players"]}})
@@ -1576,6 +1683,7 @@ def _send_current_question(room_id):
 
     q_idx = room["current_question"]
     if q_idx >= len(room["questions"]):
+        print(f"[BATTLE] ⏹️ No more questions (q_idx={q_idx} >= total={len(room['questions'])})")
         if not room.get("ended"):
             room["ended"] = True
             end_battle_and_update(room_id)
@@ -1584,6 +1692,7 @@ def _send_current_question(room_id):
     room["question_finished"] = False
     room["player_correct"]    = {}
     q = room["questions"][q_idx]
+    print(f"[BATTLE] Sending Q{q_idx+1}/10: {q.get('title', 'Câu hỏi')[:50]}...")
 
     socketio.emit("battle_question", {
         "question": sanitize_q(q), "index": q_idx + 1,
@@ -1593,6 +1702,7 @@ def _send_current_question(room_id):
     def _on_q_timeout():
         r = game_rooms.get(room_id)
         if r and r["state"] == "battle" and r["current_question"] == q_idx and not r["question_finished"]:
+            print(f"[BATTLE] ⏱️ Q{q_idx+1} timeout! Moving to next question")
             r["question_finished"] = True
             _next_question(room_id)
 
@@ -1603,7 +1713,9 @@ def _next_question(room_id):
     room = game_rooms.get(room_id)
     if not room or room["state"] != "battle": return
     room["current_question"] += 1
+    print(f"[BATTLE] Moving to Q{room['current_question']+1}/{len(room['questions'])}")
     if room["current_question"] >= len(room["questions"]):
+        print(f"[BATTLE] ⏹️ All questions answered! Calling end_battle_and_update()")
         if not room.get("ended"):
             room["ended"] = True
             end_battle_and_update(room_id)
@@ -1849,6 +1961,45 @@ def _qz_end_game(pin: str):
 
     final_scores  = _qz_scores_dict(room)
     final_players = _qz_players_dict(room)
+
+    # ── Cập nhật ELO cho giải đấu quiz ──
+    if supabase and len(room["players"]) >= 2:
+        try:
+            user_ids     = list(room["players"].keys())
+            profiles_map = _fetch_profiles_safe(user_ids)
+            players_data = []
+            for uid in user_ids:
+                elo   = profiles_map.get(uid, {}).get("elo", 1200)
+                score = final_scores.get(uid, 0)
+                players_data.append({"userId": uid, "elo": elo, "score": score})
+
+            elo_changes = calc_ffa_elo(players_data)
+            max_score   = max(final_scores.values(), default=0)
+
+            for pd in players_data:
+                uid      = pd["userId"]
+                profile  = profiles_map.get(uid, {})
+                new_elo  = max(100, pd["elo"] + elo_changes.get(uid, 0))
+                is_winner = pd["score"] == max_score and max_score > 0
+                upd = {
+                    "elo":    new_elo,
+                    "wins":   (profile.get("wins") or 0) + (1 if is_winner else 0),
+                    "losses": (profile.get("losses") or 0) + (0 if is_winner else 1),
+                }
+                r = supabase.table("profiles").update(upd).eq("id", uid).execute()
+                print(f"[DB] Quiz ELO {uid}→{new_elo} (rows:{len(r.data)})")
+                if not r.data:
+                    print(f"[DB] WARNING: 0 rows updated for {uid}")
+                # Cập nhật online_users cache
+                with _state_lock:
+                    s_sid = uid_to_sid.get(uid)
+                    if s_sid and s_sid in online_users:
+                        online_users[s_sid].update({"elo": new_elo, "wins": upd["wins"], "losses": upd["losses"]})
+
+            print(f"[DB] Quiz ELO changes: {elo_changes}")
+            broadcast_presence()
+        except Exception as e:
+            print(f"[DB] Quiz ELO update error: {e}")
 
     socketio.emit(
         "quiz_ended",

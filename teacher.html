@@ -37,7 +37,11 @@
           style="color:var(--teal)">Chem</span></span>
     </div>
 
-    <div class="nav-r-wrapper">
+    <div class="nav-r-wrapper" style="display:flex;align-items:center;gap:.75rem">
+      <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+        <span class="icon-sun">☀️</span>
+        <span class="icon-moon" style="display:none">🌙</span>
+      </button>
       <div id="nav-user-box" style="display:none;align-items:center;gap:1rem">
         <span id="nav-username" class="mobile-hide" style="font-size:.82rem;font-weight:600;color:var(--text-3)"></span>
         <button class="btn-qz-ghost" onclick="doLogout()" style="padding:.4rem .8rem;font-size:.78rem">Đăng

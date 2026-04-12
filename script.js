@@ -229,6 +229,7 @@ async function init() {
 
 async function subscribeProfileRealtime() {
   if (!sb || !U) return;
+  console.log('📡 Setting up realtime profile subscription for', U.id);
   // Xóa channel cũ để tránh duplicate
   if (U._profileChannel) {
     try { await sb.removeChannel(U._profileChannel); } catch (e) { }
@@ -244,6 +245,7 @@ async function subscribeProfileRealtime() {
       filter: `id=eq.${U.id}`
     }, async (payload) => {
       if (!payload.new) return;
+      console.log('🔔 Realtime update received:', payload.new);
       // Merge dữ liệu mới vào U.profile — không dùng mặc định cũ
       U.profile = { ...(U.profile || {}), ...payload.new };
       renderIn();
@@ -261,10 +263,13 @@ async function subscribeProfileRealtime() {
       console.log(`🔄 Profile realtime update: ELO=${U.profile.elo} W=${U.profile.wins} L=${U.profile.losses}`);
     })
     .subscribe((status, err) => {
+      console.log('[Supabase] Channel status:', status);
       if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
         console.warn('[Supabase] Profile channel error:', status, err);
         // Thử reconnect sau 3 giây
         setTimeout(() => subscribeProfileRealtime(), 3000);
+      } else if (status === 'SUBSCRIBED') {
+        console.log('✅ Profile realtime subscription active');
       }
     });
 }
@@ -2897,7 +2902,9 @@ function initSocket() {
     endBattle(data);
     // Reload profile from DB so UI reflects the updated ELO/wins/losses
     if (U) {
+      console.log('📥 Reloading profile from DB...');
       await loadP();
+      console.log('✅ Profile reloaded:', U.profile);
       renderIn();
     }
   });

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <base href="/28/">
+    <title>Chemistry Defense - Plant vs Zombie Nâng Cấp</title>
+    <!-- Google Fonts: Inter & Lexend (Chống lỗi tiếng Việt, hiện đại) -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Lexend:wght@400;700;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="modern_style.css">
+</head>
+
+<body>
+    <div id="game-container">
+
+        <!-- HUD -->
+        <div id="top-bar">
+            <!-- Inventory -->
+            <div id="inventory-box" class="glass-panel inventory-box">
+                <div class="inv-item"><span class="inv-icon"
+                        style="color:#00ff00; filter:drop-shadow(0 0 5px #00ff00)">🟢</span> <span
+                        id="inv-acid">3</span></div>
+                <div class="inv-item"><span class="inv-icon"
+                        style="color:#00aaff; filter:drop-shadow(0 0 5px #00aaff)">🔵</span> <span
+                        id="inv-base">3</span></div>
+                <div class="inv-item"><span class="inv-icon"
+                        style="color:#ffaa00; filter:drop-shadow(0 0 5px #ffaa00)">🔥</span> <span
+                        id="inv-fire">3</span></div>
+            </div>
+
+            <!-- Cards -->
+            <div id="cards-container">
+                <div class="card" data-type="acid">
+                    <div class="card-img-wrap"><img src="images/acidplant.png" alt="Acid" onerror="this.src=''"></div>
+                    <div class="card-info">
+                        <span class="card-name">Axit (HCl)</span>
+                        <span class="card-cost">1 🟢</span>
+                    </div>
+                    <div class="card-hotkey">1</div>
+                </div>
+                <div class="card" data-type="base">
+                    <div class="card-img-wrap">
+                        <img src="images/baseplant.png" alt="Base">
+                    </div>
+                    <div class="card-info">
+                        <span class="card-name">Bazơ (NaOH)</span>
+                        <span class="card-cost">1 🔵</span>
+                    </div>
+                    <div class="card-hotkey">2</div>
+                </div>
+                <div class="card" data-type="water">
+                    <div class="card-img-wrap">
+                        <img src="images/waterplant.png" alt="Water">
+                    </div>
+                    <div class="card-info">
+                        <span class="card-name">Nước (H₂O)</span>
+                        <span class="card-cost">1 🟢 1 🔵</span>
+                    </div>
+                    <div class="card-hotkey">3</div>
+                </div>
+
+                <div class="card-separator"></div>
+
+                <div id="shovel-card" class="card card-shovel" data-type="shovel">
+                    <div class="card-img-wrap">
+                        <img src="images/xeng.png" alt="Shovel">
+                    </div>
+                    <div class="card-info">
+                        <span class="card-name">Xẻng</span>
+                        <span class="card-cost">MIỄN PHÍ</span>
+                    </div>
+                    <div class="card-hotkey">Q</div>
+                </div>
+            </div>
+
+            <!-- Score -->
+            <div class="glass-panel score-container">
+                <span>Điểm: </span><span id="score-value" style="color:#00ffcc">0</span>
+            </div>
+
+            <!-- Wave -->
+            <div class="glass-panel wave-container">
+                <span>Wave: </span><span id="wave-value" style="color:#ffcc00">1</span>
+            </div>
+        </div>
+
+        <canvas id="game-canvas"></canvas>
+
+        <!-- Start Screen -->
+        <div id="start-screen" class="overlay">
+            <h1 class="main-title">🧪 GloryChem Defense</h1>
+            <p class="subtitle">Bảo vệ phòng thí nghiệm khỏi lũ Zombie hóa học!</p>
+            <div class="instructions-container">
+                <h2 class="guide-title">📚 HƯỚNG DẪN CHIẾN ĐẤU</h2>
+
+                <div class="guide-grid">
+                    <!-- Section 1: Combat -->
+                    <div class="guide-card">
+                        <div class="guide-card-icon" style="background: rgba(0, 255, 204, 0.1); color: #00ffcc;">⚔️
+                        </div>
+                        <div class="guide-card-body">
+                            <h4>Phòng Thủ Hóa Học</h4>
+                            <p>Sử dụng <b>Phản ứng Trung Hòa</b> để tiêu diệt Zombie nhanh hơn.</p>
+                            <div class="mechanic-mini-grid">
+                                <div class="m-item"><span class="m-dot" style="background:#00ff00"></span> <b>Acid</b>
+                                    vs Zombie Base</div>
+                                <div class="m-item"><span class="m-dot" style="background:#00aaff"></span> <b>Base</b>
+                                    vs Zombie Acid</div>
+                                <div class="m-item"><span class="m-dot" style="background:#44ddff"></span> <b>Nước</b>
+                                    vs Zombie Lửa</div>
+                            </div>
+                            <p class="warn-text">⚠️ Sai hệ sẽ làm Zombie Hồi Máu!</p>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Energy -->
+                    <div class="guide-card">
+                        <div class="guide-card-icon" style="background: rgba(255, 224, 102, 0.1); color: #ffe066;">⚡
+                        </div>
+                        <div class="guide-card-body">
+                            <h4>Năng Lượng & Điện Phân</h4>
+                            <ul class="guide-list">
+                                <li>Nhặt <b>Túi Muối</b> 🧂 rơi ra khi Zombie chết.</li>
+                                <li>Vào <b>Bàn điện phân</b> (nút bên trái) để điện phân muối thành năng lượng.
+                                </li>
+                                <li>Dùng <b>Xẻng ⛏️</b> để thu hồi cây cũ</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Tips -->
+                    <div class="guide-card full-width">
+                        <div class="guide-card-icon" style="background: rgba(255, 170, 0, 0.1); color: #ffaa00;">💡
+                        </div>
+                        <div class="guide-card-body">
+                            <h4>Mẹo Chiến Thuật</h4>
+                            <p>Zombie Lửa (Na, K...) sẽ biến đổi khi gặp <b>Nước</b> thành Zombie <b>Base</b>. Hãy
+                                chuẩn bị sẵn Cây Acid để dứt điểm ngay lập tức!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button id="start-btn" class="btn-start">Bắt Đầu Chiến Đấu</button>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="game-over-screen" class="overlay hidden">
+            <h1 class="main-title" style="color:#ff3e3e;">Cơ sở đã bị phá hủy!</h1>
+            <p class="final-score-text">Số Zombie đã bị thanh trừng: <span id="final-score"
+                    style="color:#00ffcc">0</span></p>
+            <button id="restart-btn" class="btn-start">Thử Lại</button>
+        </div>
+
+        <!-- Chemical Analysis Terminal -->
+        <div id="combat-log">
+            <div class="log-title">
+                CHEMICAL LAB ANALYSIS
+                <small>System Diagnostic v2.4.0</small>
+            </div>
+            <div id="log-entries"></div>
+        </div>
+
+    </div>
+
+    <!-- Lab Button (góc phải) -->
+    <div id="lab-btn" title="Phòng điện phân (Phím C)">
+        <span class="lab-icon">⚡</span>
+        <span class="lab-label">Bàn điện phân</span>
+        <span class="lab-hotkey">C</span>
+        <span id="salt-badge" class="salt-badge hidden">0</span>
+    </div>
+
+    <!-- Salt Storage mini HUD (góc phải trên) -->
+    <div id="salt-hud" class="glass-panel">
+        <div class="salt-hud-title">🧂 Kho Muối</div>
+        <div id="salt-storage-list"><span style="color:#666;font-size:11px">Chưa có muối</span></div>
+    </div>
+
+    <!-- Electrolysis Panel (overlay) -->
+    <div id="electro-panel" class="overlay hidden">
+        <div class="mc-furnace-wrap">
+
+            <!-- Header -->
+            <div class="mc-header">
+                <span class="mc-title">⚡ Bàn Điện Phân</span>
+                <div class="mc-inv-display">
+                    Kho: 🟢 <b id="ep-acid">0</b> &nbsp; 🔵 <b id="ep-base">0</b> &nbsp; 🔥 <b id="ep-fire">0</b>
+                </div>
+                <button id="electro-close" class="electro-close-btn">✕</button>
+            </div>
+
+            <div class="mc-body">
+                <!-- LEFT: Salt inventory grid -->
+                <div class="mc-left">
+                    <div class="mc-section-label">Kho Muối</div>
+                    <div id="mc-salt-grid" class="mc-salt-grid">
+                        <!-- Salt slots generated by JS -->
+                    </div>
+                </div>
+
+                <!-- CENTER: Furnace/Electrolysis machine -->
+                <div class="mc-center">
+                    <div class="mc-section-label">Nguyên liệu</div>
+                    <div class="mc-machine">
+                        <!-- Input slot -->
+                        <div id="mc-input-slot" class="mc-slot mc-input-slot" data-slot="input">
+                            <span class="mc-slot-hint">Thả muối<br>vào đây</span>
+                        </div>
+
+                        <!-- Equation display -->
+                        <div id="mc-equation" class="mc-equation">
+                            Chọn muối để xem phản ứng
+                        </div>
+
+                        <!-- Fuel / electricity bar -->
+                        <div class="mc-progress-wrap">
+                            <div class="mc-progress-label">⚡ Điện phân</div>
+                            <div id="mc-progress-bar" class="mc-progress-bar">
+                                <div id="mc-progress-fill" class="mc-progress-fill" style="width:0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Arrow -->
+                        <div class="mc-arrow-wrap">
+                            <div id="mc-arrow" class="mc-arrow">▶</div>
+                        </div>
+                    </div>
+
+                    <!-- Smelt button -->
+                    <button id="mc-smelt-btn" class="mc-smelt-btn" disabled>
+                        ⚡ Điện Phân!
+                    </button>
+                </div>
+
+                <!-- RIGHT: Output -->
+                <div class="mc-right">
+                    <div class="mc-section-label">Sản phẩm</div>
+                    <div id="mc-output-slot" class="mc-slot mc-output-slot">
+                        <span class="mc-slot-hint">Output<br>ở đây</span>
+                    </div>
+                    <div id="mc-output-label" class="mc-output-label"></div>
+
+                    <!-- New: Final equation display -->
+                    <div id="mc-result-equation" class="mc-result-equation"></div>
+
+                    <!-- Collect button -->
+                    <button id="mc-collect-btn" class="mc-collect-btn hidden">
+                        ✋ Thu thập
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="modern_game.js"></script>
+</body>
+
+</html>

@@ -378,8 +378,30 @@ document.addEventListener('DOMContentLoaded', () => {
   const links = document.querySelectorAll('#nl-periodic, #bn-periodic');
   links.forEach(link => {
     link.addEventListener('click', () => {
-      // Small delay to let gp() do its thing, then init the table
-      setTimeout(initPeriodicTable, 50);
+      // Khi nhấn vào tab Khám Phá, luôn hiện màn hình lựa chọn trước
+      backToDiscovery();
     });
   });
 });
+
+function showPeriodicTable() {
+  const selection = document.getElementById('discovery-selection');
+  const content = document.getElementById('periodic-content');
+  if (selection) selection.style.display = 'none';
+  if (content) {
+    content.style.display = 'block';
+    content.classList.add('fade-up');
+    // Khởi tạo bảng nếu chưa có
+    initPeriodicTable();
+  }
+}
+
+function backToDiscovery() {
+  const selection = document.getElementById('discovery-selection');
+  const content = document.getElementById('periodic-content');
+  if (selection) {
+    selection.style.display = 'grid';
+    selection.classList.add('fade-up');
+  }
+  if (content) content.style.display = 'none';
+}
