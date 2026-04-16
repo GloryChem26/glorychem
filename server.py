@@ -167,23 +167,18 @@ def get_user_from_request():
 # ══════════════════════════════════════
 _ratelimit_data = {} # (key, endpoint) -> (timestamp, count)
 
+# Dòng 170–199 — thay toàn bộ hàm rate_limit
 def rate_limit(limit=10, period=60):
     """
-    Decorator đơn giản để giới hạn số request từ 1 IP/user.
-    Mặc định 10 request / 60 giây.
+    Decorator rate limit theo IP (không verify JWT để tránh double-call).
     """
     def decorator(f):
         @functools.wraps(f)
         def wrapped(*args, **kwargs):
             key = request.remote_addr
-            # Nếu user đã log in, ưu tiên dùng userId làm key
-            user = get_user_from_request()
-            if user:
-                key = user.id
-                
             now = time.time()
             rl_key = (key, request.path)
-            
+
             if rl_key not in _ratelimit_data:
                 _ratelimit_data[rl_key] = [now, 1]
             else:
