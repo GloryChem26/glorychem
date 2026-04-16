@@ -1,0 +1,3972 @@
+{
+  "TOPICS": {
+    "atomic": {
+      "name": "Cấu tạo nguyên tử",
+      "icon": "⚛️"
+    },
+    "periodic": {
+      "name": "Bảng tuần hoàn",
+      "icon": "📋"
+    },
+    "chemical-bonds": {
+      "name": "Liên kết hóa học",
+      "icon": "🤝"
+    },
+    "redox": {
+      "name": "Phản ứng oxi hóa khử",
+      "icon": "⚡"
+    },
+    "thermo": {
+      "name": "Nhiệt hóa học",
+      "icon": "🔥"
+    },
+    "speed": {
+      "name": "Tốc độ phản ứng",
+      "icon": "⏱️"
+    },
+    "halogens": {
+      "name": "Nhóm Halogen",
+      "icon": "🧪"
+    },
+    "equilib": {
+      "name": "Cân bằng hóa học",
+      "icon": "⚖️"
+    },
+    "nitrogen": {
+      "name": "Nitrogen và hợp chất",
+      "icon": "🌿"
+    },
+    "sulfur": {
+      "name": "Sulfur và hợp chất",
+      "icon": "🟡"
+    },
+    "organic": {
+      "name": "Hóa hữu cơ đại cương",
+      "icon": "🧪"
+    },
+    "hydrocarbon": {
+      "name": "Hydrocarbon",
+      "icon": "⛽"
+    },
+    "halogen-deriv": {
+      "name": "Dẫn xuất halogen",
+      "icon": "🧴"
+    },
+    "alcohol-phenol": {
+      "name": "Alcohol và Phenol",
+      "icon": "🍷"
+    },
+    "carbonyl": {
+      "name": "Aldehyde và Ketone",
+      "icon": "🔑"
+    },
+    "carboxylic": {
+      "name": "Carboxylic acid",
+      "icon": "🍋"
+    },
+    "ester-lipid": {
+      "name": "Ester và Lipid",
+      "icon": "🫙"
+    },
+    "carbohydrate": {
+      "name": "Carbohydrate",
+      "icon": "🍬"
+    },
+    "nitrogen-compounds": {
+      "name": "Hợp chất chứa nitrogen",
+      "icon": "🧬"
+    },
+    "polymer": {
+      "name": "Polymer",
+      "icon": "🧵"
+    },
+    "electro": {
+      "name": "Điện hóa học",
+      "icon": "🔋"
+    },
+    "metals": {
+      "name": "Đại cương kim loại",
+      "icon": "🔩"
+    },
+    "alkali-alkaline": {
+      "name": "Kim loại kiềm và kiềm thổ",
+      "icon": "💧"
+    },
+    "aluminum": {
+      "name": "Nhôm và hợp chất",
+      "icon": "🥫"
+    },
+    "transition-complex": {
+      "name": "Kim loại chuyển tiếp và phức chất",
+      "icon": "⚙️"
+    }
+  },
+  "QUESTION_BANK": {
+    "atomic": [
+      {
+        "type": "mcq",
+        "q": "Thí nghiệm nào đã phát hiện ra hạt nhân nguyên tử?",
+        "opts": [
+          "Thí nghiệm ống tia âm cực của Thomson",
+          "Thí nghiệm bắn phá lá vàng của Rutherford",
+          "Thí nghiệm bắn phá beryllium của Chadwick",
+          "Thí nghiệm quang điện của Einstein"
+        ],
+        "correct": 1,
+        "exp": "Năm 1911, Rutherford dùng chùm hạt α bắn phá lá vàng mỏng. Hầu hết hạt α xuyên qua, một số ít bị lệch hướng hoặc bật ngược lại, chứng tỏ nguyên tử có hạt nhân nhỏ, đặc, mang điện dương ở tâm."
+      },
+      {
+        "type": "mcq",
+        "q": "Nguyên tử ²⁷₁₃Al có số proton, neutron, electron lần lượt là:",
+        "opts": [
+          "13, 14, 13",
+          "13, 27, 13",
+          "27, 13, 27",
+          "14, 13, 14"
+        ],
+        "correct": 0,
+        "exp": "Z = 13 → proton = electron = 13. N = A − Z = 27 − 13 = 14 neutron."
+      },
+      {
+        "type": "mcq",
+        "q": "Khối lượng nguyên tử tập trung chủ yếu ở đâu?",
+        "opts": [
+          "Lớp vỏ electron",
+          "Hạt nhân (proton + neutron)",
+          "Phân bố đều trong nguyên tử",
+          "Chủ yếu ở electron"
+        ],
+        "correct": 1,
+        "exp": "Khối lượng electron rất nhỏ (≈ 0,00055 amu) so với proton và neutron (≈ 1 amu mỗi hạt), nên khối lượng nguyên tử tập trung hầu hết ở hạt nhân."
+      },
+      {
+        "type": "mcq",
+        "q": "Đơn vị khối lượng nguyên tử (amu) được định nghĩa là:",
+        "opts": [
+          "Khối lượng của 1 proton",
+          "1/12 khối lượng nguyên tử ¹²C",
+          "Khối lượng của 1 electron",
+          "1/16 khối lượng nguyên tử oxygen"
+        ],
+        "correct": 1,
+        "exp": "1 amu = 1/12 khối lượng nguyên tử carbon-12 = 1,661 × 10⁻²⁷ kg."
+      },
+      {
+        "type": "mcq",
+        "q": "Nguyên tử trung hoà về điện vì:",
+        "opts": [
+          "Số neutron bằng số proton",
+          "Số proton bằng số electron",
+          "Không có hạt mang điện",
+          "Số proton bằng số neutron bằng số electron"
+        ],
+        "correct": 1,
+        "exp": "Proton mang điện +1 và electron mang điện −1. Vì số proton = số electron nên tổng điện tích = 0, nguyên tử trung hoà điện."
+      },
+      {
+        "type": "mcq",
+        "q": "Nguyên tố hoá học là tập hợp những nguyên tử có cùng:",
+        "opts": [
+          "Số neutron",
+          "Số khối",
+          "Số đơn vị điện tích hạt nhân (số proton)",
+          "Nguyên tử khối"
+        ],
+        "correct": 2,
+        "exp": "Nguyên tố hoá học là tập hợp các nguyên tử có cùng số đơn vị điện tích hạt nhân (số proton). Đây là đặc trưng duy nhất xác định loại nguyên tố."
+      },
+      {
+        "type": "mcq",
+        "q": "Chlorine có 2 đồng vị: ³⁵Cl (75,77%) và ³⁷Cl (24,23%). Nguyên tử khối trung bình của Cl là:",
+        "opts": [
+          "35,48",
+          "36,00",
+          "35,50",
+          "36,48"
+        ],
+        "correct": 0,
+        "exp": "Ā = (75,77 × 35 + 24,23 × 37) / 100 = (2651,95 + 896,51) / 100 = 3548,46 / 100 ≈ 35,48."
+      },
+      {
+        "type": "mcq",
+        "q": "Các đồng vị ¹H, ²H, ³H của nguyên tố hydrogen có đặc điểm chung nào?",
+        "opts": [
+          "Cùng số neutron",
+          "Cùng số khối",
+          "Cùng số proton (Z = 1)",
+          "Cùng khối lượng nguyên tử"
+        ],
+        "correct": 2,
+        "exp": "Các đồng vị của cùng một nguyên tố đều có cùng số proton (Z = 1 đối với hydrogen). Chúng khác nhau về số neutron: 0, 1, 2."
+      },
+      {
+        "type": "mcq",
+        "q": "Nguyên tử ⁵⁶₂₆Fe có số proton, neutron và electron lần lượt là:",
+        "opts": [
+          "26, 30, 26",
+          "26, 56, 26",
+          "30, 26, 30",
+          "56, 26, 56"
+        ],
+        "correct": 0,
+        "exp": "Z = 26 → proton = 26, electron = 26. N = A − Z = 56 − 26 = 30 neutron."
+      },
+      {
+        "type": "mcq",
+        "q": "Boron có nguyên tử khối trung bình = 10,81. Hai đồng vị là ¹⁰B và ¹¹B. Phần trăm đồng vị ¹⁰B xấp xỉ:",
+        "opts": [
+          "19%",
+          "81%",
+          "50%",
+          "10%"
+        ],
+        "correct": 0,
+        "exp": "Gọi x% là %¹⁰B → (10x + 11(100−x))/100 = 10,81 → 10x + 1100 − 11x = 1081 → x = 19. Vậy ¹⁰B chiếm 19%."
+      },
+      {
+        "type": "mcq",
+        "q": "Trong lớp electron thứ 3 (lớp M), số orbital nguyên tử tối đa là:",
+        "opts": [
+          "4",
+          "9",
+          "16",
+          "3"
+        ],
+        "correct": 1,
+        "exp": "Lớp thứ n có n² orbital. Lớp M có n = 3 → 3² = 9 orbital (1 orbital 3s + 3 orbital 3p + 5 orbital 3d)."
+      },
+      {
+        "type": "mcq",
+        "q": "Cấu hình electron của nguyên tử Ca (Z = 20) là:",
+        "opts": [
+          "1s²2s²2p⁶3s²3p⁶4s²",
+          "1s²2s²2p⁶3s²3p⁸",
+          "1s²2s²2p⁶3s²3p⁶3d²",
+          "1s²2s²2p⁶3s²3d⁸4s²"
+        ],
+        "correct": 0,
+        "exp": "Ca có 20e: 1s²(2) 2s²(4) 2p⁶(10) 3s²(12) 3p⁶(18) 4s²(20). Cấu hình: 1s²2s²2p⁶3s²3p⁶4s²."
+      },
+      {
+        "type": "mcq",
+        "q": "Nguyên tử có cấu hình electron lớp ngoài cùng là 3s²3p⁵ thuộc loại nguyên tố nào?",
+        "opts": [
+          "Kim loại kiềm",
+          "Kim loại kiềm thổ",
+          "Phi kim (halogen)",
+          "Khí hiếm"
+        ],
+        "correct": 2,
+        "exp": "Lớp ngoài cùng có 7 electron (3s²3p⁵). Nguyên tử có 5, 6, 7 electron lớp ngoài cùng thường là phi kim. Đây là Cl (Z = 17)."
+      },
+      {
+        "type": "mcq",
+        "q": "Theo quy tắc Hund, trong phân lớp 2p có 3 electron, cách phân bố đúng là:",
+        "opts": [
+          "Cả 3 electron vào 1 orbital",
+          "2 electron vào 1 orbital, 1 electron vào orbital khác",
+          "3 electron, mỗi electron vào 1 orbital, spin cùng chiều",
+          "Không thể xác định"
+        ],
+        "correct": 2,
+        "exp": "Quy tắc Hund: Trong cùng một phân lớp, electron điền vào các orbital trống trước, rồi ghép đôi sau; các electron độc thân có chiều tự quay giống nhau."
+      },
+      {
+        "type": "mcq",
+        "q": "Nguyên tử X có cấu hình electron 1s²2s²2p⁶3s²3p⁶. Đây là:",
+        "opts": [
+          "Kim loại kiềm",
+          "Phi kim",
+          "Khí hiếm",
+          "Kim loại chuyển tiếp"
+        ],
+        "correct": 2,
+        "exp": "Lớp ngoài cùng 3s²3p⁶ có 8 electron → cấu hình bền của khí hiếm. Đây là Argon (Ar, Z = 18)."
+      },
+      {
+        "type": "mcq",
+        "q": "Nguyên tử ³²S có số proton, neutron, electron lần lượt là:",
+        "opts": [
+          "16, 16, 16",
+          "16, 32, 16",
+          "32, 16, 32",
+          "16, 14, 16"
+        ],
+        "correct": 0,
+        "exp": "S: Z = 16 → proton = 16, electron = 16. N = A − Z = 32 − 16 = 16 neutron."
+      },
+      {
+        "type": "mcq",
+        "q": "Cấu hình electron của Na (Z = 11) là:",
+        "opts": [
+          "1s²2s²2p⁶3s¹",
+          "1s²2s²2p⁵3s²",
+          "1s²2s²2p⁶3p¹",
+          "1s²2s²2p⁷"
+        ],
+        "correct": 0,
+        "exp": "Na có 11e. Điền: 1s²(2) 2s²(4) 2p⁶(10) 3s¹(11). Cấu hình: 1s²2s²2p⁶3s¹."
+      },
+      {
+        "type": "mcq",
+        "q": "Silicon có 2 đồng vị bền là ²⁸Si (92,23%) và ³⁰Si (3,10%), ngoài ra còn ²⁹Si (4,67%). Nguyên tử khối trung bình của Si gần bằng:",
+        "opts": [
+          "28,09",
+          "29,00",
+          "28,50",
+          "28,00"
+        ],
+        "correct": 0,
+        "exp": "Ā = (92,23×28 + 4,67×29 + 3,10×30)/100 = (2582,44 + 135,43 + 93)/100 ≈ 28,11 ≈ 28,09."
+      },
+      {
+        "type": "mcq",
+        "q": "Ion X²⁺ có cấu hình electron 1s²2s²2p⁶. Nguyên tử X có tổng số electron là:",
+        "opts": [
+          "10",
+          "12",
+          "8",
+          "11"
+        ],
+        "correct": 1,
+        "exp": "X²⁺ mất 2e so với X trung hòa. X²⁺ có 10e → X có 10 + 2 = 12e. X là Magnesium (Mg)."
+      },
+      {
+        "type": "mcq",
+        "q": "Nguyên tử nào dưới đây có số neutron bằng số proton?",
+        "opts": [
+          "⁴⁰₁₈Ar",
+          "¹²₆C",
+          "³⁵₁₇Cl",
+          "²³₁₁Na"
+        ],
+        "correct": 1,
+        "exp": "¹²₆C: Z = 6, N = 12 − 6 = 6. Số neutron = số proton = 6. Các nguyên tử còn lại: Ar(22n ≠ 18p), Cl(18n ≠ 17p), Na(12n ≠ 11p)."
+      }
+    ],
+    "periodic": [
+      {
+        "type": "mcq",
+        "q": "Nguyên tắc nào SAI khi sắp xếp nguyên tố vào bảng tuần hoàn?",
+        "opts": [
+          "Các nguyên tố xếp theo chiều tăng dần của điện tích hạt nhân",
+          "Các nguyên tố có cùng số lớp electron xếp thành một hàng",
+          "Các nguyên tố có cùng số electron hoá trị xếp thành một cột",
+          "Các nguyên tố xếp theo chiều tăng dần nguyên tử khối"
+        ],
+        "correct": 3,
+        "exp": "Bảng tuần hoàn hiện đại sắp xếp theo chiều tăng của ĐIỆN TÍCH HẠT NHÂN (số proton), không phải theo nguyên tử khối như bảng của Mendeleev năm 1869."
+      },
+      {
+        "type": "mcq",
+        "q": "Nguyên tố A thuộc chu kì 3, nhóm IIA. Số electron lớp ngoài cùng và số lớp electron của A lần lượt là:",
+        "opts": [
+          "3 và 2",
+          "2 và 3",
+          "2 và 2",
+          "3 và 3"
+        ],
+        "correct": 1,
+        "exp": "Nhóm IIA → số electron hoá trị = 2 (số electron lớp ngoài cùng = 2). Chu kì 3 → số lớp electron = 3. Đây là Magnesium (Mg, Z = 12)."
+      },
+      {
+        "type": "mcq",
+        "q": "Bảng tuần hoàn hiện đại có bao nhiêu chu kì nhỏ?",
+        "opts": [
+          "2",
+          "3",
+          "4",
+          "7"
+        ],
+        "correct": 1,
+        "exp": "Chu kì nhỏ là chu kì 1, 2, 3. Chu kì lớn là chu kì 4, 5, 6, 7."
+      },
+      {
+        "type": "mcq",
+        "q": "Nguyên tố nào thuộc nhóm VIIA (nhóm halogen)?",
+        "opts": [
+          "Oxygen (O)",
+          "Sulfur (S)",
+          "Chlorine (Cl)",
+          "Nitrogen (N)"
+        ],
+        "correct": 2,
+        "exp": "Nhóm VIIA (halogen) gồm F, Cl, Br, I, At — các nguyên tố có 7 electron hoá trị."
+      },
+      {
+        "type": "mcq",
+        "q": "Nguyên tố ₁₉K (potassium) thuộc chu kì nào và nhóm nào?",
+        "opts": [
+          "Chu kì 3, nhóm IA",
+          "Chu kì 4, nhóm IA",
+          "Chu kì 4, nhóm IIA",
+          "Chu kì 3, nhóm IIA"
+        ],
+        "correct": 1,
+        "exp": "K: cấu hình 1s²2s²2p⁶3s²3p⁶4s¹. Electron cuối điền vào lớp 4 → chu kì 4. 1 electron hoá trị ở phân lớp s → nhóm IA."
+      },
+      {
+        "type": "mcq",
+        "q": "Trong một chu kì, theo chiều tăng dần của điện tích hạt nhân, bán kính nguyên tử biến đổi như thế nào?",
+        "opts": [
+          "Tăng dần",
+          "Giảm dần",
+          "Không thay đổi",
+          "Tăng rồi giảm"
+        ],
+        "correct": 1,
+        "exp": "Trong một chu kì, khi Z tăng, số lớp electron giữ nguyên nhưng điện tích hạt nhân tăng → lực hút với electron lớp ngoài cùng tăng → bán kính nguyên tử giảm."
+      },
+      {
+        "type": "mcq",
+        "q": "Trong nhóm IA, từ Li đến Cs, tính kim loại biến đổi theo chiều nào?",
+        "opts": [
+          "Giảm dần",
+          "Tăng dần",
+          "Không đổi",
+          "Tăng rồi giảm"
+        ],
+        "correct": 1,
+        "exp": "Trong một nhóm A, khi Z tăng, số lớp electron tăng → bán kính tăng → lực hút với electron lớp ngoài cùng giảm → dễ nhường electron hơn → tính kim loại tăng."
+      },
+      {
+        "type": "mcq",
+        "q": "Sắp xếp các nguyên tố Na, Mg, Al, Si theo chiều tăng dần của độ âm điện?",
+        "opts": [
+          "Na < Mg < Al < Si",
+          "Si < Al < Mg < Na",
+          "Al < Na < Si < Mg",
+          "Mg < Al < Na < Si"
+        ],
+        "correct": 0,
+        "exp": "Na, Mg, Al, Si thuộc chu kì 3. Trong cùng chu kì, độ âm điện tăng theo chiều tăng Z → Na (0,93) < Mg (1,31) < Al (1,61) < Si (1,90)."
+      },
+      {
+        "type": "mcq",
+        "q": "Nguyên tố nào có năng lượng ion hoá thứ nhất lớn nhất trong số F, O, N, C?",
+        "opts": [
+          "C",
+          "N",
+          "O",
+          "F"
+        ],
+        "correct": 3,
+        "exp": "F có điện tích hạt nhân lớn nhất (Z = 9) trong số các nguyên tố đã cho → lực hút electron mạnh nhất → năng lượng để tách electron lớn nhất. (Lưu ý: N đôi khi bất thường hơn O do phân lớp 2p nửa đầy bền)."
+      },
+      {
+        "type": "mcq",
+        "q": "Cho các nguyên tố: K (Z=19), Ca (Z=20), Br (Z=35), Se (Z=34). Nguyên tố có tính phi kim mạnh nhất là:",
+        "opts": [
+          "K",
+          "Ca",
+          "Br",
+          "Se"
+        ],
+        "correct": 2,
+        "exp": "K và Ca là kim loại. Br (nhóm VIIA, chu kì 4) và Se (nhóm VIA, chu kì 4) là phi kim. Trong cùng chu kì, Br (nhóm VIIA) có số electron hoá trị nhiều hơn Se (nhóm VIA) → tính phi kim mạnh hơn."
+      },
+      {
+        "type": "mcq",
+        "q": "Trong chu kì 3, hydroxide nào có tính base mạnh nhất?",
+        "opts": [
+          "Mg(OH)₂",
+          "Al(OH)₃",
+          "NaOH",
+          "H₂SiO₃"
+        ],
+        "correct": 2,
+        "exp": "Trong chu kì 3, theo chiều Z tăng tính base giảm. Na (nhóm IA) có tính kim loại mạnh nhất → NaOH có tính base mạnh nhất trong chu kì 3."
+      },
+      {
+        "type": "mcq",
+        "q": "Công thức oxide cao nhất của Sulfur (S, nhóm VIA) là:",
+        "opts": [
+          "SO",
+          "SO₂",
+          "SO₃",
+          "S₂O₃"
+        ],
+        "correct": 2,
+        "exp": "Nhóm VIA → hoá trị cao nhất với oxygen là VI. Công thức oxide: SO₃ (S có hoá trị VI với 3 nguyên tử O: 3 × (−2) + (+6) = 0)."
+      },
+      {
+        "type": "mcq",
+        "q": "Trong chu kì 3, acid nào có tính acid mạnh nhất?",
+        "opts": [
+          "H₂SiO₃",
+          "H₃PO₄",
+          "H₂SO₄",
+          "HClO₄"
+        ],
+        "correct": 3,
+        "exp": "Trong chu kì 3, tính acid của hydroxide (acid có oxygen) tăng dần từ trái sang phải. Cl (nhóm VIIA) cho HClO₄ có tính acid rất mạnh, mạnh nhất trong chu kì 3."
+      },
+      {
+        "type": "mcq",
+        "q": "Al(OH)₃ được gọi là hydroxide lưỡng tính vì:",
+        "opts": [
+          "Nó chỉ có tính acid",
+          "Nó chỉ có tính base",
+          "Nó vừa có tính acid vừa có tính base",
+          "Nó không tan trong nước"
+        ],
+        "correct": 2,
+        "exp": "Al(OH)₃ vừa phản ứng với acid mạnh (tính base) vừa phản ứng với base mạnh (tính acid), gọi là hydroxide lưỡng tính."
+      },
+      {
+        "type": "mcq",
+        "q": "Sắp xếp các hydroxide sau theo chiều tăng dần tính base: NaOH, Mg(OH)₂, Al(OH)₃",
+        "opts": [
+          "NaOH < Mg(OH)₂ < Al(OH)₃",
+          "Al(OH)₃ < Mg(OH)₂ < NaOH",
+          "Mg(OH)₂ < NaOH < Al(OH)₃",
+          "Al(OH)₃ < NaOH < Mg(OH)₂"
+        ],
+        "correct": 1,
+        "exp": "Trong chu kì 3, tính base giảm theo chiều Z tăng → Al(OH)₃ (lưỡng tính) < Mg(OH)₂ (base yếu) < NaOH (base mạnh)."
+      },
+      {
+        "type": "mcq",
+        "q": "Định luật tuần hoàn hiện đại dựa trên cơ sở nào?",
+        "opts": [
+          "Nguyên tử khối tăng dần",
+          "Điện tích hạt nhân tăng dần",
+          "Nhiệt độ nóng chảy tăng dần",
+          "Số lớp electron tăng dần"
+        ],
+        "correct": 1,
+        "exp": "Tính chất các nguyên tố biến đổi tuần hoàn theo chiều tăng của ĐIỆN TÍCH HẠT NHÂN nguyên tử (không phải nguyên tử khối như bảng Mendeleev năm 1869)."
+      },
+      {
+        "type": "mcq",
+        "q": "Nguyên tố X ở ô số 17, nhóm VIIA, chu kì 3. Điều nào SAI?",
+        "opts": [
+          "X có 17 proton",
+          "X có 3 lớp electron",
+          "X có 7 electron lớp ngoài cùng",
+          "X là kim loại"
+        ],
+        "correct": 3,
+        "exp": "Ô số 17 → Z = 17 (17 proton, đúng). Chu kì 3 → 3 lớp electron (đúng). Nhóm VIIA → 7 electron hoá trị (đúng). Nhóm VIIA là halogen (phi kim), không phải kim loại."
+      },
+      {
+        "type": "mcq",
+        "q": "Hai nguyên tố X (Z = 20) và Y (Z = 38) có tính chất hoá học gần giống nhau vì:",
+        "opts": [
+          "Cùng chu kì",
+          "Cùng nhóm A",
+          "Cùng số electron",
+          "Cùng số khối"
+        ],
+        "correct": 1,
+        "exp": "X (Ca, Z=20): [Ar]4s² và Y (Sr, Z=38): [Kr]5s². Cả hai đều thuộc nhóm IIA → có cùng số electron hoá trị (2) → có tính chất hoá học gần giống nhau."
+      },
+      {
+        "type": "mcq",
+        "q": "Nguyên tố có cấu hình electron [Ne]3s²3p³ thuộc nhóm nào?",
+        "opts": [
+          "IIA",
+          "IIIA",
+          "IVA",
+          "VA"
+        ],
+        "correct": 3,
+        "exp": "3s²3p³ có 5 electron hoá trị ở lớp ngoài cùng → thuộc nhóm VA. Đây là Phosphorus (P, Z = 15)."
+      },
+      {
+        "type": "mcq",
+        "q": "Theo định luật tuần hoàn, tính chất của nguyên tố Selenium (Se, nhóm VIA, chu kì 4) gần giống nhất với nguyên tố nào?",
+        "opts": [
+          "Chlorine (Cl, nhóm VIIA, chu kì 3)",
+          "Oxygen (O, nhóm VIA, chu kì 2)",
+          "Potassium (K, nhóm IA, chu kì 4)",
+          "Bromine (Br, nhóm VIIA, chu kì 4)"
+        ],
+        "correct": 1,
+        "exp": "Các nguyên tố cùng nhóm A có tính chất hoá học gần giống nhau. Se (nhóm VIA, chu kì 4) gần giống O (nhóm VIA, chu kì 2) và S (nhóm VIA, chu kì 3)."
+      },
+      {
+        "type": "mcq",
+        "q": "So sánh bán kính nguyên tử: Na, Mg, Al (cùng chu kì 3)?",
+        "opts": [
+          "Na > Mg > Al",
+          "Al > Mg > Na",
+          "Mg > Na > Al",
+          "Na > Al > Mg"
+        ],
+        "correct": 0,
+        "exp": "Trong chu kì 3, bán kính giảm theo chiều Z tăng: Na (Z=11) > Mg (Z=12) > Al (Z=13)."
+      },
+      {
+        "type": "mcq",
+        "q": "Nguyên tố nào trong nhóm IA có tính kim loại mạnh nhất?",
+        "opts": [
+          "Li",
+          "Na",
+          "K",
+          "Cs"
+        ],
+        "correct": 3,
+        "exp": "Trong nhóm IA, tính kim loại tăng từ trên xuống dưới. Cs (Z=55, chu kì 6) có tính kim loại mạnh nhất trong nhóm IA (trong số các nguyên tố bền)."
+      },
+      {
+        "type": "mcq",
+        "q": "Oxide cao nhất của Nitrogen (N, nhóm VA) là:",
+        "opts": [
+          "NO",
+          "N₂O₃",
+          "N₂O₅",
+          "NO₂"
+        ],
+        "correct": 2,
+        "exp": "Nhóm VA → hoá trị cao nhất là V. Oxide cao nhất: N₂O₅ (2N × V + 5O × (−II) = 0 → 2 × 5 = 10 = 5 × 2)."
+      },
+      {
+        "type": "mcq",
+        "q": "Hai nguyên tố A (nhóm IIA, chu kì 2) và B (nhóm VIIA, chu kì 3). Đó là cặp nguyên tố nào?",
+        "opts": [
+          "Be và Cl",
+          "Mg và F",
+          "Be và F",
+          "Ca và Cl"
+        ],
+        "correct": 0,
+        "exp": "Nhóm IIA chu kì 2 → 2 lớp electron, 2e hoá trị → Be (Z=4). Nhóm VIIA chu kì 3 → 3 lớp electron, 7e hoá trị → Cl (Z=17)."
+      },
+      {
+        "type": "mcq",
+        "q": "Từ vị trí của nguyên tố trong bảng tuần hoàn, ta có thể dự đoán được tất cả đặc điểm nào sau đây?",
+        "opts": [
+          "Chỉ số lớp electron và số electron hoá trị",
+          "Cấu hình electron, tính chất hoá học cơ bản và thành phần oxide cao nhất",
+          "Chỉ tính kim loại hay phi kim",
+          "Chỉ nguyên tử khối"
+        ],
+        "correct": 1,
+        "exp": "Từ vị trí trong bảng tuần hoàn (chu kì, nhóm), ta có thể dự đoán: số lớp electron, số electron hoá trị, cấu hình electron lớp ngoài cùng, tính chất hoá học và công thức oxide cao nhất."
+      }
+    ],
+    "chemical-bonds": [
+      {
+        "type": "mcq",
+        "q": "Theo quy tắc octet, nguyên tử nào sau đây đạt được cấu hình bền của khí hiếm khi nhường 2 electron?",
+        "opts": [
+          "Na (Z = 11)",
+          "Cl (Z = 17)",
+          "Mg (Z = 12)",
+          "O (Z = 8)"
+        ],
+        "correct": 2,
+        "exp": "Mg (Z = 12): 1s²2s²2p⁶3s² → nhường 2e ở lớp 3s → còn 1s²2s²2p⁶, đạt cấu hình của Ne. Mg²⁺ bền."
+      },
+      {
+        "type": "mcq",
+        "q": "Nguyên tử Fluorine (F, Z = 9) cần bao nhiêu electron để đạt cấu hình khí hiếm?",
+        "opts": [
+          "1 (nhận)",
+          "1 (nhường)",
+          "7 (nhường)",
+          "2 (nhận)"
+        ],
+        "correct": 0,
+        "exp": "F có cấu hình 1s²2s²2p⁵ (7e lớp ngoài cùng). Cần nhận thêm 1e để đạt cấu hình Ne (1s²2s²2p⁶). F tạo ion F⁻."
+      },
+      {
+        "type": "mcq",
+        "q": "Trong phản ứng hoá học, nguyên tử có xu hướng đạt cấu hình bền của khí hiếm. Cấu hình bền này có bao nhiêu electron lớp ngoài cùng (trừ He)?",
+        "opts": [
+          "2",
+          "4",
+          "6",
+          "8"
+        ],
+        "correct": 3,
+        "exp": "Quy tắc octet: 8 electron ở lớp ngoài cùng (trừ He có 2e). Đây là cấu hình bền vững của các khí hiếm (Ne, Ar, Kr, Xe, Rn)."
+      },
+      {
+        "type": "mcq",
+        "q": "Nguyên tử C (Z = 6) cần tham gia bao nhiêu liên kết cộng hoá trị để đạt cấu hình octet?",
+        "opts": [
+          "1",
+          "2",
+          "3",
+          "4"
+        ],
+        "correct": 3,
+        "exp": "C có 4e lớp ngoài cùng (2s²2p²). Cần thêm 4e để đạt 8e → góp chung 4 cặp e → tạo 4 liên kết cộng hoá trị. C thường tạo 4 liên kết (ví dụ: CH₄, CCl₄)."
+      },
+      {
+        "type": "mcq",
+        "q": "Quy tắc octet được ứng dụng chủ yếu cho các nguyên tố thuộc nhóm nào?",
+        "opts": [
+          "Nhóm B (kim loại chuyển tiếp)",
+          "Nhóm A",
+          "Chỉ các khí hiếm nhóm VIIIA",
+          "Chỉ các kim loại kiềm"
+        ],
+        "correct": 1,
+        "exp": "Quy tắc octet áp dụng chủ yếu cho các nguyên tố nhóm A, vì chúng chỉ có electron ở phân lớp s và p lớp ngoài cùng tham gia liên kết."
+      },
+      {
+        "type": "mcq",
+        "q": "Liên kết ion được hình thành do:",
+        "opts": [
+          "Hai nguyên tử góp chung electron",
+          "Lực hút tĩnh điện giữa các ion mang điện tích trái dấu",
+          "Sự xen phủ các orbital nguyên tử",
+          "Lực hút Van der Waals giữa các phân tử"
+        ],
+        "correct": 1,
+        "exp": "Liên kết ion hình thành do lực hút tĩnh điện (Coulomb) giữa ion dương (cation) và ion âm (anion), không phải dùng chung electron."
+      },
+      {
+        "type": "mcq",
+        "q": "Hợp chất nào có liên kết ion?",
+        "opts": [
+          "H₂O",
+          "CO₂",
+          "NaCl",
+          "CH₄"
+        ],
+        "correct": 2,
+        "exp": "NaCl là hợp chất ion, được tạo bởi ion Na⁺ (kim loại điển hình nhường e) và Cl⁻ (phi kim điển hình nhận e). H₂O, CO₂, CH₄ có liên kết cộng hoá trị."
+      },
+      {
+        "type": "mcq",
+        "q": "Ion Ca²⁺ có cấu hình electron là:",
+        "opts": [
+          "1s²2s²2p⁶3s²3p⁶4s²",
+          "1s²2s²2p⁶3s²3p⁶",
+          "1s²2s²2p⁶3s²3p⁶4s²3d⁰",
+          "1s²2s²2p⁶3s²3p⁴"
+        ],
+        "correct": 1,
+        "exp": "Ca (Z=20): 1s²2s²2p⁶3s²3p⁶4s². Ca²⁺ mất 2e ở 4s → cấu hình: 1s²2s²2p⁶3s²3p⁶ (giống Ar)."
+      },
+      {
+        "type": "mcq",
+        "q": "Vì sao hợp chất ion thường có nhiệt độ nóng chảy cao?",
+        "opts": [
+          "Vì phân tử khối lớn",
+          "Vì có liên kết cộng hoá trị bên trong",
+          "Vì lực hút tĩnh điện giữa các ion trái dấu trong mạng tinh thể rất mạnh",
+          "Vì có liên kết hydrogen giữa các phân tử"
+        ],
+        "correct": 2,
+        "exp": "Trong tinh thể ion, các ion được giữ chặt bởi lực hút tĩnh điện mạnh (lực Coulomb) giữa ion dương và ion âm theo mọi hướng → cần nhiều năng lượng để phá vỡ mạng tinh thể → nhiệt độ nóng chảy cao."
+      },
+      {
+        "type": "mcq",
+        "q": "Phát biểu nào SAI về hợp chất ion?",
+        "opts": [
+          "Ở trạng thái rắn không dẫn điện",
+          "Khi nóng chảy dẫn điện",
+          "Thường tan tốt trong nước",
+          "Tan trong dung môi hữu cơ không phân cực như benzene"
+        ],
+        "correct": 3,
+        "exp": "Hợp chất ion không tan trong dung môi hữu cơ không phân cực (như benzene, hexane). Chúng tan tốt trong dung môi phân cực (như nước) theo nguyên tắc 'đồng cực tan lẫn nhau'."
+      },
+      {
+        "type": "mcq",
+        "q": "Phân tử N₂ có liên kết gì giữa hai nguyên tử nitrogen?",
+        "opts": [
+          "Liên kết đơn N–N",
+          "Liên kết đôi N=N",
+          "Liên kết ba N≡N",
+          "Liên kết ion"
+        ],
+        "correct": 2,
+        "exp": "N có 5e lớp ngoài cùng, cần thêm 3e để đạt octet. Hai N góp chung 3 cặp e → liên kết ba N≡N (1σ + 2π). Đây là lý do N₂ rất bền."
+      },
+      {
+        "type": "mcq",
+        "q": "Phân loại liên kết trong phân tử HCl, biết χH = 2,20 và χCl = 3,16:",
+        "opts": [
+          "CHT không phân cực",
+          "CHT phân cực",
+          "Liên kết ion",
+          "Liên kết hydrogen"
+        ],
+        "correct": 1,
+        "exp": "Δχ = 3,16 − 2,20 = 0,96. 0,4 ≤ 0,96 < 1,7 → Liên kết cộng hoá trị phân cực. Cặp electron dùng chung bị lệch về phía Cl."
+      },
+      {
+        "type": "mcq",
+        "q": "Phân tử CO₂ có bao nhiêu liên kết σ và π?",
+        "opts": [
+          "2σ và 0π",
+          "2σ và 2π",
+          "1σ và 2π",
+          "0σ và 4π"
+        ],
+        "correct": 1,
+        "exp": "CO₂: O=C=O. Mỗi liên kết đôi C=O gồm 1σ + 1π. Có 2 liên kết đôi → tổng cộng 2σ + 2π."
+      },
+      {
+        "type": "mcq",
+        "q": "Liên kết nào bền nhất trong số các liên kết sau?",
+        "opts": [
+          "C–C (Eb = 347 kJ/mol)",
+          "C=C (Eb = 612 kJ/mol)",
+          "C≡C (Eb = 838 kJ/mol)",
+          "Tất cả như nhau"
+        ],
+        "correct": 2,
+        "exp": "Năng lượng liên kết càng lớn thì liên kết càng bền. C≡C có Eb = 838 kJ/mol lớn nhất → bền nhất."
+      },
+      {
+        "type": "mcq",
+        "q": "Trong liên kết cho–nhận của ion NH₄⁺, nguồn gốc cặp electron dùng chung là từ:",
+        "opts": [
+          "H cung cấp cho N",
+          "N cung cấp cho H⁺",
+          "Cả N và H cùng góp",
+          "Không có cặp electron dùng chung"
+        ],
+        "correct": 1,
+        "exp": "NH₃ + H⁺ → NH₄⁺. N trong NH₃ còn một cặp electron chưa dùng (lone pair), N cho cặp electron này vào liên kết với H⁺ → liên kết cho–nhận N → H⁺."
+      },
+      {
+        "type": "mcq",
+        "q": "Tại sao nhiệt độ sôi của H₂O (100°C) cao hơn nhiều so với H₂S (−60,7°C) dù O và S cùng nhóm VIA?",
+        "opts": [
+          "Vì phân tử H₂O có khối lượng lớn hơn",
+          "Vì H₂O có liên kết hydrogen liên phân tử bền hơn H₂S",
+          "Vì H₂O có liên kết cộng hoá trị mạnh hơn",
+          "Vì H₂O có nhiều nguyên tử hơn"
+        ],
+        "correct": 1,
+        "exp": "O có độ âm điện lớn (3,44) → H trong H₂O bị phân cực mạnh → tạo liên kết hydrogen O–H···O rất bền giữa các phân tử H₂O. S có độ âm điện nhỏ hơn → H₂S không tạo được liên kết hydrogen như vậy."
+      },
+      {
+        "type": "mcq",
+        "q": "Liên kết hydrogen được hình thành khi nguyên tử H liên kết với nguyên tố nào?",
+        "opts": [
+          "Bất kì nguyên tố nào",
+          "Chỉ N, O, F (độ âm điện lớn)",
+          "Chỉ các kim loại",
+          "Chỉ carbon"
+        ],
+        "correct": 1,
+        "exp": "Liên kết hydrogen chỉ hình thành khi H liên kết với nguyên tử có độ âm điện rất lớn là N, O, F. Lúc đó H mang điện tích dương đủ lớn để hút nguyên tử N, O, F khác."
+      },
+      {
+        "type": "mcq",
+        "q": "Tại sao nhiệt độ sôi của các đơn chất halogen tăng theo thứ tự F₂ < Cl₂ < Br₂ < I₂?",
+        "opts": [
+          "Do liên kết hydrogen tăng dần",
+          "Do liên kết ion tăng dần",
+          "Do tương tác van der Waals tăng dần khi khối lượng phân tử tăng",
+          "Do năng lượng liên kết X–X tăng dần"
+        ],
+        "correct": 2,
+        "exp": "Các đơn chất halogen là phân tử đối xứng, không phân cực, không tạo liên kết hydrogen. Nhiệt độ sôi tăng do tương tác van der Waals (lực London) tăng khi khối lượng phân tử và kích thước phân tử tăng."
+      },
+      {
+        "type": "mcq",
+        "q": "Chất nào sau đây tạo được liên kết hydrogen với nước?",
+        "opts": [
+          "CH₄",
+          "CCl₄",
+          "C₂H₅OH (ethanol)",
+          "C₆H₆ (benzene)"
+        ],
+        "correct": 2,
+        "exp": "C₂H₅OH có nhóm –OH (O có độ âm điện lớn liên kết với H) → tạo liên kết hydrogen với H₂O. CH₄, CCl₄, C₆H₆ không có nguyên tử H liên kết với N, O, F."
+      },
+      {
+        "type": "mcq",
+        "q": "Tương tác van der Waals khác liên kết cộng hoá trị ở điểm cơ bản nào?",
+        "opts": [
+          "Tương tác van der Waals mạnh hơn",
+          "Liên kết CHT là liên kết yếu, van der Waals là liên kết mạnh",
+          "Tương tác van der Waals là lực hút yếu giữa các phân tử, CHT là liên kết mạnh trong phân tử",
+          "Không có sự khác biệt"
+        ],
+        "correct": 2,
+        "exp": "Tương tác van der Waals (liên phân tử) rất yếu so với liên kết cộng hoá trị (nội phân tử). Van der Waals là lực hút tạm thời giữa các phân tử trung hoà điện."
+      },
+      {
+        "type": "mcq",
+        "q": "Sắp xếp các liên kết sau theo chiều giảm dần độ bền: Liên kết CHT, Liên kết hydrogen, Liên kết ion, Tương tác van der Waals",
+        "opts": [
+          "Liên kết ion > CHT > Hydrogen > van der Waals",
+          "CHT > ion > Hydrogen > van der Waals",
+          "Hydrogen > CHT > ion > van der Waals",
+          "van der Waals > Hydrogen > CHT > ion"
+        ],
+        "correct": 0,
+        "exp": "Độ bền giảm dần: Liên kết ion (và CHT) rất mạnh (hàng trăm kJ/mol) > Liên kết hydrogen (5–40 kJ/mol) > Tương tác van der Waals (< 5 kJ/mol)."
+      },
+      {
+        "type": "mcq",
+        "q": "Phân tử nào có liên kết cộng hoá trị không phân cực?",
+        "opts": [
+          "HCl",
+          "H₂O",
+          "Cl₂",
+          "NH₃"
+        ],
+        "correct": 2,
+        "exp": "Cl₂: hai nguyên tử giống hệt nhau, Δχ = 0 → liên kết CHT không phân cực. Các phân tử còn lại đều có Δχ > 0 → liên kết phân cực."
+      },
+      {
+        "type": "mcq",
+        "q": "Trong phân tử H₂O, loại liên kết giữa O và H là gì? (χH = 2,20; χO = 3,44)",
+        "opts": [
+          "Ion",
+          "CHT không phân cực",
+          "CHT phân cực",
+          "Liên kết hydrogen"
+        ],
+        "correct": 2,
+        "exp": "Δχ(O–H) = 3,44 − 2,20 = 1,24. 0,4 ≤ 1,24 < 1,7 → Liên kết cộng hoá trị phân cực. Liên kết hydrogen là liên kết giữa các PHÂN TỬ H₂O với nhau."
+      },
+      {
+        "type": "mcq",
+        "q": "Tại sao ethanolamine (HOCH₂CH₂NH₂) có nhiệt độ sôi cao hơn ethane (C₂H₆)?",
+        "opts": [
+          "Ethanolamine có khối lượng phân tử lớn hơn nhiều",
+          "Ethanolamine có liên kết hydrogen liên phân tử (O–H và N–H), còn ethane không có",
+          "Ethane có tương tác van der Waals lớn hơn",
+          "Ethanolamine có liên kết ion"
+        ],
+        "correct": 1,
+        "exp": "Ethanolamine có nhóm –OH và –NH₂ → tạo liên kết hydrogen liên phân tử. Ethane (C₂H₆) chỉ có liên kết C–H và C–C, không tạo liên kết hydrogen → nhiệt độ sôi thấp hơn nhiều."
+      },
+      {
+        "type": "mcq",
+        "q": "Hợp chất nào dẫn điện được khi ở trạng thái nóng chảy?",
+        "opts": [
+          "C₆H₁₂O₆ (glucose)",
+          "NaCl (muối ăn)",
+          "SiO₂ (thạch anh)",
+          "Tất cả đều không"
+        ],
+        "correct": 1,
+        "exp": "NaCl là hợp chất ion. Khi nóng chảy, các ion Na⁺ và Cl⁻ tự do di chuyển → dẫn điện. Glucose và SiO₂ không phải hợp chất ion, không dẫn điện khi nóng chảy."
+      }
+    ],
+    "redox": [
+      {
+        "type": "mcq",
+        "q": "Số oxi hoá của Manganese (Mn) trong KMnO₄ là:",
+        "opts": [
+          "+2",
+          "+4",
+          "+6",
+          "+7"
+        ],
+        "correct": 3,
+        "exp": "KMnO₄: K (+1) + Mn (x) + 4×O (−2) = 0 → 1 + x − 8 = 0 → x = +7."
+      },
+      {
+        "type": "mcq",
+        "q": "Trong phản ứng: Fe + CuSO₄ → FeSO₄ + Cu, chất khử là:",
+        "opts": [
+          "Fe",
+          "Cu²⁺",
+          "Fe²⁺",
+          "SO₄²⁻"
+        ],
+        "correct": 0,
+        "exp": "Fe⁰ → Fe²⁺ + 2e: Fe nhường electron → Fe là chất khử (bị oxi hoá). Cu²⁺ + 2e → Cu⁰: Cu²⁺ là chất oxi hoá (bị khử)."
+      },
+      {
+        "type": "mcq",
+        "q": "Phản ứng nào sau đây KHÔNG phải là phản ứng oxi hoá – khử?",
+        "opts": [
+          "2H₂ + O₂ → 2H₂O",
+          "Mg + 2HCl → MgCl₂ + H₂",
+          "NaOH + HCl → NaCl + H₂O",
+          "Zn + CuSO₄ → ZnSO₄ + Cu"
+        ],
+        "correct": 2,
+        "exp": "Phản ứng trung hoà NaOH + HCl → NaCl + H₂O không có sự thay đổi số oxi hoá của nguyên tố nào (Na: +1→+1, O: −2→−2, H: +1→+1, Cl: −1→−1) → không phải phản ứng oxi hoá – khử."
+      },
+      {
+        "type": "mcq",
+        "q": "Trong phản ứng: 2KMnO₄ + 16HCl → 2KCl + 2MnCl₂ + 5Cl₂ + 8H₂O, chất nào vừa là chất oxi hoá vừa bị oxi hoá?",
+        "opts": [
+          "KMnO₄",
+          "HCl",
+          "MnCl₂",
+          "Cl₂"
+        ],
+        "correct": 1,
+        "exp": "HCl: một phần Cl⁻ (−1) bị oxi hoá thành Cl₂ (0) → HCl là chất khử (bị oxi hoá). KMnO₄: Mn⁷⁺ → Mn²⁺ (nhận 5e) → KMnO₄ là chất oxi hoá. Câu hỏi hỏi 'vừa là chất oxi hoá vừa bị oxi hoá' → không có trong ví dụ này. Đây là câu dễ nhầm."
+      },
+      {
+        "type": "mcq",
+        "q": "Cân bằng phản ứng: Al + HNO₃ (loãng) → Al(NO₃)₃ + N₂O + H₂O. Hệ số tối giản của Al và N₂O lần lượt là:",
+        "opts": [
+          "8 và 3",
+          "4 và 3",
+          "8 và 4",
+          "3 và 8"
+        ],
+        "correct": 0,
+        "exp": "Al⁰ → Al³⁺ + 3e (×8). 2N⁵⁺ + 8e → N₂O (×3). Tổng e nhường = 24, tổng e nhận = 24. Hệ số Al = 8, N₂O = 3. Phương trình: 8Al + 30HNO₃ → 8Al(NO₃)₃ + 3N₂O + 15H₂O."
+      },
+      {
+        "type": "mcq",
+        "q": "Số oxi hoá của Chromium (Cr) trong Cr₂O₇²⁻ là:",
+        "opts": [
+          "+3",
+          "+4",
+          "+6",
+          "+7"
+        ],
+        "correct": 2,
+        "exp": "Cr₂O₇²⁻: 2x + 7×(−2) = −2 → 2x − 14 = −2 → 2x = 12 → x = +6."
+      },
+      {
+        "type": "mcq",
+        "q": "Phản ứng oxi hoá – khử xảy ra do sự:",
+        "opts": [
+          "Trao đổi ion giữa các chất",
+          "Chuyển dịch electron giữa các chất",
+          "Hòa tan các chất",
+          "Kết tủa các chất"
+        ],
+        "correct": 1,
+        "exp": "Bản chất của phản ứng oxi hoá – khử là sự chuyển dịch (nhường/nhận) electron giữa các chất phản ứng, dẫn đến thay đổi số oxi hoá."
+      },
+      {
+        "type": "mcq",
+        "q": "Trong phản ứng: 3Cu + 8HNO₃ (loãng) → 3Cu(NO₃)₂ + 2NO↑ + 4H₂O, số mol HNO₃ đóng vai trò chất oxi hoá trên 1 mol Cu là:",
+        "opts": [
+          "8/3",
+          "2/3",
+          "1",
+          "8"
+        ],
+        "correct": 1,
+        "exp": "Chỉ N⁵⁺ (trong HNO₃) nhận e → chất oxi hoá. Có 2 mol NO tạo thành → 2 mol HNO₃ là chất oxi hoá. 3 mol Cu → 2/3 mol HNO₃ đóng vai trò oxi hoá trên 1 mol Cu."
+      },
+      {
+        "type": "mcq",
+        "q": "Cho phản ứng: MnO₂ + 4HCl → MnCl₂ + Cl₂ + 2H₂O. Phát biểu nào đúng?",
+        "opts": [
+          "MnO₂ là chất khử",
+          "HCl vừa là chất khử vừa là môi trường",
+          "Cl₂ vừa là chất oxi hoá vừa là chất khử",
+          "Mn không thay đổi số oxi hoá"
+        ],
+        "correct": 1,
+        "exp": "Mn⁴⁺ (MnO₂) + 2e → Mn²⁺ (MnCl₂): MnO₂ là chất oxi hoá. Cl⁻ (HCl) → Cl₂ (2Cl⁻ → Cl₂ + 2e): HCl là chất khử. 2HCl còn lại tạo MnCl₂ và H₂O → đóng vai trò môi trường."
+      },
+      {
+        "type": "mcq",
+        "q": "Trong phản ứng oxi hoá – khử, phát biểu nào sau đây ĐÚNG?",
+        "opts": [
+          "Chất oxi hoá nhường electron",
+          "Chất khử nhận electron",
+          "Quá trình khử là quá trình nhận electron",
+          "Số oxi hoá của chất oxi hoá tăng"
+        ],
+        "correct": 2,
+        "exp": "Quá trình khử (sự khử) là quá trình nhận electron (số oxi hoá giảm). Chất oxi hoá nhận electron (không phải nhường), chất khử nhường electron. Số oxi hoá của chất oxi hoá giảm (không phải tăng)."
+      }
+    ],
+    "thermo": [
+      {
+        "type": "mcq",
+        "q": "Phản ứng nào sau đây là phản ứng toả nhiệt?",
+        "opts": [
+          "Nhiệt phân CaCO₃",
+          "Hòa tan NH₄Cl vào nước (thu nhiệt)",
+          "Đốt cháy methane (CH₄)",
+          "Quang hợp của cây xanh"
+        ],
+        "correct": 2,
+        "exp": "CH₄(g) + 2O₂(g) → CO₂(g) + 2H₂O(l), ΔH = −890 kJ. Tất cả phản ứng cháy đều toả nhiệt. Các phản ứng còn lại đều thu nhiệt (cần cung cấp năng lượng)."
+      },
+      {
+        "type": "mcq",
+        "q": "Điều kiện chuẩn trong nhiệt hoá học thường được chọn ở áp suất và nhiệt độ nào?",
+        "opts": [
+          "1 atm và 0°C",
+          "1 bar và 25°C (298 K)",
+          "1 atm và 100°C",
+          "1 bar và 0°C"
+        ],
+        "correct": 1,
+        "exp": "Điều kiện chuẩn: áp suất 1 bar (≈ 100 kPa) với chất khí; nồng độ 1 mol/L với chất tan trong dung dịch; nhiệt độ thường chọn 25°C (298 K)."
+      },
+      {
+        "type": "mcq",
+        "q": "Cho phản ứng: N₂(g) + O₂(g) → 2NO(g), ΔᵣH°₂₉₈ = +180,5 kJ. Phát biểu nào đúng?",
+        "opts": [
+          "Phản ứng toả nhiệt, hệ giải phóng 180,5 kJ",
+          "Phản ứng thu nhiệt, cần cung cấp 180,5 kJ để tạo 2 mol NO",
+          "Phản ứng không trao đổi nhiệt",
+          "ΔH > 0 chứng tỏ phản ứng tự xảy ra thuận lợi"
+        ],
+        "correct": 1,
+        "exp": "ΔH = +180,5 kJ > 0 → phản ứng thu nhiệt (hệ hấp thụ 180,5 kJ từ môi trường để tạo ra 2 mol NO từ N₂ và O₂). Đây là lý do tia sét tạo ra NO trong khí quyển."
+      },
+      {
+        "type": "mcq",
+        "q": "Nhiệt tạo thành chuẩn (ΔfH°₂₉₈) của một đơn chất bền (H₂, C graphite, O₂...) có giá trị là:",
+        "opts": [
+          "+1 kJ/mol",
+          "−1 kJ/mol",
+          "0 kJ/mol",
+          "Khác nhau cho mỗi đơn chất"
+        ],
+        "correct": 2,
+        "exp": "Theo định nghĩa, nhiệt tạo thành chuẩn của bất kì đơn chất nào ở trạng thái bền nhất đều bằng 0, vì không cần phản ứng nào để 'tạo thành' đơn chất từ chính nó."
+      },
+      {
+        "type": "mcq",
+        "q": "Cho biết năng lượng liên kết: Eb(H–H) = 436 kJ/mol; Eb(Cl–Cl) = 243 kJ/mol; Eb(H–Cl) = 432 kJ/mol. Tính ΔᵣH°₂₉₈ của phản ứng H₂(g) + Cl₂(g) → 2HCl(g):",
+        "opts": [
+          "−185 kJ",
+          "+185 kJ",
+          "−432 kJ",
+          "+432 kJ"
+        ],
+        "correct": 0,
+        "exp": "ΔH = [Eb(H–H) + Eb(Cl–Cl)] − [2 × Eb(H–Cl)] = (436 + 243) − (2 × 432) = 679 − 864 = −185 kJ. Phản ứng toả 185 kJ."
+      },
+      {
+        "type": "mcq",
+        "q": "Đại lượng nào đặc trưng cho lượng nhiệt trao đổi của phản ứng ở áp suất không đổi?",
+        "opts": [
+          "Nhiệt độ (T)",
+          "Biến thiên enthalpy (ΔH)",
+          "Áp suất (P)",
+          "Thể tích (V)"
+        ],
+        "correct": 1,
+        "exp": "Biến thiên enthalpy ΔH đặc trưng cho nhiệt lượng trao đổi của hệ với môi trường ở áp suất không đổi. ΔH < 0: toả nhiệt; ΔH > 0: thu nhiệt."
+      },
+      {
+        "type": "mcq",
+        "q": "Cho: ΔfH°₂₉₈(CO₂) = −393,5 kJ/mol; ΔfH°₂₉₈(H₂O, l) = −285,8 kJ/mol; ΔfH°₂₉₈(CH₄) = −74,8 kJ/mol. Tính ΔᵣH°₂₉₈ của phản ứng: CH₄(g) + 2O₂(g) → CO₂(g) + 2H₂O(l)",
+        "opts": [
+          "−890,3 kJ",
+          "+890,3 kJ",
+          "−604,5 kJ",
+          "+604,5 kJ"
+        ],
+        "correct": 0,
+        "exp": "ΔH = [ΔfH°(CO₂) + 2×ΔfH°(H₂O)] − [ΔfH°(CH₄) + 2×ΔfH°(O₂)] = [−393,5 + 2×(−285,8)] − [−74,8 + 0] = −965,1 − (−74,8) = −890,3 kJ."
+      },
+      {
+        "type": "mcq",
+        "q": "Phản ứng phân hủy Cu(OH)₂: Cu(OH)₂(s) → CuO(s) + H₂O(l) cần đun nóng liên tục. Kết luận nào đúng?",
+        "opts": [
+          "ΔH < 0, toả nhiệt",
+          "ΔH > 0, thu nhiệt",
+          "ΔH = 0, không trao đổi nhiệt",
+          "Không thể biết từ thông tin đã cho"
+        ],
+        "correct": 1,
+        "exp": "Cần đun nóng liên tục = hệ hấp thụ nhiệt từ môi trường → phản ứng thu nhiệt → ΔH > 0."
+      },
+      {
+        "type": "mcq",
+        "q": "Biết Eb(N≡N) = 945 kJ/mol; Eb(H–H) = 436 kJ/mol; Eb(N–H) = 391 kJ/mol. ΔᵣH của N₂ + 3H₂ → 2NH₃ là:",
+        "opts": [
+          "−92 kJ",
+          "+92 kJ",
+          "−2349 kJ",
+          "+2349 kJ"
+        ],
+        "correct": 0,
+        "exp": "ΔH = [Eb(N≡N) + 3×Eb(H–H)] − [2×3×Eb(N–H)] = [945 + 3×436] − [6×391] = [945 + 1308] − 2346 = 2253 − 2346 = −93 kJ ≈ −92 kJ."
+      },
+      {
+        "type": "mcq",
+        "q": "Phương trình nhiệt hoá học cần ghi thêm thông tin gì so với phương trình hoá học thông thường?",
+        "opts": [
+          "Chỉ cần ghi điều kiện phản ứng",
+          "Trạng thái của các chất và giá trị ΔᵣH°₂₉₈",
+          "Chỉ cần ghi giá trị ΔH",
+          "Nhiệt độ và áp suất thực hiện phản ứng"
+        ],
+        "correct": 1,
+        "exp": "Phương trình nhiệt hoá học cần ghi thêm: (1) trạng thái của các chất (s, l, g, aq) vì ΔH phụ thuộc vào trạng thái; và (2) giá trị ΔᵣH°₂₉₈ (kJ)."
+      }
+    ],
+    "speed": [
+      {
+        "type": "mcq",
+        "q": "Tốc độ phản ứng hoá học là:",
+        "opts": [
+          "Thời gian để phản ứng kết thúc",
+          "Độ biến thiên nồng độ của một chất trong một đơn vị thời gian",
+          "Khối lượng chất phản ứng bị tiêu thụ",
+          "Số mol chất sản phẩm tạo ra"
+        ],
+        "correct": 1,
+        "exp": "Tốc độ phản ứng đo lường sự thay đổi nồng độ (mol/L) của chất phản ứng (giảm) hoặc sản phẩm (tăng) trong một đơn vị thời gian (s, min)."
+      },
+      {
+        "type": "mcq",
+        "q": "Yếu tố nào sau đây KHÔNG làm thay đổi hằng số tốc độ phản ứng k?",
+        "opts": [
+          "Nhiệt độ",
+          "Nồng độ chất phản ứng",
+          "Bản chất của phản ứng",
+          "Chất xúc tác"
+        ],
+        "correct": 1,
+        "exp": "Hằng số tốc độ k chỉ phụ thuộc vào bản chất phản ứng và nhiệt độ (cũng bị ảnh hưởng bởi chất xúc tác). Nồng độ KHÔNG ảnh hưởng đến k (nồng độ ảnh hưởng đến tốc độ v qua phương trình v = k[A]ᵃ[B]ᵇ)."
+      },
+      {
+        "type": "mcq",
+        "q": "Nếu hệ số nhiệt độ Van't Hoff γ = 3, khi tăng nhiệt độ từ 20°C lên 50°C, tốc độ phản ứng tăng lên bao nhiêu lần?",
+        "opts": [
+          "3 lần",
+          "9 lần",
+          "27 lần",
+          "81 lần"
+        ],
+        "correct": 2,
+        "exp": "Tăng 30°C = 3 lần tăng 10°C. Tốc độ tăng = γ^(ΔT/10) = 3^(30/10) = 3³ = 27 lần."
+      },
+      {
+        "type": "mcq",
+        "q": "Để làm thịt nhanh chín hơn khi nấu nướng, người ta thường thái nhỏ thịt. Yếu tố nào đã được áp dụng?",
+        "opts": [
+          "Nhiệt độ",
+          "Nồng độ",
+          "Diện tích tiếp xúc bề mặt",
+          "Chất xúc tác"
+        ],
+        "correct": 2,
+        "exp": "Thái nhỏ thịt giúp tăng diện tích tiếp xúc giữa thịt với nhiệt và các chất trong quá trình nấu → phản ứng hoá học (biến tính protein, phân huỷ) xảy ra nhanh hơn → thịt chín nhanh hơn."
+      },
+      {
+        "type": "mcq",
+        "q": "Chất xúc tác làm tăng tốc độ phản ứng bằng cách nào?",
+        "opts": [
+          "Tăng nồng độ chất phản ứng",
+          "Tăng nhiệt độ phản ứng",
+          "Hạ thấp năng lượng hoạt hoá của phản ứng",
+          "Tăng số va chạm giữa các phân tử"
+        ],
+        "correct": 2,
+        "exp": "Chất xúc tác làm tăng tốc độ phản ứng bằng cách tạo ra con đường phản ứng mới có năng lượng hoạt hoá (Ea) thấp hơn, do đó nhiều hạt có đủ năng lượng để phản ứng hơn."
+      },
+      {
+        "type": "mcq",
+        "q": "Nồng độ ban đầu của N₂ và H₂ trong bình phản ứng: [N₂] = 0,01 mol/L; [H₂] = 0,03 mol/L. Sau 20 giây, nồng độ N₂ còn 0,008 mol/L. Tốc độ trung bình của phản ứng N₂ + 3H₂ → 2NH₃ tính theo N₂ là:",
+        "opts": [
+          "1 × 10⁻⁴ mol/L·s",
+          "2 × 10⁻⁴ mol/L·s",
+          "3 × 10⁻⁴ mol/L·s",
+          "1 × 10⁻³ mol/L·s"
+        ],
+        "correct": 0,
+        "exp": "ΔC(N₂) = 0,01 − 0,008 = 0,002 mol/L; Δt = 20 s. v̄ = 0,002 / 20 = 1 × 10⁻⁴ mol/L·s."
+      },
+      {
+        "type": "mcq",
+        "q": "Phản ứng A → B có hệ số nhiệt độ γ = 2. Ở 30°C, v = 1 mol/L·s. Ở 70°C, tốc độ phản ứng là:",
+        "opts": [
+          "4 mol/L·s",
+          "8 mol/L·s",
+          "16 mol/L·s",
+          "2 mol/L·s"
+        ],
+        "correct": 2,
+        "exp": "Tăng từ 30°C lên 70°C: ΔT = 40°C = 4 lần 10°C. v₇₀/v₃₀ = 2⁴ = 16. v₇₀ = 1 × 16 = 16 mol/L·s."
+      },
+      {
+        "type": "mcq",
+        "q": "Trong sản xuất amoniac (N₂ + 3H₂ ⇌ 2NH₃), người ta dùng Fe làm xúc tác. Vai trò của Fe là:",
+        "opts": [
+          "Tăng hiệu suất tạo NH₃",
+          "Làm cho phản ứng đạt cân bằng nhanh hơn mà không làm thay đổi vị trí cân bằng",
+          "Làm thay đổi chiều phản ứng",
+          "Tăng nồng độ NH₃ ở cân bằng"
+        ],
+        "correct": 1,
+        "exp": "Chất xúc tác Fe giúp phản ứng đạt trạng thái cân bằng nhanh hơn bằng cách giảm Ea cho cả hai chiều phản ứng, nhưng không làm thay đổi thành phần hỗn hợp tại cân bằng (hằng số cân bằng Kc không đổi)."
+      },
+      {
+        "type": "mcq",
+        "q": "Biểu thức tốc độ v = k[A]²[B] ứng với phản ứng nào có bậc phản ứng tổng quát là 3?",
+        "opts": [
+          "A + B → Sản phẩm",
+          "2A + B → Sản phẩm (phản ứng đơn giản)",
+          "A₂ + B → Sản phẩm (phản ứng đơn giản)",
+          "Tất cả đều đúng"
+        ],
+        "correct": 1,
+        "exp": "Với phản ứng đơn giản 2A + B → sp, bậc phản ứng theo A là 2, theo B là 1, tổng bậc = 3 → v = k[A]²[B]."
+      },
+      {
+        "type": "mcq",
+        "q": "Tốc độ phản ứng KHÔNG phụ thuộc vào yếu tố nào sau đây?",
+        "opts": [
+          "Nhiệt độ",
+          "Bản chất các chất phản ứng",
+          "Màu sắc của chất phản ứng",
+          "Nồng độ các chất phản ứng"
+        ],
+        "correct": 2,
+        "exp": "Màu sắc của chất phản ứng không ảnh hưởng đến tốc độ phản ứng hoá học. Tốc độ phụ thuộc vào: bản chất chất phản ứng, nồng độ, nhiệt độ, áp suất (chất khí), diện tích bề mặt, chất xúc tác."
+      }
+    ],
+    "halogens": [
+      {
+        "type": "mcq",
+        "q": "Nguyên tố nào có tính oxi hoá mạnh nhất trong nhóm halogen?",
+        "opts": [
+          "Iodine (I)",
+          "Bromine (Br)",
+          "Chlorine (Cl)",
+          "Fluorine (F)"
+        ],
+        "correct": 3,
+        "exp": "Fluorine có độ âm điện lớn nhất (3,98 theo Pauling), bán kính nguyên tử nhỏ nhất trong nhóm halogen → lực hút electron lớn nhất → tính oxi hoá mạnh nhất."
+      },
+      {
+        "type": "mcq",
+        "q": "Trong bảng 21.2, trạng thái và màu sắc của Bromine (Br₂) ở điều kiện thường là:",
+        "opts": [
+          "Khí, màu vàng lục",
+          "Lỏng, màu nâu đỏ",
+          "Rắn, màu tím đen",
+          "Khí, màu vàng nhạt"
+        ],
+        "correct": 1,
+        "exp": "Theo bảng 21.2, Br₂ ở điều kiện thường là chất lỏng màu nâu đỏ, dễ bay hơi và có tính độc cao."
+      },
+      {
+        "type": "mcq",
+        "q": "Khi chlorine tan vào nước, phản ứng xảy ra là:",
+        "opts": [
+          "Cl₂ + H₂O → HClO₂ + HCl",
+          "Cl₂ + H₂O ⇌ HCl + HClO",
+          "Cl₂ + H₂O → HCl + H₂",
+          "Cl₂ + H₂O → 2HCl + O₂"
+        ],
+        "correct": 1,
+        "exp": "Cl₂ + H₂O ⇌ HCl + HClO (nước chlorine). HClO là hypochlorous acid, có tính oxi hoá mạnh → có tính tẩy màu và khử trùng, dùng trong xử lý nước sinh hoạt."
+      },
+      {
+        "type": "mcq",
+        "q": "Tại sao nhiệt độ sôi tăng theo thứ tự F₂ < Cl₂ < Br₂ < I₂?",
+        "opts": [
+          "Vì liên kết X–X ngày càng bền hơn",
+          "Vì tương tác van der Waals tăng khi khối lượng phân tử tăng",
+          "Vì liên kết hydrogen tăng dần từ F₂ đến I₂",
+          "Vì độ âm điện giảm dần từ F đến I"
+        ],
+        "correct": 1,
+        "exp": "Các đơn chất halogen X₂ là phân tử không phân cực, không tạo liên kết hydrogen. Nhiệt độ sôi tăng do tương tác van der Waals (lực London) tăng khi khối lượng phân tử và kích thước phân tử tăng."
+      },
+      {
+        "type": "mcq",
+        "q": "Phản ứng của chlorine với dung dịch NaOH ở nhiệt độ thường tạo ra sản phẩm gì?",
+        "opts": [
+          "NaCl và NaClO₃",
+          "NaCl và NaClO (nước Javel)",
+          "NaCl và NaClO₄",
+          "Chỉ tạo ra NaCl"
+        ],
+        "correct": 1,
+        "exp": "Cl₂ + 2NaOH (thường) → NaCl + NaClO + H₂O. Hỗn hợp NaCl và NaClO (sodium hypochlorite) là thành phần của nước Javel, dùng tẩy trắng và khử trùng."
+      },
+      {
+        "type": "mcq",
+        "q": "Acid nào trong dãy hydrohalic acid là acid YẾU?",
+        "opts": [
+          "HCl",
+          "HBr",
+          "HI",
+          "HF"
+        ],
+        "correct": 3,
+        "exp": "HF là acid yếu duy nhất trong dãy hydrohalic acid do liên kết H–F rất bền (Eb = 569 kJ/mol) và có liên kết hydrogen liên phân tử mạnh, làm cho HF khó phân li trong nước hơn HCl, HBr, HI."
+      },
+      {
+        "type": "mcq",
+        "q": "Dùng thuốc thử nào để nhận biết ion Cl⁻, Br⁻, I⁻ trong dung dịch?",
+        "opts": [
+          "BaCl₂",
+          "AgNO₃",
+          "NaOH",
+          "H₂SO₄ loãng"
+        ],
+        "correct": 1,
+        "exp": "Dung dịch AgNO₃: Cl⁻ → AgCl↓ trắng; Br⁻ → AgBr↓ vàng nhạt; I⁻ → AgI↓ vàng đậm. Đây là phản ứng trao đổi ion đặc trưng để nhận biết ion halide."
+      },
+      {
+        "type": "mcq",
+        "q": "Tại sao HF (t°sôi = +19,5°C) có nhiệt độ sôi cao bất thường so với HCl (−84,9°C), HBr (−66,7°C) và HI (−35,8°C)?",
+        "opts": [
+          "Vì liên kết H–F bền hơn liên kết H–Cl",
+          "Vì HF tạo liên kết hydrogen liên phân tử H–F···H–F rất bền",
+          "Vì HF có phân tử khối lớn hơn HCl",
+          "Vì F có độ âm điện nhỏ hơn Cl"
+        ],
+        "correct": 1,
+        "exp": "HF phân cực mạnh (F là nguyên tử có độ âm điện lớn nhất) → H mang điện tích dương đủ lớn để tạo liên kết hydrogen O–H···F (hay F–H···F) mạnh giữa các phân tử HF → cần nhiều năng lượng để phá vỡ liên kết này khi sôi → nhiệt độ sôi cao bất thường."
+      },
+      {
+        "type": "mcq",
+        "q": "Kết tủa AgBr có màu gì khi nhỏ AgNO₃ vào dung dịch NaBr?",
+        "opts": [
+          "Trắng",
+          "Vàng nhạt",
+          "Vàng đậm",
+          "Đen"
+        ],
+        "correct": 1,
+        "exp": "AgBr↓ có màu vàng nhạt. Để phân biệt: AgCl (trắng) < AgBr (vàng nhạt) < AgI (vàng đậm)."
+      },
+      {
+        "type": "mcq",
+        "q": "So sánh tính khử của các ion: F⁻, Cl⁻, Br⁻, I⁻?",
+        "opts": [
+          "F⁻ > Cl⁻ > Br⁻ > I⁻",
+          "I⁻ > Br⁻ > Cl⁻ > F⁻",
+          "Cl⁻ > Br⁻ > I⁻ > F⁻",
+          "Tất cả như nhau"
+        ],
+        "correct": 1,
+        "exp": "Tính khử của ion halide tăng dần từ F⁻ đến I⁻. Kích thước ion tăng từ F⁻ đến I⁻ → electron lớp ngoài cùng bị hút yếu hơn → dễ nhường electron hơn → tính khử tăng. F⁻ hầu như không có tính khử."
+      },
+      {
+        "type": "mcq",
+        "q": "Dãy sắp xếp đúng các hydrohalic acid theo chiều tăng dần tính acid là:",
+        "opts": [
+          "HCl < HBr < HI < HF",
+          "HF < HCl < HBr < HI",
+          "HI < HBr < HCl < HF",
+          "HF < HI < HBr < HCl"
+        ],
+        "correct": 1,
+        "exp": "Năng lượng liên kết H–X giảm dần từ HF đến HI (569 > 432 > 366 > 299 kJ/mol) → khả năng phân li H⁺ tăng dần → tính acid tăng dần: HF (yếu) < HCl < HBr < HI (rất mạnh)."
+      },
+      {
+        "type": "mcq",
+        "q": "Thành phần chính của nước Javel là:",
+        "opts": [
+          "NaCl và NaClO",
+          "NaCl và NaClO₃",
+          "KCl và KClO",
+          "CaCl₂ và Ca(ClO)₂"
+        ],
+        "correct": 0,
+        "exp": "Nước Javel được tạo ra bằng phản ứng Cl₂ + 2NaOH → NaCl + NaClO + H₂O. Thành phần gồm: NaCl (sodium chloride) và NaClO (sodium hypochlorite) — chất có tính tẩy trắng và khử trùng."
+      },
+      {
+        "type": "mcq",
+        "q": "Khi đổ dung dịch AgNO₃ vào dung dịch muối nào sau đây sẽ KHÔNG thấy kết tủa?",
+        "opts": [
+          "NaF",
+          "NaCl",
+          "NaBr",
+          "NaI"
+        ],
+        "correct": 0,
+        "exp": "AgF tan trong nước (không tạo kết tủa). Còn AgCl (trắng), AgBr (vàng nhạt), AgI (vàng đậm) đều là kết tủa ít tan."
+      },
+      {
+        "type": "mcq",
+        "q": "Halogen nào thể hiện tính tự oxi hoá – tự khử khi tác dụng với nước?",
+        "opts": [
+          "F₂",
+          "Cl₂",
+          "Br₂",
+          "I₂"
+        ],
+        "correct": 1,
+        "exp": "Cl₂ + H₂O ⇌ HCl + HClO: Cl₂ (số oxh = 0) vừa bị oxi hoá (+1 trong HClO) vừa bị khử (−1 trong HCl) → tự oxi hoá − tự khử. F₂ phản ứng mãnh liệt tạo HF + O₂, không phải tự oxi hoá – tự khử."
+      },
+      {
+        "type": "mcq",
+        "q": "Biết rằng E°(F₂/F⁻) > E°(Cl₂/Cl⁻) > E°(Br₂/Br⁻) > E°(I₂/I⁻). Phản ứng nào sau đây KHÔNG xảy ra?",
+        "opts": [
+          "Cl₂ + 2NaBr → 2NaCl + Br₂",
+          "Br₂ + 2NaI → 2NaBr + I₂",
+          "F₂ + 2NaCl → 2NaF + Cl₂",
+          "I₂ + 2NaCl → 2NaI + Cl₂"
+        ],
+        "correct": 3,
+        "exp": "Halogen có tính oxi hoá mạnh hơn mới đẩy được halogen yếu hơn ra khỏi dung dịch muối. I₂ có tính oxi hoá yếu hơn Cl₂ nên I₂ không đẩy được Cl⁻ thành Cl₂."
+      }
+    ],
+    "equilib": [
+      {
+        "type": "mcq",
+        "q": "Phản ứng nào sau đây là phản ứng thuận nghịch?",
+        "opts": [
+          "2KClO₃ → 2KCl + 3O₂ (to)",
+          "N₂ + 3H₂ ⇌ 2NH₃",
+          "NaOH + HCl → NaCl + H₂O",
+          "Zn + 2HCl → ZnCl₂ + H₂↑"
+        ],
+        "correct": 1,
+        "exp": "Ký hiệu ⇌ chỉ phản ứng thuận nghịch. N₂ + 3H₂ ⇌ 2NH₃ là phản ứng tổng hợp amoniac điển hình của Haber."
+      },
+      {
+        "type": "mcq",
+        "q": "Tại trạng thái cân bằng hóa học, điều nào sau đây ĐÚNG?",
+        "opts": [
+          "Phản ứng dừng lại hoàn toàn",
+          "Nồng độ chất đầu bằng nồng độ sản phẩm",
+          "Tốc độ phản ứng thuận bằng tốc độ phản ứng nghịch",
+          "Chỉ còn lại sản phẩm"
+        ],
+        "correct": 2,
+        "exp": "Cân bằng động: v₁ = v₂ ≠ 0. Nồng độ không đổi nhưng không nhất thiết bằng nhau."
+      },
+      {
+        "type": "mcq",
+        "q": "Cho phản ứng: 2SO₂ + O₂ ⇌ 2SO₃ (ΔH < 0). Để tăng hiệu suất tạo SO₃, ta nên:",
+        "opts": [
+          "Tăng nhiệt độ",
+          "Giảm áp suất",
+          "Tăng nồng độ SO₂",
+          "Thêm chất xúc tác để dịch chuyển cân bằng thuận"
+        ],
+        "correct": 2,
+        "exp": "Tăng nồng độ chất đầu (SO₂) → CB dịch theo chiều thuận → tạo thêm SO₃. Chất xúc tác chỉ giúp đạt CB nhanh hơn, không dịch chuyển CB."
+      },
+      {
+        "type": "mcq",
+        "q": "Kc của phản ứng H₂ + I₂ ⇌ 2HI được tính bằng:",
+        "opts": [
+          "[HI]²/[H₂][I₂]",
+          "[H₂][I₂]/[HI]²",
+          "[HI]/[H₂][I₂]",
+          "[H₂][I₂]/[HI]"
+        ],
+        "correct": 0,
+        "exp": "Kc = [sản phẩm]^hệ số / [chất đầu]^hệ số = [HI]² / ([H₂][I₂])"
+      },
+      {
+        "type": "mcq",
+        "q": "Hằng số cân bằng Kc phụ thuộc vào yếu tố nào?",
+        "opts": [
+          "Nồng độ chất đầu",
+          "Áp suất",
+          "Nhiệt độ",
+          "Chất xúc tác"
+        ],
+        "correct": 2,
+        "exp": "Kc chỉ phụ thuộc vào nhiệt độ. Thay đổi nồng độ, áp suất hay chất xúc tác không làm thay đổi Kc."
+      },
+      {
+        "type": "mcq",
+        "q": "Dung dịch HCl 0,01M có pH = ?",
+        "opts": [
+          "1",
+          "2",
+          "12",
+          "13"
+        ],
+        "correct": 1,
+        "exp": "HCl điện li mạnh: HCl → H⁺ + Cl⁻ → [H⁺] = 0,01 = 10⁻². pH = −log(10⁻²) = 2."
+      },
+      {
+        "type": "mcq",
+        "q": "Tại 25°C, dung dịch có [OH⁻] = 10⁻³ M thì pH = ?",
+        "opts": [
+          "3",
+          "11",
+          "4",
+          "10"
+        ],
+        "correct": 1,
+        "exp": "pOH = −log(10⁻³) = 3. pH = 14 − pOH = 14 − 3 = 11. Dung dịch có tính bazơ."
+      },
+      {
+        "type": "mcq",
+        "q": "Chất nào sau đây là chất điện li mạnh?",
+        "opts": [
+          "CH₃COOH",
+          "HF",
+          "NaOH",
+          "NH₃"
+        ],
+        "correct": 2,
+        "exp": "NaOH là bazơ mạnh, điện li hoàn toàn: NaOH → Na⁺ + OH⁻. CH₃COOH, HF là axit yếu; NH₃ là bazơ yếu."
+      },
+      {
+        "type": "mcq",
+        "q": "Phản ứng nào sau đây XẢY RA trong dung dịch?",
+        "opts": [
+          "NaCl + KNO₃ → KCl + NaNO₃",
+          "BaCl₂ + Na₂SO₄ → BaSO₄↓ + 2NaCl",
+          "KCl + NaOH → không phản ứng",
+          "HCl + NaNO₃ → không phản ứng"
+        ],
+        "correct": 1,
+        "exp": "BaCl₂ + Na₂SO₄ → BaSO₄↓ + 2NaCl xảy ra vì tạo kết tủa BaSO₄ không tan."
+      },
+      {
+        "type": "mcq",
+        "q": "Giá trị Kw = [H⁺][OH⁻] = 10⁻¹⁴ ở 25°C. Nếu [H⁺] = 10⁻⁵ M thì [OH⁻] = ?",
+        "opts": [
+          "10⁻⁵ M",
+          "10⁻⁹ M",
+          "10⁻¹⁹ M",
+          "10⁻⁴ M"
+        ],
+        "correct": 1,
+        "exp": "[OH⁻] = Kw / [H⁺] = 10⁻¹⁴ / 10⁻⁵ = 10⁻⁹ M."
+      },
+      {
+        "type": "mcq",
+        "q": "Cho N₂ + 3H₂ ⇌ 2NH₃ (ΔH = −92 kJ/mol). Biện pháp nào làm TĂNG hiệu suất NH₃?",
+        "opts": [
+          "Tăng nhiệt độ",
+          "Giảm áp suất",
+          "Tăng nồng độ N₂ và H₂",
+          "Cho thêm xúc tác sắt (Fe)"
+        ],
+        "correct": 2,
+        "exp": "Tăng nồng độ chất đầu → CB dịch thuận → tăng NH₃. Tăng nhiệt độ dịch nghịch (ΔH<0). Giảm áp suất dịch nghịch (chiều tăng mol khí)."
+      },
+      {
+        "type": "mcq",
+        "q": "Dung dịch HNO₃ 0,001M có pH = ?",
+        "opts": [
+          "1",
+          "2",
+          "3",
+          "4"
+        ],
+        "correct": 2,
+        "exp": "HNO₃ là axit mạnh: [H⁺] = 0,001 = 10⁻³ M. pH = −log(10⁻³) = 3."
+      },
+      {
+        "type": "mcq",
+        "q": "Kc > 1 cho phản ứng thuận nghịch aA ⇌ bB có ý nghĩa là:",
+        "opts": [
+          "Tại cân bằng, nồng độ A > nồng độ B",
+          "Tại cân bằng, sản phẩm B chiếm ưu thế hơn chất đầu A",
+          "Phản ứng chưa đạt cân bằng",
+          "Phản ứng nghịch nhanh hơn phản ứng thuận"
+        ],
+        "correct": 1,
+        "exp": "Kc = [B]ᵇ/[A]ᵃ > 1 → tử số > mẫu số → nồng độ sản phẩm cao hơn."
+      }
+    ],
+    "nitrogen": [
+      {
+        "type": "mcq",
+        "q": "Ở điều kiện thường, đơn chất nitrogen có tính chất hóa học như thế nào?",
+        "opts": [
+          "Rất hoạt động",
+          "Khá trơ",
+          "Phản ứng mạnh với kim loại",
+          "Phản ứng mạnh với oxi"
+        ],
+        "correct": 1,
+        "exp": "Do liên kết ba bền, N₂ trơ ở nhiệt độ thường."
+      },
+      {
+        "type": "mcq",
+        "q": "Trong phản ứng N₂ + 3H₂ ⇌ 2NH₃, nitrogen thể hiện tính chất gì?",
+        "opts": [
+          "Tính khử",
+          "Tính oxi hóa",
+          "Tính base",
+          "Tính acid"
+        ],
+        "correct": 1,
+        "exp": "Số oxi hóa của N giảm từ 0 xuống -3 → N₂ là chất oxi hóa."
+      },
+      {
+        "type": "mcq",
+        "q": "Trong tự nhiên, quá trình nào cung cấp đạm nitrate cho đất từ nitrogen?",
+        "opts": [
+          "Phản ứng N₂ với H₂",
+          "Phản ứng N₂ với O₂ khi có sấm sét",
+          "Phản ứng N₂ với kim loại",
+          "Phản ứng N₂ với nước"
+        ],
+        "correct": 1,
+        "exp": "Sấm sét tạo NO, sau đó chuyển thành HNO₃ rồi NO₃⁻."
+      },
+      {
+        "type": "mcq",
+        "q": "Nguyên nhân chính làm nitrogen khó hóa lỏng và ít tan trong nước là do:",
+        "opts": [
+          "Phân tử khối nhỏ",
+          "Liên kết ba bền",
+          "Tương tác van der Waals yếu",
+          "Phân tử phân cực"
+        ],
+        "correct": 2,
+        "exp": "Giữa các phân tử N₂ chỉ có lực van der Waals yếu, không có liên kết hydro."
+      },
+      {
+        "type": "mcq",
+        "q": "Ứng dụng nào sau đây KHÔNG phải của nitrogen?",
+        "opts": [
+          "Bảo quản thực phẩm",
+          "Làm lạnh nhanh trong y tế",
+          "Sản xuất phân đạm (NH₃)",
+          "Sản xuất pin mặt trời"
+        ],
+        "correct": 3,
+        "exp": "Nitrogen dùng để tổng hợp NH₃, bảo quản, làm lạnh, không dùng sản xuất pin mặt trời."
+      },
+      {
+        "type": "mcq",
+        "q": "Dung dịch NH₃ 0,1M làm quỳ tím chuyển màu gì?",
+        "opts": [
+          "Đỏ",
+          "Xanh",
+          "Tím",
+          "Vàng"
+        ],
+        "correct": 1,
+        "exp": "NH₃ + H₂O ⇌ NH₄⁺ + OH⁻ → môi trường base → quỳ xanh."
+      },
+      {
+        "type": "mcq",
+        "q": "Trong phản ứng 4NH₃ + 5O₂ → 4NO + 6H₂O, NH₃ thể hiện tính chất gì?",
+        "opts": [
+          "Tính base",
+          "Tính oxi hóa",
+          "Tính khử",
+          "Tính acid"
+        ],
+        "correct": 2,
+        "exp": "Số oxi hóa của N tăng từ -3 lên +2 → NH₃ là chất khử."
+      },
+      {
+        "type": "mcq",
+        "q": "Hiện tượng xảy ra khi cho dung dịch NH₃ đặc vào dung dịch CuSO₄ là:",
+        "opts": [
+          "Kết tủa xanh, tan dần",
+          "Kết tủa đỏ nâu",
+          "Sủi bọt khí",
+          "Không hiện tượng"
+        ],
+        "correct": 0,
+        "exp": "Ban đầu tạo Cu(OH)₂ xanh, sau đó tan trong NH₃ dư tạo phức [Cu(NH₃)₄]²⁺ xanh thẫm."
+      },
+      {
+        "type": "mcq",
+        "q": "Để nhận biết ion NH₄⁺ trong dung dịch, ta dùng thuốc thử:",
+        "opts": [
+          "Dung dịch AgNO₃",
+          "Dung dịch NaOH, đun nhẹ",
+          "Dung dịch BaCl₂",
+          "Quỳ tím"
+        ],
+        "correct": 1,
+        "exp": "NH₄⁺ + OH⁻ → NH₃↑ (mùi khai) → nhận biết."
+      },
+      {
+        "type": "mcq",
+        "q": "Muối ammonium nào sau đây được dùng làm chất nổ?",
+        "opts": [
+          "NH₄Cl",
+          "(NH₄)₂SO₄",
+          "NH₄NO₃",
+          "NH₄HCO₃"
+        ],
+        "correct": 2,
+        "exp": "NH₄NO₃ bị phân hủy nhanh tạo N₂, O₂, H₂O, tỏa nhiệt mạnh → gây nổ."
+      },
+      {
+        "type": "mcq",
+        "q": "Khí NO₂ có màu gì?",
+        "opts": [
+          "Không màu",
+          "Trắng",
+          "Nâu đỏ",
+          "Xanh lục"
+        ],
+        "correct": 2,
+        "exp": "NO₂ là khí màu nâu đỏ đặc trưng."
+      },
+      {
+        "type": "mcq",
+        "q": "Nguyên nhân chính gây mưa acid là do các khí:",
+        "opts": [
+          "CO₂ và CH₄",
+          "SO₂ và NOx",
+          "CO và O₃",
+          "H₂S và NH₃"
+        ],
+        "correct": 1,
+        "exp": "SO₂ và NOx chuyển hóa thành H₂SO₄, HNO₃ trong nước mưa."
+      },
+      {
+        "type": "mcq",
+        "q": "Khi cho mảnh đồng vào dung dịch HNO₃ đặc, nóng, hiện tượng quan sát được là:",
+        "opts": [
+          "Có khí không màu thoát ra",
+          "Dung dịch chuyển xanh, khí nâu đỏ",
+          "Không hiện tượng",
+          "Có kết tủa đen"
+        ],
+        "correct": 1,
+        "exp": "Cu + 4HNO₃ đặc → Cu(NO₃)₂ (xanh) + 2NO₂ (nâu đỏ) + 2H₂O."
+      },
+      {
+        "type": "mcq",
+        "q": "Kim loại nào sau đây bị thụ động hóa trong HNO₃ đặc nguội?",
+        "opts": [
+          "Cu",
+          "Ag",
+          "Fe",
+          "Zn"
+        ],
+        "correct": 2,
+        "exp": "Al, Fe, Cr bị thụ động do tạo màng oxit bảo vệ."
+      },
+      {
+        "type": "mcq",
+        "q": "Trong phản ứng của HNO₃ với kim loại, số oxi hóa của N thay đổi như thế nào?",
+        "opts": [
+          "Từ +5 xuống thấp hơn",
+          "Từ +5 lên +7",
+          "Không đổi",
+          "Từ +3 lên +5"
+        ],
+        "correct": 0,
+        "exp": "HNO₃ là chất oxi hóa, N(+5) bị khử xuống các số oxi hóa thấp hơn."
+      }
+    ],
+    "sulfur": [
+      {
+        "type": "mcq",
+        "q": "Sulfur thể hiện tính oxi hóa khi tác dụng với chất nào sau đây?",
+        "opts": [
+          "O₂",
+          "F₂",
+          "H₂",
+          "HNO₃ đặc nóng"
+        ],
+        "correct": 2,
+        "exp": "S + H₂ → H₂S, S nhận electron (từ 0 xuống -2) → tính oxi hóa."
+      },
+      {
+        "type": "mcq",
+        "q": "SO₂ vừa có tính oxi hóa vừa có tính khử vì trong phân tử S có số oxi hóa:",
+        "opts": [
+          "+4 (trung gian)",
+          "-2 (thấp nhất)",
+          "0",
+          "+6 (cao nhất)"
+        ],
+        "correct": 0,
+        "exp": "Số oxi hóa +4 có thể tăng lên +6 (khử) hoặc giảm xuống 0, -2 (oxi hóa)."
+      },
+      {
+        "type": "mcq",
+        "q": "Phản ứng được dùng để sản xuất H₂SO₄ trong công nghiệp từ SO₂ là:",
+        "opts": [
+          "SO₂ + H₂O → H₂SO₃",
+          "2SO₂ + O₂ → 2SO₃",
+          "SO₂ + Br₂ + 2H₂O → H₂SO₄ + 2HBr",
+          "SO₂ + 2H₂S → 3S + 2H₂O"
+        ],
+        "correct": 1,
+        "exp": "SO₂ bị oxi hóa thành SO₃, sau đó SO₃ + H₂O → H₂SO₄."
+      },
+      {
+        "type": "mcq",
+        "q": "Thuốc thử để nhận biết khí SO₂ là:",
+        "opts": [
+          "Dung dịch Ca(OH)₂",
+          "Dung dịch Br₂",
+          "Dung dịch AgNO₃",
+          "Quỳ tím ẩm"
+        ],
+        "correct": 1,
+        "exp": "SO₂ làm mất màu dung dịch Br₂ do tính khử."
+      },
+      {
+        "type": "mcq",
+        "q": "Khi đốt cháy S trong không khí, sản phẩm chính là:",
+        "opts": [
+          "SO₃",
+          "SO₂",
+          "H₂S",
+          "S₈"
+        ],
+        "correct": 1,
+        "exp": "S + O₂ → SO₂ (lưu huỳnh đioxit)."
+      },
+      {
+        "type": "mcq",
+        "q": "Khi pha loãng H₂SO₄ đặc, thao tác đúng là:",
+        "opts": [
+          "Rót nước vào acid",
+          "Rót acid vào nước",
+          "Đổ nhanh cả hai",
+          "Đun nóng trước khi trộn"
+        ],
+        "correct": 1,
+        "exp": "Acid tỏa nhiệt mạnh, rót acid vào nước để tránh sôi bắn."
+      },
+      {
+        "type": "mcq",
+        "q": "Dung dịch H₂SO₄ loãng không tác dụng với kim loại nào sau đây?",
+        "opts": [
+          "Mg",
+          "Zn",
+          "Fe",
+          "Cu"
+        ],
+        "correct": 3,
+        "exp": "Cu đứng sau H trong dãy điện hóa, không phản ứng với acid loãng."
+      },
+      {
+        "type": "mcq",
+        "q": "Sản phẩm khử thường gặp khi cho H₂SO₄ đặc nóng tác dụng với kim loại là:",
+        "opts": [
+          "H₂",
+          "SO₂",
+          "S",
+          "H₂S"
+        ],
+        "correct": 1,
+        "exp": "H₂SO₄ đặc bị khử thành SO₂ (mùi hắc)."
+      },
+      {
+        "type": "mcq",
+        "q": "Thuốc thử để nhận biết ion SO₄²⁻ trong dung dịch là:",
+        "opts": [
+          "Dung dịch AgNO₃",
+          "Dung dịch BaCl₂",
+          "Quỳ tím",
+          "Dung dịch NaOH"
+        ],
+        "correct": 1,
+        "exp": "Ba²⁺ + SO₄²⁻ → BaSO₄↓ trắng, không tan trong acid."
+      },
+      {
+        "type": "mcq",
+        "q": "Trong công nghiệp sản xuất H₂SO₄ bằng phương pháp tiếp xúc, giai đoạn quan trọng nhất là:",
+        "opts": [
+          "Đốt S",
+          "Oxi hóa SO₂ thành SO₃",
+          "Hấp thụ SO₃ vào nước",
+          "Làm sạch khí"
+        ],
+        "correct": 1,
+        "exp": "Phản ứng 2SO₂ + O₂ ⇌ 2SO₃ có xúc tác, hiệu suất phụ thuộc nhiều vào điều kiện."
+      }
+    ],
+    "organic": [
+      {
+        "type": "mcq",
+        "q": "Chất nào sau đây KHÔNG phải hợp chất hữu cơ?",
+        "opts": [
+          "CH₄",
+          "C₂H₅OH",
+          "CO₂",
+          "C₆H₁₂O₆"
+        ],
+        "correct": 2,
+        "exp": "CO₂ là hợp chất vô cơ (oxide carbon)."
+      },
+      {
+        "type": "mcq",
+        "q": "Đặc điểm nào sau đây là đúng cho hầu hết hợp chất hữu cơ?",
+        "opts": [
+          "Tan nhiều trong nước",
+          "Liên kết ion",
+          "Phản ứng xảy ra nhanh",
+          "Nhiệt độ sôi thấp"
+        ],
+        "correct": 3,
+        "exp": "HCHC thường có nhiệt độ sôi thấp do liên kết cộng hóa trị và lực liên phân tử yếu."
+      },
+      {
+        "type": "mcq",
+        "q": "Nhóm chức của alcohol là:",
+        "opts": [
+          "–OH liên kết với C no",
+          "–OH liên kết với vòng benzene",
+          "–O–",
+          "–CHO"
+        ],
+        "correct": 0,
+        "exp": "Alcohol có nhóm –OH gắn với carbon no (sp³)."
+      },
+      {
+        "type": "mcq",
+        "q": "Phổ IR thường được dùng để:",
+        "opts": [
+          "Xác định phân tử khối",
+          "Xác định nhóm chức",
+          "Xác định nhiệt độ sôi",
+          "Xác định cấu trúc tinh thể"
+        ],
+        "correct": 1,
+        "exp": "Mỗi nhóm chức hấp thụ bức xạ hồng ngoại ở số sóng đặc trưng."
+      },
+      {
+        "type": "mcq",
+        "q": "Hợp chất chỉ chứa carbon và hydrogen được gọi là:",
+        "opts": [
+          "Dẫn xuất halogen",
+          "Hydrocarbon",
+          "Alcohol",
+          "Aldehyde"
+        ],
+        "correct": 1,
+        "exp": "Hydrocarbon là hợp chất hữu cơ chỉ gồm C và H."
+      },
+      {
+        "type": "mcq",
+        "q": "Để tách ethanol ra khỏi hỗn hợp với nước, người ta dùng phương pháp:",
+        "opts": [
+          "Chiết",
+          "Chưng cất",
+          "Kết tinh",
+          "Sắc kí"
+        ],
+        "correct": 1,
+        "exp": "Ethanol và nước có nhiệt độ sôi khác nhau (78,3°C và 100°C) nên chưng cất thường."
+      },
+      {
+        "type": "mcq",
+        "q": "Trong phễu chiết, dung môi chiết thường có khối lượng riêng:",
+        "opts": [
+          "Lớn hơn nước",
+          "Nhỏ hơn nước",
+          "Bằng nước",
+          "Bất kỳ"
+        ],
+        "correct": 1,
+        "exp": "Thường dùng dung môi nhẹ hơn nước (ether, hexane) để ở lớp trên, dễ tách."
+      },
+      {
+        "type": "mcq",
+        "q": "Phương pháp kết tinh dùng để tinh chế chất rắn dựa trên:",
+        "opts": [
+          "Sự thăng hoa",
+          "Sự khác nhau về nhiệt độ sôi",
+          "Sự thay đổi độ tan theo nhiệt độ",
+          "Sự hấp phụ"
+        ],
+        "correct": 2,
+        "exp": "Hòa tan nóng, làm lạnh → chất tan kết tinh, tạp chất tan."
+      },
+      {
+        "type": "mcq",
+        "q": "Sắc kí cột tách các chất dựa vào:",
+        "opts": [
+          "Khối lượng riêng",
+          "Tốc độ bay hơi",
+          "Khả năng hấp phụ khác nhau",
+          "Nhiệt độ nóng chảy"
+        ],
+        "correct": 2,
+        "exp": "Các chất bị hấp phụ khác nhau trên pha tĩnh, di chuyển với tốc độ khác nhau."
+      },
+      {
+        "type": "mcq",
+        "q": "Phương pháp nào thường dùng để tách tinh dầu từ vỏ bưởi (chất lỏng không tan trong nước, dễ bay hơi)?",
+        "opts": [
+          "Chưng cất lôi cuốn hơi nước",
+          "Chiết lỏng – rắn",
+          "Kết tinh",
+          "Sắc kí cột"
+        ],
+        "correct": 0,
+        "exp": "Chưng cất lôi cuốn hơi nước tách tinh dầu khỏi nguyên liệu thực vật."
+      },
+      {
+        "type": "mcq",
+        "q": "Công thức đơn giản nhất cho biết:",
+        "opts": [
+          "Số lượng nguyên tử mỗi nguyên tố",
+          "Tỉ lệ tối giản các nguyên tử",
+          "Cấu trúc phân tử",
+          "Khối lượng phân tử"
+        ],
+        "correct": 1,
+        "exp": "CTĐGN chỉ cho biết tỉ lệ số nguyên tử ở dạng tối giản."
+      },
+      {
+        "type": "mcq",
+        "q": "Trên phổ khối lượng, giá trị m/z của peak ion phân tử [M⁺] bằng:",
+        "opts": [
+          "Phân tử khối",
+          "Nguyên tử khối",
+          "Số khối của đồng vị",
+          "Năng lượng liên kết"
+        ],
+        "correct": 0,
+        "exp": "Ion phân tử [M⁺] có m/z đúng bằng phân tử khối."
+      },
+      {
+        "type": "mcq",
+        "q": "Một chất có CTĐGN là CH₂O và phân tử khối 60. CTPT của chất là:",
+        "opts": [
+          "CH₂O",
+          "C₂H₄O₂",
+          "C₃H₆O₃",
+          "C₄H₈O₄"
+        ],
+        "correct": 1,
+        "exp": "M = 12+2+16=30; n = 60/30 = 2 → C₂H₄O₂."
+      },
+      {
+        "type": "mcq",
+        "q": "Phân tích nguyên tố cho thấy một hợp chất có %C = 40%, %H = 6,67%, còn lại O. Công thức đơn giản nhất là:",
+        "opts": [
+          "CH₂O",
+          "C₂H₄O",
+          "CH₃O",
+          "C₃H₆O₂"
+        ],
+        "correct": 0,
+        "exp": "Tỉ lệ C:H:O = (40/12):(6,67/1):(53,33/16)=3,33:6,67:3,33=1:2:1 → CH₂O."
+      },
+      {
+        "type": "mcq",
+        "q": "Phổ khối lượng của một chất cho peak M⁺ = 92. Biết chất này chỉ gồm C và H, công thức phân tử có thể là:",
+        "opts": [
+          "C₆H₆",
+          "C₇H₈",
+          "C₈H₁₀",
+          "C₇H₁₆"
+        ],
+        "correct": 1,
+        "exp": "C₇H₈ có M = 12*7+8 = 92."
+      }
+    ],
+    "hydrocarbon": [
+      {
+        "type": "mcq",
+        "q": "Công thức chung của alkane là:",
+        "opts": [
+          "CₙH₂ₙ",
+          "CₙH₂ₙ₊₂",
+          "CₙH₂ₙ₋₂",
+          "CₙH₂ₙ₋₆"
+        ],
+        "correct": 1,
+        "exp": "Alkane no, mạch hở có dạng CₙH₂ₙ₊₂."
+      },
+      {
+        "type": "mcq",
+        "q": "Sản phẩm chính của phản ứng clo hóa methane (ánh sáng) là:",
+        "opts": [
+          "CH₃Cl",
+          "CH₂Cl₂",
+          "CHCl₃",
+          "CCl₄"
+        ],
+        "correct": 0,
+        "exp": "Phản ứng thế lần lượt, nhưng sản phẩm chính ở điều kiện thường là CH₃Cl."
+      },
+      {
+        "type": "mcq",
+        "q": "Phản ứng cracking dùng để:",
+        "opts": [
+          "Tăng chỉ số octane",
+          "Tạo alkane mạch nhánh",
+          "Bẻ gãy alkane lớn thành nhỏ",
+          "Tạo vòng benzene"
+        ],
+        "correct": 2,
+        "exp": "Cracking bẻ gãy mạch C–C tạo hydrocarbon nhỏ hơn."
+      },
+      {
+        "type": "mcq",
+        "q": "Alkane ở thể khí điều kiện thường là các chất có số C từ:",
+        "opts": [
+          "1 đến 4",
+          "5 đến 17",
+          "18 trở lên",
+          "1 đến 10"
+        ],
+        "correct": 0,
+        "exp": "C₁–C₄ và neopentane ở thể khí."
+      },
+      {
+        "type": "mcq",
+        "q": "Biện pháp nào giúp giảm ô nhiễm từ khí thải phương tiện giao thông?",
+        "opts": [
+          "Dùng xăng pha chì",
+          "Tăng hàm lượng sulfur",
+          "Sử dụng xăng E5",
+          "Tăng nhiệt độ động cơ"
+        ],
+        "correct": 2,
+        "exp": "E5 chứa 5% ethanol, cháy sạch hơn, giảm phát thải."
+      },
+      {
+        "type": "mcq",
+        "q": "Công thức tổng quát của alkene là:",
+        "opts": [
+          "CₙH₂ₙ₊₂",
+          "CₙH₂ₙ",
+          "CₙH₂ₙ₋₂",
+          "CₙH₂ₙ₋₆"
+        ],
+        "correct": 1,
+        "exp": "Alkene mạch hở, 1 liên kết đôi: CₙH₂ₙ (n≥2)."
+      },
+      {
+        "type": "mcq",
+        "q": "Khi cho propene cộng HBr (theo Markovnikov), sản phẩm chính là:",
+        "opts": [
+          "CH₃CH₂CH₂Br",
+          "CH₃CHBrCH₃",
+          "CH₂BrCH₂CH₃",
+          "CH₃CH=CHBr"
+        ],
+        "correct": 1,
+        "exp": "H cộng vào C nhiều H hơn (C₁), Br cộng vào C ít H hơn (C₂) → 2-bromopropane."
+      },
+      {
+        "type": "mcq",
+        "q": "Thuốc thử dùng để phân biệt ethane và ethylene là:",
+        "opts": [
+          "Dung dịch AgNO₃/NH₃",
+          "Dung dịch brom",
+          "Dung dịch NaOH",
+          "Quỳ tím"
+        ],
+        "correct": 1,
+        "exp": "Ethylene làm mất màu dung dịch brom, ethane thì không."
+      },
+      {
+        "type": "mcq",
+        "q": "Phản ứng đặc trưng để nhận biết alkyne có liên kết ba đầu mạch là:",
+        "opts": [
+          "Phản ứng với AgNO₃/NH₃",
+          "Phản ứng cộng H₂",
+          "Phản ứng trùng hợp",
+          "Phản ứng cháy"
+        ],
+        "correct": 0,
+        "exp": "Alkyne-1 tạo kết tủa vàng với AgNO₃/NH₃."
+      },
+      {
+        "type": "mcq",
+        "q": "Sản phẩm của phản ứng trùng hợp ethylene là:",
+        "opts": [
+          "PVC",
+          "PE",
+          "PP",
+          "PS"
+        ],
+        "correct": 1,
+        "exp": "PE (polyethylene) từ ethylene."
+      },
+      {
+        "type": "mcq",
+        "q": "Công thức phân tử của benzene là:",
+        "opts": [
+          "C₆H₁₂",
+          "C₆H₆",
+          "C₆H₁₀",
+          "C₆H₈"
+        ],
+        "correct": 1,
+        "exp": "Benzene C₆H₆."
+      },
+      {
+        "type": "mcq",
+        "q": "Phản ứng nitro hóa benzene cần dùng hỗn hợp:",
+        "opts": [
+          "HNO₃ loãng",
+          "HNO₃ đặc + H₂SO₄ đặc",
+          "HNO₃ + HCl",
+          "HNO₃ + H₂O"
+        ],
+        "correct": 1,
+        "exp": "H₂SO₄ đặc đóng vai trò xúc tác và hút nước."
+      },
+      {
+        "type": "mcq",
+        "q": "Khi cho toluene tác dụng với Br₂ (FeBr₃), sản phẩm chính là:",
+        "opts": [
+          "o-bromotoluene và p-bromotoluene",
+          "m-bromotoluene",
+          "benzyl bromide",
+          "bromobenzene"
+        ],
+        "correct": 0,
+        "exp": "Nhóm –CH₃ đẩy electron, định hướng thế vào vị trí ortho và para."
+      },
+      {
+        "type": "mcq",
+        "q": "Phản ứng của benzene với Cl₂ có chiếu sáng tạo sản phẩm:",
+        "opts": [
+          "C₆H₅Cl",
+          "C₆H₄Cl₂",
+          "C₆H₆Cl₆",
+          "C₆H₅Cl₃"
+        ],
+        "correct": 2,
+        "exp": "Cộng 3 phân tử Cl₂ tạo hexachlorocyclohexane (666)."
+      },
+      {
+        "type": "mcq",
+        "q": "TNT (thuốc nổ) được điều chế từ toluene qua phản ứng:",
+        "opts": [
+          "Cộng H₂",
+          "Nitro hóa",
+          "Halogen hóa",
+          "Oxi hóa"
+        ],
+        "correct": 1,
+        "exp": "Toluene + HNO₃ đặc/H₂SO₄ đặc → 2,4,6-trinitrotoluene (TNT)."
+      }
+    ],
+    "halogen-deriv": [
+      {
+        "type": "mcq",
+        "q": "Dẫn xuất halogen có công thức CH₃CH₂Cl có tên thay thế là:",
+        "opts": [
+          "Chloroethane",
+          "Ethyl chloride",
+          "1-chloroethane",
+          "Chloromethane"
+        ],
+        "correct": 0,
+        "exp": "Tên thay thế: chloro + ethane."
+      },
+      {
+        "type": "mcq",
+        "q": "Phản ứng thủy phân bromoethane trong dung dịch NaOH tạo sản phẩm:",
+        "opts": [
+          "Ethene",
+          "Ethanol",
+          "Ethane",
+          "Bromoethene"
+        ],
+        "correct": 1,
+        "exp": "C₂H₅Br + NaOH → C₂H₅OH + NaBr."
+      },
+      {
+        "type": "mcq",
+        "q": "Quy tắc Zaitsev trong phản ứng tách HX phát biểu rằng:",
+        "opts": [
+          "H tách cùng với X ở C bậc thấp hơn",
+          "H tách ưu tiên ở C bậc cao hơn",
+          "X tách trước",
+          "Phản ứng xảy ra không định hướng"
+        ],
+        "correct": 1,
+        "exp": "Tạo alkene có nhiều nhánh hơn (bền hơn)."
+      },
+      {
+        "type": "mcq",
+        "q": "Chất nào sau đây thường được dùng làm chất làm lạnh nhưng gây hại tầng ozone?",
+        "opts": [
+          "CFC",
+          "HFC",
+          "NH₃",
+          "CO₂"
+        ],
+        "correct": 0,
+        "exp": "CFC chứa Cl, phá hủy ozone."
+      },
+      {
+        "type": "mcq",
+        "q": "Liên kết C–X phân cực nhất khi X là:",
+        "opts": [
+          "F",
+          "Cl",
+          "Br",
+          "I"
+        ],
+        "correct": 0,
+        "exp": "Độ âm điện F lớn nhất, liên kết C–F phân cực mạnh nhất."
+      }
+    ],
+    "alcohol-phenol": [
+      {
+        "type": "mcq",
+        "q": "Alcohol nào sau đây là alcohol bậc II?",
+        "opts": [
+          "CH₃OH",
+          "CH₃CH₂OH",
+          "CH₃CH(OH)CH₃",
+          "(CH₃)₃COH"
+        ],
+        "correct": 2,
+        "exp": "C mang OH liên kết với hai nhóm alkyl."
+      },
+      {
+        "type": "mcq",
+        "q": "Phản ứng của ethanol với CuO đun nóng tạo sản phẩm:",
+        "opts": [
+          "CH₃COOH",
+          "CH₃CHO",
+          "C₂H₄",
+          "C₂H₅OC₂H₅"
+        ],
+        "correct": 1,
+        "exp": "Alcohol bậc I bị oxi hóa thành aldehyde."
+      },
+      {
+        "type": "mcq",
+        "q": "Glycerol phản ứng với Cu(OH)₂ tạo dung dịch màu:",
+        "opts": [
+          "Đỏ nâu",
+          "Xanh lam",
+          "Tím",
+          "Vàng"
+        ],
+        "correct": 1,
+        "exp": "Tạo phức glycerat đồng màu xanh lam đặc trưng."
+      },
+      {
+        "type": "mcq",
+        "q": "Xăng E5 có nghĩa là:",
+        "opts": [
+          "5% ethanol, 95% xăng",
+          "5% xăng, 95% ethanol",
+          "5% methanol",
+          "95% ethanol"
+        ],
+        "correct": 0,
+        "exp": "E5: 5% ethanol sinh học, 95% xăng."
+      },
+      {
+        "type": "mcq",
+        "q": "Điều chế ethanol trong công nghiệp chủ yếu bằng phương pháp:",
+        "opts": [
+          "Lên men tinh bột",
+          "Hydrat hóa ethylene",
+          "Thủy phân dẫn xuất halogen",
+          "Oxi hóa methane"
+        ],
+        "correct": 1,
+        "exp": "C₂H₄ + H₂O → C₂H₅OH (xúc tác H₃PO₄, t°, p)."
+      },
+      {
+        "type": "mcq",
+        "q": "Phenol có tính acid yếu vì:",
+        "opts": [
+          "Nhóm –OH phân cực mạnh",
+          "Vòng benzene hút electron làm O–H phân cực hơn",
+          "Có liên kết hydro",
+          "Tan trong nước"
+        ],
+        "correct": 1,
+        "exp": "Vòng benzene hút electron, làm mật độ electron trên O giảm, H linh động hơn."
+      },
+      {
+        "type": "mcq",
+        "q": "Khi cho phenol tác dụng với nước bromine, hiện tượng là:",
+        "opts": [
+          "Dung dịch mất màu, kết tủa trắng",
+          "Sủi bọt khí",
+          "Dung dịch chuyển xanh",
+          "Không hiện tượng"
+        ],
+        "correct": 0,
+        "exp": "Tạo kết tủa 2,4,6-tribromophenol trắng."
+      },
+      {
+        "type": "mcq",
+        "q": "Chất nào sau đây phản ứng được với dung dịch NaOH?",
+        "opts": [
+          "C₂H₅OH",
+          "C₆H₅OH",
+          "CH₃OCH₃",
+          "C₆H₆"
+        ],
+        "correct": 1,
+        "exp": "Phenol là acid yếu, phản ứng với NaOH tạo phenolat."
+      },
+      {
+        "type": "mcq",
+        "q": "Picric acid (2,4,6-trinitrophenol) được dùng làm:",
+        "opts": [
+          "Thuốc nhuộm",
+          "Chất diệt nấm",
+          "Thuốc nổ",
+          "Dung môi"
+        ],
+        "correct": 2,
+        "exp": "Picric acid là chất nổ mạnh."
+      },
+      {
+        "type": "mcq",
+        "q": "Phương pháp hiện đại để sản xuất phenol trong công nghiệp là từ:",
+        "opts": [
+          "Nhựa than đá",
+          "Benzen + Cl₂",
+          "Cumene",
+          "Toluene"
+        ],
+        "correct": 2,
+        "exp": "Quy trình cumene (oxi hóa cumene) chiếm hơn 90% sản lượng phenol."
+      }
+    ],
+    "carbonyl": [
+      {
+        "type": "mcq",
+        "q": "Thuốc thử Tollens dùng để nhận biết nhóm chức:",
+        "opts": [
+          "–OH",
+          "–CHO",
+          "–COOH",
+          "–NH₂"
+        ],
+        "correct": 1,
+        "exp": "Aldehyde bị oxi hóa bởi [Ag(NH₃)₂]OH tạo Ag."
+      },
+      {
+        "type": "mcq",
+        "q": "Chất nào sau đây có phản ứng tráng gương?",
+        "opts": [
+          "CH₃COCH₃",
+          "CH₃CH₂CHO",
+          "CH₃CH₂OH",
+          "CH₃COOH"
+        ],
+        "correct": 1,
+        "exp": "Aldehyde (propanal) có phản ứng tráng gương."
+      },
+      {
+        "type": "mcq",
+        "q": "Khi oxi hóa ethanol bằng CuO đun nóng, sản phẩm thu được là:",
+        "opts": [
+          "CH₃CHO",
+          "CH₃COOH",
+          "C₂H₄",
+          "C₂H₅OC₂H₅"
+        ],
+        "correct": 0,
+        "exp": "Alcohol bậc I bị oxi hóa thành aldehyde."
+      },
+      {
+        "type": "mcq",
+        "q": "Phản ứng iodoform dùng để nhận biết hợp chất có nhóm:",
+        "opts": [
+          "–CHO",
+          "–COOH",
+          "CH₃–C=O (methyl ketone)",
+          "–OH"
+        ],
+        "correct": 2,
+        "exp": "Các methyl ketone (CH₃–CO–R) tạo iodoform kết tủa vàng."
+      },
+      {
+        "type": "mcq",
+        "q": "Sản phẩm chính của phản ứng cộng HCN vào acetaldehyde (CH₃CHO) là:",
+        "opts": [
+          "CH₃CH(OH)CN",
+          "CH₃CH₂CH(CN)OH",
+          "CH₃CH₂CN",
+          "CH₃COCN"
+        ],
+        "correct": 0,
+        "exp": "Cộng HCN vào nhóm C=O tạo cyanohydrin."
+      }
+    ],
+    "carboxylic": [
+      {
+        "type": "mcq",
+        "q": "Công thức tổng quát của carboxylic acid no, đơn chức, mạch hở là:",
+        "opts": [
+          "CₙH₂ₙ₊₁O₂",
+          "CₙH₂ₙ₊₂O₂",
+          "CₙH₂ₙ₋₂O₂",
+          "CₙH₂ₙ₊₁COOH"
+        ],
+        "correct": 3,
+        "exp": "CₙH₂ₙ₊₁COOH với n≥0."
+      },
+      {
+        "type": "mcq",
+        "q": "Dung dịch acetic acid phản ứng với Na₂CO₃ giải phóng khí:",
+        "opts": [
+          "H₂",
+          "CO₂",
+          "SO₂",
+          "O₂"
+        ],
+        "correct": 1,
+        "exp": "2CH₃COOH + Na₂CO₃ → 2CH₃COONa + CO₂ + H₂O."
+      },
+      {
+        "type": "mcq",
+        "q": "Phản ứng ester hóa giữa acetic acid và ethanol tạo sản phẩm có mùi:",
+        "opts": [
+          "Chuối chín",
+          "Dứa",
+          "Táo",
+          "Không mùi"
+        ],
+        "correct": 0,
+        "exp": "Ethyl acetate có mùi chuối chín, táo tây."
+      },
+      {
+        "type": "mcq",
+        "q": "Chất nào sau đây có tính acid mạnh nhất?",
+        "opts": [
+          "CH₃OH",
+          "C₆H₅OH",
+          "CH₃COOH",
+          "C₂H₅OH"
+        ],
+        "correct": 2,
+        "exp": "Acid acetic (pKa ≈ 4,76) mạnh hơn phenol (pKa ≈ 10) và alcohol."
+      },
+      {
+        "type": "mcq",
+        "q": "Điều chế acetic acid trong công nghiệp bằng phương pháp nào sau đây?",
+        "opts": [
+          "Oxi hóa butane",
+          "Lên men rượu vang",
+          "Hydrat hóa ethylene",
+          "Cracking alkane"
+        ],
+        "correct": 0,
+        "exp": "Phương pháp oxi hóa alkane (butane) bằng O₂ xúc tác."
+      }
+    ],
+    "ester-lipid": [
+      {
+        "type": "mcq",
+        "q": "Công thức tổng quát của ester đơn chức là?",
+        "opts": [
+          "RCOOH",
+          "ROR'",
+          "RCOOR'",
+          "RCHO"
+        ],
+        "correct": 2,
+        "exp": "Ester đơn chức có dạng RCOOR' (R có thể là H, R' là gốc hydrocarbon)."
+      },
+      {
+        "type": "mcq",
+        "q": "Phản ứng xà phòng hóa ester là phản ứng?",
+        "opts": [
+          "Thuận nghịch",
+          "Một chiều",
+          "Cần xúc tác acid",
+          "Không tạo muối"
+        ],
+        "correct": 1,
+        "exp": "Xà phòng hóa dùng NaOH/KOH, phản ứng một chiều tạo muối và alcohol."
+      },
+      {
+        "type": "mcq",
+        "q": "Este nào có mùi chuối chín?",
+        "opts": [
+          "Ethyl acetate",
+          "Isoamyl acetate",
+          "Methyl butyrate",
+          "Ethyl formate"
+        ],
+        "correct": 1,
+        "exp": "Isoamyl acetate (CH₃COOC₅H₁₁) có mùi chuối."
+      },
+      {
+        "type": "mcq",
+        "q": "Khi thủy phân CH₃COOC₂H₅ trong môi trường axit, sản phẩm là?",
+        "opts": [
+          "CH₃COONa + C₂H₅OH",
+          "CH₃COOH + C₂H₅OH",
+          "CH₃COOC₂H₅ + H₂O",
+          "CH₃COONa + H₂O"
+        ],
+        "correct": 1,
+        "exp": "Thủy phân trong axit tạo acid và alcohol tương ứng."
+      },
+      {
+        "type": "mcq",
+        "q": "Một ester có CTPT C₄H₈O₂, thủy phân cho muối natri butyrat. Công thức của ester là?",
+        "opts": [
+          "HCOOC₃H₇",
+          "CH₃COOC₂H₅",
+          "C₂H₅COOCH₃",
+          "C₃H₇COOH"
+        ],
+        "correct": 2,
+        "exp": "C₂H₅COOCH₃ (methyl propionate) thủy phân cho C₂H₅COONa (natri butyrat)."
+      },
+      {
+        "type": "mcq",
+        "q": "Chất béo là triester của glycerol với?",
+        "opts": [
+          "Acid vô cơ",
+          "Acid béo",
+          "Acid axetic",
+          "Amino acid"
+        ],
+        "correct": 1,
+        "exp": "Chất béo là triester của glycerol và acid béo."
+      },
+      {
+        "type": "mcq",
+        "q": "Dầu thực vật lỏng ở nhiệt độ thường vì chứa?",
+        "opts": [
+          "Acid béo no",
+          "Acid béo không no",
+          "Glycerol tự do",
+          "Nước"
+        ],
+        "correct": 1,
+        "exp": "Acid béo không no (có nối đôi) làm giảm nhiệt độ nóng chảy."
+      },
+      {
+        "type": "mcq",
+        "q": "Phản ứng hydrogen hóa dầu thực vật dùng để?",
+        "opts": [
+          "Sản xuất xà phòng",
+          "Sản xuất bơ thực vật",
+          "Điều chế glycerol",
+          "Làm dầu ăn"
+        ],
+        "correct": 1,
+        "exp": "Hydrogen hóa biến dầu lỏng thành chất béo rắn (bơ thực vật)."
+      },
+      {
+        "type": "mcq",
+        "q": "Sản phẩm của phản ứng xà phòng hóa tristearin là?",
+        "opts": [
+          "C₁₇H₃₅COONa + C₃H₅(OH)₃",
+          "C₁₇H₃₅COOH + C₃H₅(OH)₃",
+          "C₁₇H₃₅COONa + H₂O",
+          "C₁₇H₃₅COOK + C₃H₅(OH)₃"
+        ],
+        "correct": 0,
+        "exp": "(C₁₇H₃₅COO)₃C₃H₅ + 3NaOH → 3C₁₇H₃₅COONa + C₃H₅(OH)₃."
+      },
+      {
+        "type": "mcq",
+        "q": "Nguyên nhân dầu mỡ bị ôi là do?",
+        "opts": [
+          "Thủy phân",
+          "Hydrogen hóa",
+          "Oxi hóa bởi O₂ không khí",
+          "Este hóa"
+        ],
+        "correct": 2,
+        "exp": "Các nối đôi C=C bị oxi hóa chậm bởi oxi không khí tạo sản phẩm mùi khó chịu."
+      },
+      {
+        "type": "mcq",
+        "q": "Thành phần chính của xà phòng là?",
+        "opts": [
+          "Triglyceride",
+          "Muối natri của acid béo",
+          "Acid béo tự do",
+          "Glycerol"
+        ],
+        "correct": 1,
+        "exp": "Xà phòng là muối natri (hoặc kali) của acid béo."
+      },
+      {
+        "type": "mcq",
+        "q": "Chất giặt rửa tổng hợp có ưu điểm gì so với xà phòng?",
+        "opts": [
+          "Thân thiện môi trường hơn",
+          "Dùng được trong nước cứng",
+          "Rẻ tiền hơn",
+          "Tạo nhiều bọt hơn"
+        ],
+        "correct": 1,
+        "exp": "Chất giặt rửa tổng hợp không tạo kết tủa với Ca²⁺, Mg²⁺."
+      },
+      {
+        "type": "mcq",
+        "q": "Cấu trúc lưỡng tính của xà phòng gồm?",
+        "opts": [
+          "Đầu kỵ nước và đuôi ưa nước",
+          "Đầu ưa nước và đuôi kỵ nước",
+          "Cả hai đều ưa nước",
+          "Cả hai đều kỵ nước"
+        ],
+        "correct": 1,
+        "exp": "Đầu -COO⁻ ưa nước, đuôi R- kỵ nước."
+      },
+      {
+        "type": "mcq",
+        "q": "Xà phòng kém tác dụng trong nước cứng vì?",
+        "opts": [
+          "Tạo kết tủa với Ca²⁺, Mg²⁺",
+          "Bị thủy phân",
+          "Tan quá nhiều",
+          "Tạo bọt quá lớn"
+        ],
+        "correct": 0,
+        "exp": "Ion Ca²⁺, Mg²⁺ tạo kết tủa với muối của acid béo."
+      },
+      {
+        "type": "mcq",
+        "q": "Phản ứng sản xuất xà phòng từ chất béo gọi là?",
+        "opts": [
+          "Este hóa",
+          "Hydrogen hóa",
+          "Xà phòng hóa",
+          "Trùng hợp"
+        ],
+        "correct": 2,
+        "exp": "Xà phòng hóa là phản ứng thủy phân chất béo trong môi trường kiềm."
+      }
+    ],
+    "carbohydrate": [
+      {
+        "type": "mcq",
+        "q": "Glucose có công thức phân tử là?",
+        "opts": [
+          "C₅H₁₀O₅",
+          "C₆H₁₂O₆",
+          "C₁₂H₂₂O₁₁",
+          "(C₆H₁₀O₅)ₙ"
+        ],
+        "correct": 1,
+        "exp": "Glucose là monosaccarit C₆H₁₂O₆."
+      },
+      {
+        "type": "mcq",
+        "q": "Phản ứng tráng bạc của glucose chứng tỏ có nhóm?",
+        "opts": [
+          "–OH",
+          "–CHO",
+          "–COOH",
+          "–CO–"
+        ],
+        "correct": 1,
+        "exp": "Nhóm –CHO bị oxi hóa bởi AgNO₃/NH₃."
+      },
+      {
+        "type": "mcq",
+        "q": "Glucose hòa tan Cu(OH)₂ ở nhiệt độ thường tạo dung dịch màu xanh lam do?",
+        "opts": [
+          "Nhóm –CHO",
+          "Nhiều nhóm –OH kề nhau",
+          "Liên kết đôi",
+          "Vòng 6 cạnh"
+        ],
+        "correct": 1,
+        "exp": "Các nhóm OH liền kề tạo phức đồng."
+      },
+      {
+        "type": "mcq",
+        "q": "Lên men glucose thu được sản phẩm chính là?",
+        "opts": [
+          "CH₃COOH",
+          "C₂H₅OH + CO₂",
+          "CH₃CHO",
+          "CO₂ + H₂O"
+        ],
+        "correct": 1,
+        "exp": "C₆H₁₂O₆ → 2C₂H₅OH + 2CO₂."
+      },
+      {
+        "type": "mcq",
+        "q": "Fructose trong môi trường kiềm có thể chuyển hóa thành?",
+        "opts": [
+          "Saccharose",
+          "Glucose",
+          "Tinh bột",
+          "Maltose"
+        ],
+        "correct": 1,
+        "exp": "Fructose chuyển hóa qua lại với glucose trong môi trường kiềm."
+      },
+      {
+        "type": "mcq",
+        "q": "Saccharose thuộc loại?",
+        "opts": [
+          "Monosaccarit",
+          "Disaccarit",
+          "Polisaccarit",
+          "Oligosaccarit"
+        ],
+        "correct": 1,
+        "exp": "Saccharose là disaccarit gồm glucose và fructose."
+      },
+      {
+        "type": "mcq",
+        "q": "Thủy phân saccharose trong môi trường axit thu được?",
+        "opts": [
+          "Chỉ glucose",
+          "Chỉ fructose",
+          "Glucose và fructose",
+          "Tinh bột"
+        ],
+        "correct": 2,
+        "exp": "C₁₂H₂₂O₁₁ + H₂O → C₆H₁₂O₆ (gluc) + C₆H₁₂O₆ (fruct)."
+      },
+      {
+        "type": "mcq",
+        "q": "Dung dịch saccharose tinh khiết không tráng bạc vì?",
+        "opts": [
+          "Không có nhóm –CHO tự do",
+          "Không tan",
+          "Bị thủy phân chậm",
+          "Có vị ngọt"
+        ],
+        "correct": 0,
+        "exp": "Liên kết glycosit che kín nhóm carbonyl."
+      },
+      {
+        "type": "mcq",
+        "q": "Maltose có tính khử do?",
+        "opts": [
+          "Nhóm –OH hemiacetal tự do",
+          "Liên kết α-1,4",
+          "Phân tử khối lớn",
+          "Có vòng furanose"
+        ],
+        "correct": 0,
+        "exp": "Maltose còn nhóm –OH hemiacetal ở C1 của một gốc glucose."
+      },
+      {
+        "type": "mcq",
+        "q": "Saccharose được sản xuất chủ yếu từ?",
+        "opts": [
+          "Tinh bột",
+          "Mía, củ cải đường",
+          "Gỗ",
+          "Mật ong"
+        ],
+        "correct": 1,
+        "exp": "Saccharose chiết xuất từ mía, củ cải đường."
+      },
+      {
+        "type": "mcq",
+        "q": "Tinh bột và cellulose đều có công thức (C₆H₁₀O₅)ₙ, khác nhau về?",
+        "opts": [
+          "Hàm lượng nước",
+          "Cấu trúc liên kết glycosit",
+          "Số mắt xích",
+          "Màu sắc"
+        ],
+        "correct": 1,
+        "exp": "Tinh bột liên kết α-1,4 và α-1,6; cellulose liên kết β-1,4."
+      },
+      {
+        "type": "mcq",
+        "q": "Thuốc thử nhận biết tinh bột là?",
+        "opts": [
+          "I₂/KI",
+          "AgNO₃/NH₃",
+          "Cu(OH)₂",
+          "Nước brom"
+        ],
+        "correct": 0,
+        "exp": "Tinh bột tạo phức màu xanh tím với iot."
+      },
+      {
+        "type": "mcq",
+        "q": "Xenlulozơ trinitrat được dùng làm?",
+        "opts": [
+          "Tơ sợi",
+          "Thuốc súng không khói",
+          "Chất dẻo",
+          "Phim ảnh"
+        ],
+        "correct": 1,
+        "exp": "[C₆H₇O₂(ONO₂)₃]ₙ dễ cháy nổ, dùng làm thuốc súng không khói."
+      },
+      {
+        "type": "mcq",
+        "q": "Liên kết giữa các mắt xích glucozơ trong xenlulozơ là?",
+        "opts": [
+          "α-1,4-glycosit",
+          "β-1,4-glycosit",
+          "α-1,6-glycosit",
+          "β-1,6-glycosit"
+        ],
+        "correct": 1,
+        "exp": "Xenlulozơ có liên kết β-1,4-glycosit."
+      },
+      {
+        "type": "mcq",
+        "q": "Thủy phân hoàn toàn tinh bột thu được?",
+        "opts": [
+          "Saccarozơ",
+          "Fructozơ",
+          "Glucozơ",
+          "Maltôzơ"
+        ],
+        "correct": 2,
+        "exp": "(C₆H₁₀O₅)ₙ + nH₂O → nC₆H₁₂O₆ (glucozơ)."
+      }
+    ],
+    "nitrogen-compounds": [
+      {
+        "type": "mcq",
+        "q": "Bậc của amine được xác định bằng?",
+        "opts": [
+          "Số C liên kết với N",
+          "Số gốc hydrocarbon liên kết với N",
+          "Số H trong phân tử",
+          "Khối lượng phân tử"
+        ],
+        "correct": 1,
+        "exp": "Bậc amine = số gốc hydrocarbon gắn trực tiếp với N."
+      },
+      {
+        "type": "mcq",
+        "q": "Aniline có tính bazơ yếu hơn NH₃ vì?",
+        "opts": [
+          "Nhóm C₆H₅ đẩy electron",
+          "Nhóm C₆H₅ hút electron",
+          "Aniline không tan",
+          "Có liên kết H nội phân tử"
+        ],
+        "correct": 1,
+        "exp": "Vòng benzen hút electron qua hiệu ứng liên hợp, giảm mật độ e trên N."
+      },
+      {
+        "type": "mcq",
+        "q": "Cho methylamine tác dụng với HCl thu được?",
+        "opts": [
+          "CH₃NH₃Cl",
+          "CH₃Cl + NH₃",
+          "CH₃NH₂Cl",
+          "CH₃NHCl"
+        ],
+        "correct": 0,
+        "exp": "CH₃NH₂ + HCl → CH₃NH₃Cl (metylamoni clorua)."
+      },
+      {
+        "type": "mcq",
+        "q": "Phản ứng của aniline với nước brom tạo kết tủa trắng chứng tỏ?",
+        "opts": [
+          "Tính bazơ",
+          "Phản ứng thế dễ dàng vào vòng thơm",
+          "Oxi hóa",
+          "Tạo phức"
+        ],
+        "correct": 1,
+        "exp": "Nhóm –NH₂ kích hoạt vòng, thế Br vào vị trí 2,4,6."
+      },
+      {
+        "type": "mcq",
+        "q": "Trong dãy CH₃NH₂, NH₃, C₆H₅NH₂, chất có tính bazơ mạnh nhất là?",
+        "opts": [
+          "CH₃NH₂",
+          "NH₃",
+          "C₆H₅NH₂",
+          "Bằng nhau"
+        ],
+        "correct": 0,
+        "exp": "CH₃ nhóm đẩy e làm tăng tính bazơ."
+      },
+      {
+        "type": "mcq",
+        "q": "Amino axit có tính lưỡng tính vì?",
+        "opts": [
+          "Có nhóm –COOH và –NH₂",
+          "Tan trong nước",
+          "Là chất rắn",
+          "Có cấu trúc mạch hở"
+        ],
+        "correct": 0,
+        "exp": "–COOH cho H⁺ (axit), –NH₂ nhận H⁺ (bazơ)."
+      },
+      {
+        "type": "mcq",
+        "q": "Glyxin tác dụng với NaOH thu được?",
+        "opts": [
+          "H₂N–CH₂–COONa",
+          "ClH₃N–CH₂–COOH",
+          "H₂N–CH₂–COO⁻Na⁺",
+          "Cả A và C"
+        ],
+        "correct": 3,
+        "exp": "H₂N–CH₂–COOH + NaOH → H₂N–CH₂–COONa."
+      },
+      {
+        "type": "mcq",
+        "q": "Phản ứng màu biuret dùng để nhận biết?",
+        "opts": [
+          "Amino axit",
+          "Đipeptit",
+          "Tripeptit trở lên",
+          "Protein thủy phân"
+        ],
+        "correct": 2,
+        "exp": "Cần từ 2 liên kết peptit trở lên mới cho màu tím."
+      },
+      {
+        "type": "mcq",
+        "q": "Dạng tồn tại chủ yếu của amino axit trong dung dịch là?",
+        "opts": [
+          "Phân tử trung hòa",
+          "Ion lưỡng cực",
+          "Ion dương",
+          "Ion âm"
+        ],
+        "correct": 1,
+        "exp": "H₂N–R–COOH ⇌ H₃N⁺–R–COO⁻."
+      },
+      {
+        "type": "mcq",
+        "q": "Muối mononatri glutamat được dùng làm?",
+        "opts": [
+          "Thuốc",
+          "Mì chính (bột ngọt)",
+          "Phân bón",
+          "Chất tẩy rửa"
+        ],
+        "correct": 1,
+        "exp": "Là gia vị tăng vị ngọt cho thức ăn."
+      },
+      {
+        "type": "mcq",
+        "q": "Liên kết peptit là liên kết?",
+        "opts": [
+          "–CO–NH–",
+          "–CO–O–",
+          "–NH–NH–",
+          "–CO–CH₂–"
+        ],
+        "correct": 0,
+        "exp": "Liên kết giữa –COOH và –NH₂ tạo –CO–NH–."
+      },
+      {
+        "type": "mcq",
+        "q": "Protein có phản ứng màu biuret với Cu(OH)₂ tạo màu?",
+        "opts": [
+          "Đỏ",
+          "Xanh",
+          "Tím",
+          "Vàng"
+        ],
+        "correct": 2,
+        "exp": "Phức màu tím đặc trưng."
+      },
+      {
+        "type": "mcq",
+        "q": "Khi đun nóng protein với axit, sản phẩm cuối cùng là?",
+        "opts": [
+          "α-amino axit",
+          "Hỗn hợp peptit",
+          "CO₂ và H₂O",
+          "Amoniac"
+        ],
+        "correct": 0,
+        "exp": "Thủy phân hoàn toàn protein tạo α-amino axit."
+      },
+      {
+        "type": "mcq",
+        "q": "Phản ứng của protein với HNO₃ đặc tạo màu vàng gọi là?",
+        "opts": [
+          "Biure",
+          "Xanthoproteic",
+          "Tráng bạc",
+          "Este hóa"
+        ],
+        "correct": 1,
+        "exp": "Phản ứng xanthoproteic nhận biết vòng benzen trong protein."
+      },
+      {
+        "type": "mcq",
+        "q": "Protein bị đông tụ khi đun nóng do?",
+        "opts": [
+          "Phân hủy thành amino axit",
+          "Phá vỡ cấu trúc không gian",
+          "Tạo liên kết peptit mới",
+          "Thủy phân"
+        ],
+        "correct": 1,
+        "exp": "Biến tính, mất cấu trúc bậc cao dẫn đến kết tủa."
+      }
+    ],
+    "polymer": [
+      {
+        "type": "mcq",
+        "q": "Polime được tạo từ phản ứng trùng hợp là?",
+        "opts": [
+          "Nilon-6,6",
+          "Tơ tằm",
+          "Polietilen",
+          "Xenlulozơ"
+        ],
+        "correct": 2,
+        "exp": "PE từ trùng hợp etilen."
+      },
+      {
+        "type": "mcq",
+        "q": "Tơ visco thuộc loại?",
+        "opts": [
+          "Tơ thiên nhiên",
+          "Tơ tổng hợp",
+          "Tơ nhân tạo (bán tổng hợp)",
+          "Tơ poliamit"
+        ],
+        "correct": 2,
+        "exp": "Từ xenlulozơ qua xử lý hóa học."
+      },
+      {
+        "type": "mcq",
+        "q": "Monome để tổng hợp PVC là?",
+        "opts": [
+          "CH₂=CHCl",
+          "CH₂=CH₂",
+          "CH₂=CCl₂",
+          "CH₂=CH–CH₃"
+        ],
+        "correct": 0,
+        "exp": "Vinyl clorua CH₂=CHCl."
+      },
+      {
+        "type": "mcq",
+        "q": "Tơ nilon-6,6 được điều chế từ?",
+        "opts": [
+          "Axit ađipic + hexametylenđiamin",
+          "Axit ε-aminocaproic",
+          "Caprolactam",
+          "Vinyl xianua"
+        ],
+        "correct": 0,
+        "exp": "Trùng ngưng HOOC-(CH₂)₄-COOH và H₂N-(CH₂)₆-NH₂."
+      },
+      {
+        "type": "mcq",
+        "q": "Phản ứng trùng ngưng khác trùng hợp ở điểm?",
+        "opts": [
+          "Sản phẩm có M lớn hơn",
+          "Có giải phóng phân tử nhỏ",
+          "Cần xúc tác",
+          "Monome có liên kết đôi"
+        ],
+        "correct": 1,
+        "exp": "Trùng ngưng tách H₂O, NH₃,..."
+      },
+      {
+        "type": "mcq",
+        "q": "Chất dẻo dùng làm ống nhựa, vỏ dây điện là?",
+        "opts": [
+          "PE",
+          "PVC",
+          "PMMA",
+          "PS"
+        ],
+        "correct": 1,
+        "exp": "PVC cứng, bền hóa chất, cách điện tốt."
+      },
+      {
+        "type": "mcq",
+        "q": "Tơ visco thuộc loại tơ?",
+        "opts": [
+          "Thiên nhiên",
+          "Tổng hợp",
+          "Nhân tạo",
+          "Poliamit"
+        ],
+        "correct": 2,
+        "exp": "Từ xenlulozơ tái sinh."
+      },
+      {
+        "type": "mcq",
+        "q": "Monome để tổng hợp cao su buna là?",
+        "opts": [
+          "Isopren",
+          "Buta-1,3-đien",
+          "Etilen",
+          "Stiren"
+        ],
+        "correct": 1,
+        "exp": "Trùng hợp buta-1,3-đien."
+      },
+      {
+        "type": "mcq",
+        "q": "Lưu hóa cao su nhằm mục đích?",
+        "opts": [
+          "Tăng độ dẻo",
+          "Tạo cầu nối disulfua, tăng độ bền và đàn hồi",
+          "Làm trong suốt",
+          "Giảm giá thành"
+        ],
+        "correct": 1,
+        "exp": "Cầu –S–S– nối mạch polime."
+      },
+      {
+        "type": "mcq",
+        "q": "Tơ nilon-6 (capron) được tổng hợp từ?",
+        "opts": [
+          "Axit ε-aminocaproic",
+          "Caprolactam",
+          "Hexametylenđiamin + axit ađipic",
+          "Vinyl xianua"
+        ],
+        "correct": 1,
+        "exp": "Caprolactam mở vòng trùng hợp."
+      }
+    ],
+    "electro": [
+      {
+        "type": "mcq",
+        "q": "Trong pin Galvani, cực âm (anode) xảy ra quá trình?",
+        "opts": [
+          "Khử",
+          "Oxi hóa",
+          "Trung hòa",
+          "Kết tủa"
+        ],
+        "correct": 1,
+        "exp": "Anode là nơi xảy ra oxi hóa (nhường electron)."
+      },
+      {
+        "type": "mcq",
+        "q": "Thế điện cực chuẩn của cặp Zn²⁺/Zn là –0,762 V, của Cu²⁺/Cu là +0,340 V. Sức điện động chuẩn của pin Zn-Cu là?",
+        "opts": [
+          "0,422 V",
+          "1,102 V",
+          "0,340 V",
+          "0,762 V"
+        ],
+        "correct": 1,
+        "exp": "E°pin = 0,340 – (–0,762) = 1,102 V."
+      },
+      {
+        "type": "mcq",
+        "q": "Dãy điện hóa sắp xếp các cặp oxi hóa – khử theo chiều?",
+        "opts": [
+          "Tăng tính khử",
+          "Tăng tính oxi hóa của dạng oxi hóa",
+          "Giảm dần thế điện cực",
+          "Tùy ý"
+        ],
+        "correct": 1,
+        "exp": "E° càng lớn, tính oxi hóa của dạng oxi hóa càng mạnh."
+      },
+      {
+        "type": "mcq",
+        "q": "Loại pin nào có thể sạc lại được?",
+        "opts": [
+          "Pin khô",
+          "Pin Mặt Trời",
+          "Acquy chì",
+          "Pin nhiên liệu"
+        ],
+        "correct": 2,
+        "exp": "Acquy là pin thứ cấp (sạc được)."
+      },
+      {
+        "type": "mcq",
+        "q": "Phản ứng xảy ra trong pin Zn-Cu là?",
+        "opts": [
+          "Zn + Cu²⁺ → Zn²⁺ + Cu",
+          "Zn + Cu → Zn²⁺ + Cu²⁺",
+          "Zn²⁺ + Cu → Zn + Cu²⁺",
+          "Zn + Cu²⁺ → Zn²⁺ + Cu²⁺"
+        ],
+        "correct": 0,
+        "exp": "Zn khử Cu²⁺ thành Cu."
+      },
+      {
+        "type": "mcq",
+        "q": "Trong điện phân dung dịch CuSO₄ với điện cực trơ, ở cathode xảy ra?",
+        "opts": [
+          "Cu → Cu²⁺ + 2e",
+          "Cu²⁺ + 2e → Cu",
+          "2H₂O → O₂ + 4H⁺ + 4e",
+          "2H⁺ + 2e → H₂"
+        ],
+        "correct": 1,
+        "exp": "Cu²⁺ có tính oxi hóa mạnh hơn H₂O nên bị khử trước."
+      },
+      {
+        "type": "mcq",
+        "q": "Để điều chế kim loại Na trong công nghiệp, người ta dùng?",
+        "opts": [
+          "Điện phân dung dịch NaCl",
+          "Điện phân NaCl nóng chảy",
+          "Nhiệt phân Na₂CO₃",
+          "Dùng CO khử Na₂O"
+        ],
+        "correct": 1,
+        "exp": "Na là kim loại mạnh, chỉ điều chế bằng điện phân nóng chảy."
+      },
+      {
+        "type": "mcq",
+        "q": "Trong điện phân dung dịch NaCl có màng ngăn, sản phẩm ở anode là?",
+        "opts": [
+          "Na",
+          "H₂",
+          "Cl₂",
+          "O₂"
+        ],
+        "correct": 2,
+        "exp": "Anion Cl⁻ bị oxi hóa thành Cl₂."
+      },
+      {
+        "type": "mcq",
+        "q": "Quá trình mạ điện (ví dụ mạ đồng) dựa trên nguyên tắc?",
+        "opts": [
+          "Điện phân với anode tan",
+          "Điện phân nóng chảy",
+          "Nhiệt luyện",
+          "Thủy luyện"
+        ],
+        "correct": 0,
+        "exp": "Anode là kim loại mạ, cathode là vật cần mạ."
+      },
+      {
+        "type": "mcq",
+        "q": "Khi điện phân Al₂O₃ nóng chảy (có criolit), sản phẩm ở cathode là?",
+        "opts": [
+          "Al",
+          "O₂",
+          "CO₂",
+          "Na"
+        ],
+        "correct": 0,
+        "exp": "Al³⁺ + 3e → Al."
+      }
+    ],
+    "metals": [
+      {
+        "type": "mcq",
+        "q": "Nguyên tử kim loại thường có số electron lớp ngoài cùng là?",
+        "opts": [
+          "1–3",
+          "5–7",
+          "4",
+          "8"
+        ],
+        "correct": 0,
+        "exp": "Hầu hết kim loại có 1-3 electron hóa trị."
+      },
+      {
+        "type": "mcq",
+        "q": "Trong tinh thể kim loại, các electron tự do đảm nhận vai trò?",
+        "opts": [
+          "Tạo liên kết cộng hóa trị",
+          "Liên kết các ion dương",
+          "Tạo phân tử",
+          "Cách điện"
+        ],
+        "correct": 1,
+        "exp": "Electron tự do liên kết các ion dương với nhau."
+      },
+      {
+        "type": "mcq",
+        "q": "Kim loại nào sau đây ở thể lỏng ở điều kiện thường?",
+        "opts": [
+          "Hg",
+          "Ga",
+          "Cs",
+          "Na"
+        ],
+        "correct": 0,
+        "exp": "Thủy ngân là kim loại lỏng duy nhất."
+      },
+      {
+        "type": "mcq",
+        "q": "Liên kết kim loại khác liên kết ion ở điểm?",
+        "opts": [
+          "Có electron tự do",
+          "Lực hút tĩnh điện",
+          "Không có điện tích",
+          "Chỉ tồn tại ở nhiệt độ cao"
+        ],
+        "correct": 0,
+        "exp": "Liên kết kim loại có electron tự do, liên kết ion không có."
+      },
+      {
+        "type": "mcq",
+        "q": "Nguyên nhân kim loại có tính dẻo là do?",
+        "opts": [
+          "Các lớp ion trượt lên nhau",
+          "Electron tự do di chuyển",
+          "Mạng tinh thể bền",
+          "Nhiệt độ nóng chảy thấp"
+        ],
+        "correct": 0,
+        "exp": "Các lớp ion dương có thể trượt mà không phá vỡ liên kết."
+      },
+      {
+        "type": "mcq",
+        "q": "Kim loại dẫn điện tốt nhất là?",
+        "opts": [
+          "Cu",
+          "Ag",
+          "Au",
+          "Al"
+        ],
+        "correct": 1,
+        "exp": "Bạc (Ag) dẫn điện tốt nhất."
+      },
+      {
+        "type": "mcq",
+        "q": "Kim loại nào không phản ứng với dung dịch HCl loãng?",
+        "opts": [
+          "Mg",
+          "Fe",
+          "Cu",
+          "Zn"
+        ],
+        "correct": 2,
+        "exp": "Cu đứng sau H trong dãy điện hóa."
+      },
+      {
+        "type": "mcq",
+        "q": "Phản ứng của Fe với Cl₂ tạo sản phẩm?",
+        "opts": [
+          "FeCl₂",
+          "FeCl₃",
+          "FeCl",
+          "FeCl₄"
+        ],
+        "correct": 1,
+        "exp": "2Fe + 3Cl₂ → 2FeCl₃."
+      },
+      {
+        "type": "mcq",
+        "q": "Kim loại nào tác dụng mạnh với nước ở nhiệt độ thường?",
+        "opts": [
+          "Mg",
+          "Al",
+          "Na",
+          "Fe"
+        ],
+        "correct": 2,
+        "exp": "Kim loại kiềm (Na, K) phản ứng mãnh liệt với nước."
+      },
+      {
+        "type": "mcq",
+        "q": "Tính chất hóa học đặc trưng của kim loại là?",
+        "opts": [
+          "Tính oxi hóa",
+          "Tính khử",
+          "Tính bazơ",
+          "Tính axit"
+        ],
+        "correct": 1,
+        "exp": "Kim loại dễ nhường electron → tính khử."
+      },
+      {
+        "type": "mcq",
+        "q": "Nguyên tắc điều chế kim loại là?",
+        "opts": [
+          "Oxi hóa ion kim loại",
+          "Khử ion kim loại thành nguyên tử",
+          "Nhiệt phân muối",
+          "Điện phân nóng chảy"
+        ],
+        "correct": 1,
+        "exp": "Mⁿ⁺ + ne → M."
+      },
+      {
+        "type": "mcq",
+        "q": "Phương pháp thích hợp để điều chế Fe từ quặng hematite là?",
+        "opts": [
+          "Nhiệt luyện",
+          "Thủy luyện",
+          "Điện phân nóng chảy",
+          "Điện phân dung dịch"
+        ],
+        "correct": 0,
+        "exp": "Dùng CO khử Fe₂O₃ ở nhiệt độ cao."
+      },
+      {
+        "type": "mcq",
+        "q": "Trong công nghiệp, Al được sản xuất bằng?",
+        "opts": [
+          "Điện phân AlCl₃ nóng chảy",
+          "Điện phân Al₂O₃ nóng chảy trong criolit",
+          "Nhiệt luyện",
+          "Thủy luyện"
+        ],
+        "correct": 1,
+        "exp": "Điện phân Al₂O₃ nóng chảy với criolit."
+      },
+      {
+        "type": "mcq",
+        "q": "Phương pháp thủy luyện thường dùng để điều chế?",
+        "opts": [
+          "Na",
+          "Mg",
+          "Cu",
+          "Al"
+        ],
+        "correct": 2,
+        "exp": "Thủy luyện dùng cho kim loại yếu như Cu, Ag, Au."
+      },
+      {
+        "type": "mcq",
+        "q": "Quặng bauxite dùng để sản xuất kim loại nào?",
+        "opts": [
+          "Fe",
+          "Al",
+          "Cu",
+          "Zn"
+        ],
+        "correct": 1,
+        "exp": "Bauxite (Al₂O₃.2H₂O) là quặng nhôm."
+      }
+    ],
+    "alkali-alkaline": [
+      {
+        "type": "mcq",
+        "q": "Kim loại kiềm có cấu hình electron lớp ngoài cùng là?",
+        "opts": [
+          "ns¹",
+          "ns²",
+          "ns²np¹",
+          "ns²np²"
+        ],
+        "correct": 0,
+        "exp": "Nhóm IA có 1 electron hóa trị ns¹."
+      },
+      {
+        "type": "mcq",
+        "q": "Khi cho Na vào dung dịch CuSO₄, sản phẩm thu được gồm?",
+        "opts": [
+          "Cu + Na₂SO₄",
+          "Cu(OH)₂ + Na₂SO₄ + H₂",
+          "CuO + NaOH",
+          "Na₂O + Cu"
+        ],
+        "correct": 1,
+        "exp": "Na phản ứng với nước trước, NaOH tạo kết tủa với Cu²⁺."
+      },
+      {
+        "type": "mcq",
+        "q": "NaHCO₃ được dùng làm bột nở vì?",
+        "opts": [
+          "Dễ tan",
+          "Có vị ngọt",
+          "Bị phân hủy tạo CO₂ khi đun nóng",
+          "Tác dụng với axit"
+        ],
+        "correct": 2,
+        "exp": "2NaHCO₃ → Na₂CO₃ + CO₂ + H₂O."
+      },
+      {
+        "type": "mcq",
+        "q": "Để bảo quản kim loại Na, người ta ngâm trong?",
+        "opts": [
+          "Nước",
+          "Dầu hỏa",
+          "Rượu",
+          "Axit HCl"
+        ],
+        "correct": 1,
+        "exp": "Dầu hỏa cách ly không khí và ẩm."
+      },
+      {
+        "type": "mcq",
+        "q": "Màu ngọn lửa của ion Na⁺ là?",
+        "opts": [
+          "Đỏ tía",
+          "Vàng",
+          "Tím nhạt",
+          "Lục"
+        ],
+        "correct": 1,
+        "exp": "Ion Na⁺ cho màu vàng đặc trưng."
+      },
+      {
+        "type": "mcq",
+        "q": "Kim loại kiềm thổ có tính khử mạnh hơn kim loại kiềm cùng chu kì?",
+        "opts": [
+          "Đúng",
+          "Sai",
+          "Không so sánh",
+          "Chỉ Be yếu hơn"
+        ],
+        "correct": 1,
+        "exp": "Kim loại kiềm có tính khử mạnh hơn kiềm thổ cùng chu kì."
+      },
+      {
+        "type": "mcq",
+        "q": "Phản ứng dùng để dập tắt đám cháy do Mg gây ra?",
+        "opts": [
+          "Nước",
+          "CO₂",
+          "Cát khô",
+          "Khí N₂"
+        ],
+        "correct": 2,
+        "exp": "Mg cháy trong CO₂ và N₂, cát khô cách ly oxi."
+      },
+      {
+        "type": "mcq",
+        "q": "Nước cứng tạm thời chứa các ion?",
+        "opts": [
+          "Ca²⁺, Mg²⁺, Cl⁻",
+          "Ca²⁺, Mg²⁺, HCO₃⁻",
+          "Ca²⁺, Mg²⁺, SO₄²⁻",
+          "Na⁺, K⁺, HCO₃⁻"
+        ],
+        "correct": 1,
+        "exp": "Do Ca(HCO₃)₂, Mg(HCO₃)₂, đun sôi tạo kết tủa."
+      },
+      {
+        "type": "mcq",
+        "q": "Thạch cao nung có công thức là?",
+        "opts": [
+          "CaSO₄",
+          "CaSO₄.2H₂O",
+          "CaSO₄.½H₂O",
+          "CaSO₄.H₂O"
+        ],
+        "correct": 2,
+        "exp": "CaSO₄.½H₂O dùng bó bột."
+      },
+      {
+        "type": "mcq",
+        "q": "Để làm mềm nước cứng vĩnh cửu (chứa Ca²⁺, Mg²⁺, SO₄²⁻, Cl⁻) có thể dùng?",
+        "opts": [
+          "Đun sôi",
+          "Na₂CO₃",
+          "HCl",
+          "Ca(OH)₂"
+        ],
+        "correct": 1,
+        "exp": "Na₂CO₃ tạo kết tủa CaCO₃, MgCO₃."
+      }
+    ],
+    "aluminum": [
+      {
+        "type": "mcq",
+        "q": "Nhôm bền trong không khí và nước là do?",
+        "opts": [
+          "Tính khử yếu",
+          "Lớp màng Al₂O₃ bảo vệ",
+          "Thụ động",
+          "Không phản ứng"
+        ],
+        "correct": 1,
+        "exp": "Lớp oxit mỏng, bền ngăn cản tác dụng."
+      },
+      {
+        "type": "mcq",
+        "q": "Hợp chất nào của nhôm có tính lưỡng tính?",
+        "opts": [
+          "AlCl₃",
+          "Al₂O₃",
+          "Al(NO₃)₃",
+          "Al₂(SO₄)₃"
+        ],
+        "correct": 1,
+        "exp": "Al₂O₃ và Al(OH)₃ đều lưỡng tính."
+      },
+      {
+        "type": "mcq",
+        "q": "Phản ứng nhiệt nhôm (Al + Fe₂O₃) dùng để?",
+        "opts": [
+          "Điều chế sắt",
+          "Hàn đường ray",
+          "Làm pháo hoa",
+          "Cả A và B"
+        ],
+        "correct": 3,
+        "exp": "Phản ứng tỏa nhiệt lớn, dùng hàn nhiệt nhôm và điều chế Fe."
+      },
+      {
+        "type": "mcq",
+        "q": "Cho từ từ NaOH vào AlCl₃, hiện tượng?",
+        "opts": [
+          "Kết tủa keo trắng, sau đó tan",
+          "Sủi bọt khí",
+          "Kết tủa xanh",
+          "Không hiện tượng"
+        ],
+        "correct": 0,
+        "exp": "Al³⁺ + 3OH⁻ → Al(OH)₃; Al(OH)₃ + OH⁻ → [Al(OH)₄]⁻."
+      },
+      {
+        "type": "mcq",
+        "q": "Criolit trong sản xuất nhôm có vai trò?",
+        "opts": [
+          "Tăng nhiệt độ nóng chảy",
+          "Hạ nhiệt độ nóng chảy của Al₂O₃",
+          "Làm chất khử",
+          "Tạo hợp kim"
+        ],
+        "correct": 1,
+        "exp": "Hạ nhiệt độ nóng chảy từ 2050°C xuống ~900°C."
+      }
+    ],
+    "transition-complex": [
+      {
+        "type": "mcq",
+        "q": "Cấu hình electron của nguyên tử Fe (Z=26) là?",
+        "opts": [
+          "[Ar]3d⁶4s²",
+          "[Ar]3d⁵4s¹",
+          "[Ar]3d⁸4s²",
+          "[Ar]3d⁷4s¹"
+        ],
+        "correct": 0,
+        "exp": "Fe: 1s²2s²2p⁶3s²3p⁶3d⁶4s²."
+      },
+      {
+        "type": "mcq",
+        "q": "Kim loại chuyển tiếp dãy thứ nhất gồm các nguyên tố từ?",
+        "opts": [
+          "Sc đến Cu",
+          "Ti đến Zn",
+          "Cr đến Cu",
+          "Mn đến Zn"
+        ],
+        "correct": 0,
+        "exp": "Từ Sc (21) đến Cu (29)."
+      },
+      {
+        "type": "mcq",
+        "q": "Đặc điểm chung về số oxi hóa của kim loại chuyển tiếp là?",
+        "opts": [
+          "Chỉ có +1",
+          "Chỉ có +2",
+          "Nhiều số oxi hóa khác nhau",
+          "Luôn +3"
+        ],
+        "correct": 2,
+        "exp": "Do electron ở phân lớp 3d và 4s."
+      },
+      {
+        "type": "mcq",
+        "q": "Kim loại cứng nhất trong dãy chuyển tiếp thứ nhất là?",
+        "opts": [
+          "Fe",
+          "Cr",
+          "Ni",
+          "Cu"
+        ],
+        "correct": 1,
+        "exp": "Crom có độ cứng cao nhất (8,5-9 Mohs)."
+      },
+      {
+        "type": "mcq",
+        "q": "Ion Fe³⁺ có cấu hình electron là?",
+        "opts": [
+          "[Ar]3d⁵",
+          "[Ar]3d⁶",
+          "[Ar]3d⁴",
+          "[Ar]3d³"
+        ],
+        "correct": 0,
+        "exp": "Fe (3d⁶4s²) mất 3e → 3d⁵."
+      },
+      {
+        "type": "mcq",
+        "q": "Trong phức chất [Ag(NH₃)₂]⁺, nguyên tử trung tâm là?",
+        "opts": [
+          "Ag",
+          "N",
+          "H",
+          "Ag⁺"
+        ],
+        "correct": 3,
+        "exp": "Nguyên tử trung tâm là Ag⁺."
+      },
+      {
+        "type": "mcq",
+        "q": "Liên kết giữa nguyên tử trung tâm và phối tử trong phức chất là?",
+        "opts": [
+          "Liên kết ion",
+          "Liên kết cộng hóa trị cho – nhận",
+          "Liên kết kim loại",
+          "Liên kết hydrogen"
+        ],
+        "correct": 1,
+        "exp": "Phối tử cho cặp e vào orbital trống của nguyên tử trung tâm."
+      },
+      {
+        "type": "mcq",
+        "q": "Phức chất [Cu(H₂O)₆]²⁺ có dạng hình học?",
+        "opts": [
+          "Tứ diện",
+          "Vuông phẳng",
+          "Bát diện",
+          "Tháp vuông"
+        ],
+        "correct": 2,
+        "exp": "Số phối trí 6 → bát diện."
+      },
+      {
+        "type": "mcq",
+        "q": "Phối tử trong phức chất [Co(NH₃)₆]³⁺ là?",
+        "opts": [
+          "Co³⁺",
+          "NH₃",
+          "NH₄⁺",
+          "H₂O"
+        ],
+        "correct": 1,
+        "exp": "Phối tử là phân tử NH₃."
+      },
+      {
+        "type": "mcq",
+        "q": "Công thức nào sau đây là phức chất?",
+        "opts": [
+          "NaCl",
+          "CuSO₄",
+          "[Cu(NH₃)₄]SO₄",
+          "CH₃COOH"
+        ],
+        "correct": 2,
+        "exp": "Chứa ion phức [Cu(NH₃)₄]²⁺."
+      },
+      {
+        "type": "mcq",
+        "q": "Hiện tượng khi cho dung dịch NH₃ từ từ vào CuSO₄ là?",
+        "opts": [
+          "Kết tủa xanh, tan tạo dung dịch xanh thẫm",
+          "Kết tủa trắng",
+          "Sủi bọt khí",
+          "Không hiện tượng"
+        ],
+        "correct": 0,
+        "exp": "Tạo Cu(OH)₂ xanh, sau đó tan thành [Cu(NH₃)₄]²⁺ xanh thẫm."
+      },
+      {
+        "type": "mcq",
+        "q": "Thuốc thử Tollens có công thức phức chất là?",
+        "opts": [
+          "[Ag(NH₃)₂]OH",
+          "[Ag(NH₃)₂]Cl",
+          "[Ag(CN)₂]⁻",
+          "[Ag(H₂O)₂]⁺"
+        ],
+        "correct": 0,
+        "exp": "Dung dịch [Ag(NH₃)₂]OH dùng để tráng bạc."
+      },
+      {
+        "type": "mcq",
+        "q": "Phản ứng thế phối tử là gì?",
+        "opts": [
+          "Thay thế nguyên tử trung tâm",
+          "Thay thế phối tử này bằng phối tử khác",
+          "Phá hủy phức chất",
+          "Tạo kết tủa"
+        ],
+        "correct": 1,
+        "exp": "Ví dụ: [Cu(H₂O)₆]²⁺ + 4Cl⁻ → [CuCl₄]²⁻ + 6H₂O."
+      },
+      {
+        "type": "mcq",
+        "q": "Phức chất nào có vai trò vận chuyển oxy trong máu?",
+        "opts": [
+          "Chlorophyll",
+          "Hemoglobin",
+          "Vitamin B₁₂",
+          "Cisplatin"
+        ],
+        "correct": 1,
+        "exp": "Hemoglobin chứa Fe²⁺ tạo phức với O₂."
+      },
+      {
+        "type": "mcq",
+        "q": "Phức chất được dùng trong điều trị ung thư là?",
+        "opts": [
+          "Cisplatin",
+          "Transplatin",
+          "Carboplatin",
+          "Cả A và C"
+        ],
+        "correct": 3,
+        "exp": "Cisplatin và carboplatin là thuốc hóa trị."
+      }
+    ]
+  }
+}

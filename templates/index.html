@@ -1,0 +1,2077 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GloryChem — Đấu Trường Hóa Học</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&family=Lexend:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap"
+    rel="stylesheet">
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/forum.css">
+  <link rel="stylesheet" href="/static/css/lesson.css">
+  <link rel="stylesheet" href="/static/css/periodic.css">
+  <link rel="stylesheet" href="/static/css/nav-redesign.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="/static/js/question.js"></script>
+  <script>
+    (function () {
+      const storedTheme = localStorage.getItem('glorychem-theme');
+      if (storedTheme === 'dark' || (!storedTheme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
+</head>
+
+<body>
+
+  <canvas id="pc"></canvas>
+
+  <!-- ═══ NAV ═══ -->
+  <nav>
+    <div class="logo" onclick="gp('home')">
+      <div class="lmark">⚗️</div>
+      <span class="ltext">Glory<span>Chem</span></span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="#" id="nl-home" class="active" onclick="gp('home');return false">Trang Chủ</a></li>
+      <li><a href="#" id="nl-challenge" onclick="gp('challenge');return false">Thách Đấu</a></li>
+      <li><a href="#" id="nl-periodic" onclick="gp('periodic');return false">Khám Phá</a></li>
+      <li><a href="#" id="nl-lesson" onclick="gp('lesson');return false">Kiến Thức</a></li>
+      <li><a href="#" id="nl-forum" onclick="gp('forum');return false">Diễn Đàn</a></li>
+      <li><a href="#" id="nl-leaderboard" onclick="gp('leaderboard');return false">Bảng Xếp Hạng</a></li>
+
+    </ul>
+    <div class="nav-r-wrapper">
+      <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+        <span class="icon-sun">☀️</span>
+        <span class="icon-moon" style="display:none">🌙</span>
+      </button>
+      <div class="nav-r" id="nav-r">
+        <button class="btn btn-ghost" onclick="openM('login')">Đăng Nhập</button>
+        <button class="btn btn-teal" onclick="openM('register')">Đăng Ký</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══ HOME ═══ -->
+  <div id="page-home" class="page active">
+
+    <!-- ═══ HERO — MAGAZINE SPLIT ═══ -->
+    <section class="mg-hero">
+
+      <!-- Left: editorial block -->
+      <div class="mg-hero-left">
+
+        <!-- Logged out -->
+        <div id="hero-logged-out">
+          <div class="mg-overline">
+            <span class="mg-overline-bar"></span>
+            <span>NỀN TẢNG HÓA HỌC THẾ HỆ MỚI</span>
+          </div>
+          <h1 class="mg-h1">
+            <span class="mg-h1-line">ĐẤU</span>
+            <span class="mg-h1-line mg-h1-accent">TRƯỜNG</span>
+            <span class="mg-h1-line">HÓA HỌC</span>
+          </h1>
+          <p class="mg-sub">Đối đầu trực tiếp với học sinh toàn quốc. Trả lời câu hỏi THPT theo thời gian thực và leo
+            bảng xếp hạng qua từng trận chiến.</p>
+          <div class="mg-cta-row">
+            <button class="btn-mg-primary" onclick="openM('register')">Bắt Đầu Miễn Phí</button>
+            <button class="btn-mg-ghost" onclick="gp('challenge')">Xem Thách Đấu →</button>
+          </div>
+        </div>
+
+        <!-- Logged in -->
+        <div id="hero-logged-in" style="display:none">
+          <div class="mg-overline">
+            <span class="mg-overline-bar"></span>
+            <span>CHÀO MỪNG TRỞ LẠI, <span id="mg-welcome-name">...</span></span>
+          </div>
+          <h1 class="mg-h1">
+            <span class="mg-h1-line">ĐẤU</span>
+            <span class="mg-h1-line mg-h1-accent">TRƯỜNG</span>
+            <span class="mg-h1-line">HÓA HỌC</span>
+          </h1>
+          <div class="mg-user-stats">
+            <div class="mg-ustat">
+              <div class="mg-ustat-val" id="mg-elo">1200</div>
+              <div class="mg-ustat-lbl">ELO Rating</div>
+            </div>
+            <div class="mg-ustat-divider"></div>
+            <div class="mg-ustat">
+              <div class="mg-ustat-val" id="mg-wins">0</div>
+              <div class="mg-ustat-lbl">Trận thắng</div>
+            </div>
+            <div class="mg-ustat-divider"></div>
+            <div class="mg-ustat">
+              <div class="mg-ustat-val" id="mg-rank-label">Electron</div>
+              <div class="mg-ustat-lbl">Cấp bậc</div>
+            </div>
+          </div>
+          <div class="mg-cta-row">
+            <button class="btn-mg-primary" onclick="gp('challenge')">Vào Đấu Trường</button>
+            <button class="btn-mg-ghost" onclick="gp('leaderboard')">Bảng Xếp Hạng →</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right: element stack + live card -->
+      <div class="mg-hero-right">
+        <div class="mg-el-stack">
+          <div class="mg-el-card mg-el-dark">
+            <div class="mg-el-num">26</div>
+            <div class="mg-el-sym">Fe</div>
+            <div class="mg-el-name">Iron</div>
+            <div class="mg-el-mass">55.845</div>
+          </div>
+          <div class="mg-el-card mg-el-light">
+            <div class="mg-el-num">1</div>
+            <div class="mg-el-sym mg-el-sym-accent">H</div>
+            <div class="mg-el-name">Hydrogen</div>
+            <div class="mg-el-mass">1.008</div>
+          </div>
+          <div class="mg-el-card mg-el-mid">
+            <div class="mg-el-num">11</div>
+            <div class="mg-el-sym">Na</div>
+            <div class="mg-el-name">Sodium</div>
+            <div class="mg-el-mass">22.990</div>
+          </div>
+          <div class="mg-el-card mg-el-accent-card">
+            <div class="mg-el-num">6</div>
+            <div class="mg-el-sym">C</div>
+            <div class="mg-el-name">Carbon</div>
+            <div class="mg-el-mass">12.011</div>
+          </div>
+        </div>
+
+        <!-- Live match badge -->
+        <div class="mg-live-badge">
+          <span class="mg-live-dot"></span>
+          <span class="mg-live-text">LIVE — <strong id="mg-live-count">89</strong> trận đang diễn ra</span>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ═══ STATS TICKER ═══ -->
+    <div class="mg-ticker">
+      <div class="mg-ticker-inner">
+        <div class="mg-ticker-item"><span class="mg-ticker-val" data-target="2847">0</span><span
+            class="mg-ticker-lbl">Người chơi</span></div>
+        <div class="mg-ticker-sep">✦</div>
+        <div class="mg-ticker-item"><span class="mg-ticker-val" data-target="150">0</span><span
+            class="mg-ticker-lbl">Câu hỏi THPT</span></div>
+        <div class="mg-ticker-sep">✦</div>
+        <div class="mg-ticker-item"><span class="mg-ticker-val" data-target="12">0</span><span class="mg-ticker-lbl">Chủ
+            đề</span></div>
+        <div class="mg-ticker-sep">✦</div>
+        <div class="mg-ticker-item"><span class="mg-ticker-val" data-target="98">0</span><span class="mg-ticker-lbl">%
+            hài lòng</span></div>
+        <div class="mg-ticker-sep">✦</div>
+        <div class="mg-ticker-item"><span class="mg-ticker-val" data-target="5">0</span><span class="mg-ticker-lbl">Cấp
+            bậc</span></div>
+      </div>
+    </div>
+
+    <!-- ═══ FEATURES — BENTO MAGAZINE ═══ -->
+    <section class="mg-sec">
+      <div class="mg-sec-head">
+        <div class="mg-label-row">
+          <span class="mg-label-bar"></span>
+          <span class="mg-label-text">TÍNH NĂNG</span>
+        </div>
+        <h2 class="mg-sh2">Tại Sao Chọn<br><em>GloryChem?</em></h2>
+      </div>
+
+      <div class="mg-bento">
+
+        <!-- Card lớn: Đấu 1v1 -->
+        <div class="mg-bc mg-bc-hero mg-tilt" onclick="gp('challenge')">
+          <div class="mg-bc-tag">Tính năng chính</div>
+          <div class="mg-bc-icon-big">⚔️</div>
+          <h3 class="mg-bc-title">Đấu Trực Tiếp 1v1</h3>
+          <p class="mg-bc-body">Đối đầu thời gian thực với học sinh cùng trình độ trên cả nước. Áp lực thi đấu giúp ghi
+            nhớ nhanh và lâu hơn gấp nhiều lần so với học thông thường.</p>
+          <div class="mg-bc-cta">Vào Đấu Trường →</div>
+        </div>
+
+        <!-- Card nhỏ: ELO -->
+        <div class="mg-bc mg-bc-dark mg-tilt">
+          <div class="mg-bc-icon-sm">🏆</div>
+          <h3 class="mg-bc-title-sm">Hệ Thống ELO</h3>
+          <p class="mg-bc-body-sm">Rating công bằng. Leo từ Electron lên Giáo Sư.</p>
+          <div class="mg-rank-ladder">
+            <span class="mg-rank-pip active">⚛</span>
+            <span class="mg-rank-arrow">→</span>
+            <span class="mg-rank-pip">🔬</span>
+            <span class="mg-rank-arrow">→</span>
+            <span class="mg-rank-pip">🧪</span>
+            <span class="mg-rank-arrow">→</span>
+            <span class="mg-rank-pip">🎓</span>
+          </div>
+        </div>
+
+        <!-- Card nhỏ: Chương trình -->
+        <div class="mg-bc mg-bc-light mg-tilt">
+          <div class="mg-bc-icon-sm">📚</div>
+          <h3 class="mg-bc-title-sm">Bám Sát THPT</h3>
+          <p class="mg-bc-body-sm">Đại cương · Vô cơ · Hữu cơ. Đúng chương trình, đúng dạng bài.</p>
+          <div class="mg-subject-pills">
+            <span class="mg-pill">Lớp 10</span>
+            <span class="mg-pill">Lớp 11</span>
+            <span class="mg-pill">Lớp 12</span>
+          </div>
+        </div>
+
+        <!-- Card rộng: Tiến độ -->
+        <div class="mg-bc mg-bc-wide mg-tilt">
+          <div class="mg-bc-icon-sm">📊</div>
+          <h3 class="mg-bc-title-sm">Theo Dõi Tiến Độ</h3>
+          <p class="mg-bc-body-sm">Dashboard cá nhân — điểm mạnh/yếu, lịch sử trận, ELO theo thời gian.</p>
+          <div class="mg-progress-demo">
+            <div class="mg-prog-row">
+              <span class="mg-prog-lbl">Hóa đại cương</span>
+              <div class="mg-prog-bar">
+                <div class="mg-prog-fill" style="width:78%;background:var(--teal)"></div>
+              </div>
+              <span class="mg-prog-pct">78%</span>
+            </div>
+            <div class="mg-prog-row">
+              <span class="mg-prog-lbl">Hóa vô cơ</span>
+              <div class="mg-prog-bar">
+                <div class="mg-prog-fill" style="width:55%;background:var(--blue)"></div>
+              </div>
+              <span class="mg-prog-pct">55%</span>
+            </div>
+            <div class="mg-prog-row">
+              <span class="mg-prog-lbl">Hóa hữu cơ</span>
+              <div class="mg-prog-bar">
+                <div class="mg-prog-fill" style="width:42%;background:var(--amber)"></div>
+              </div>
+              <span class="mg-prog-pct">42%</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══ EXPLORE — HÓA HỌC THÚ VỊ (REDESIGN) ═══ -->
+    <section class="xp-section">
+
+      <!-- Section header editorial -->
+      <div class="xp-header">
+        <div class="xp-header-left">
+          <div class="xp-kicker">
+            <span class="xp-kicker-line"></span>
+            <span>KHÁM PHÁ</span>
+          </div>
+          <h2 class="xp-h2">Hóa Học<br><em>Thú Vị</em></h2>
+        </div>
+        <div class="xp-header-right">
+          <p class="xp-sub">Những điều bạn chưa biết về thế giới của các nguyên tố — từ bí ẩn vũ trụ đến phản ứng điên
+            rồ.</p>
+          <!-- Animated number strip -->
+          <div class="xp-num-strip">
+            <div class="xp-num-item">
+              <span class="xp-big-num">118</span>
+              <span class="xp-num-lbl">Nguyên tố</span>
+            </div>
+            <div class="xp-num-div"></div>
+            <div class="xp-num-item">
+              <span class="xp-big-num">10M+</span>
+              <span class="xp-num-lbl">Hợp chất Carbon</span>
+            </div>
+            <div class="xp-num-div"></div>
+            <div class="xp-num-item">
+              <span class="xp-big-num">-273°</span>
+              <span class="xp-num-lbl">Độ C tuyệt đối</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scrolling marquee tape -->
+      <div class="xp-tape">
+        <div class="xp-tape-inner">
+          <span>Au · Ag · Fe · Cu · Na · K · Ca · Mg · Al · Si · P · S · Cl · Ar · H₂O · CO₂ · NaCl · HCl · H₂SO₄ ·
+            NH₃</span>
+          <span aria-hidden="true">Au · Ag · Fe · Cu · Na · K · Ca · Mg · Al · Si · P · S · Cl · Ar · H₂O · CO₂ · NaCl ·
+            HCl · H₂SO₄ · NH₃</span>
+        </div>
+      </div>
+
+      <!-- Main mosaic grid -->
+      <div class="xp-mosaic">
+
+        <!-- Card 1: Vàng — full-height left -->
+        <div class="xp-card xp-card-gold xp-tall">
+          <div class="xp-card-overlay"></div>
+          <div class="xp-card-tag">Nguyên tố · Au</div>
+          <div class="xp-giant-symbol">Au</div>
+          <div class="xp-card-content">
+            <h3 class="xp-card-title">Vàng — Kim loại huyền thoại</h3>
+            <p class="xp-card-body">Toàn bộ lượng vàng từng khai thác chỉ lấp đầy <strong>3.5 bể bơi Olympic</strong>.
+              Màu vàng duy nhất trong tự nhiên — do electron d tương đối tính.</p>
+          </div>
+          <div class="xp-card-num">79</div>
+        </div>
+
+        <!-- Card 2: Nước — ngang -->
+        <div class="xp-card xp-card-water">
+          <div class="xp-card-tag">Phân tử · H₂O</div>
+          <div class="xp-card-content">
+            <h3 class="xp-card-title">Nước — 3 trạng thái cùng lúc</h3>
+            <p class="xp-card-body">Tại <em>Triple Point</em> <strong>(0.01°C, 611.7 Pa)</strong>, nước tồn tại đồng
+              thời ở thể rắn, lỏng và khí cùng một lúc.</p>
+          </div>
+          <div class="xp-angle-badge">104.5°</div>
+        </div>
+
+        <!-- Card 3: Carbon — highlight box -->
+        <div class="xp-card xp-card-carbon">
+          <div class="xp-card-tag">Hữu cơ · C</div>
+          <div class="xp-mega-stat">
+            <span class="xp-mega-val">10M+</span>
+            <span class="xp-mega-lbl">hợp chất</span>
+          </div>
+          <h3 class="xp-card-title">Carbon — Nền tảng sự sống</h3>
+          <p class="xp-card-body">Một nguyên tố, mười triệu hợp chất. Kim cương và than chì đều là Carbon — chỉ khác
+            cách sắp xếp.</p>
+        </div>
+
+        <!-- Card 4: Mendeleev — dark editorial -->
+        <div class="xp-card xp-card-dark xp-card-mendeleev">
+          <div class="xp-card-tag" style="color:var(--teal)">Lịch sử · 1869</div>
+          <h3 class="xp-card-title" style="color:#fff">Mendeleev — Nhà tiên tri</h3>
+          <p class="xp-card-body" style="color:rgba(255,255,255,.6)">Dự đoán sự tồn tại của <strong
+              style="color:var(--teal)">Gallium</strong>, <strong style="color:var(--teal)">Germanium</strong> trước khi
+            chúng được tìm thấy — 15 năm sau đó khoa học xác nhận.</p>
+          <div class="xp-year-stamp">1869</div>
+        </div>
+
+        <!-- Card 5: Helium — color block -->
+        <div class="xp-card xp-card-helium">
+          <div class="xp-card-split">
+            <div class="xp-split-left">
+              <div class="xp-card-tag">Khí hiếm</div>
+              <div class="xp-element-block">
+                <span class="xp-el-num">2</span>
+                <span class="xp-el-sym">He</span>
+                <span class="xp-el-name">Helium</span>
+              </div>
+            </div>
+            <div class="xp-split-right">
+              <h3 class="xp-card-title">Từ Mặt Trời xuống Trái Đất</h3>
+              <p class="xp-card-body">Phát hiện qua quang phổ Mặt Trời năm <strong>1868</strong>, trước khi tìm thấy
+                trên Trái Đất 27 năm. Tên "Helios" — thần Mặt Trời Hy Lạp.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 6: Phản ứng điên rồ — interactive -->
+        <div class="xp-card xp-card-reaction" onclick="this.classList.toggle('xp-react-active')">
+          <div class="xp-card-tag">⚡ Phản ứng · Tap để xem</div>
+          <div class="xp-reaction-display">
+            <div class="xp-react-before">
+              <span class="xp-react-mol">Na</span>
+              <span class="xp-react-op">+</span>
+              <span class="xp-react-mol">H₂O</span>
+            </div>
+            <div class="xp-react-arrow">→</div>
+            <div class="xp-react-after">
+              <span class="xp-react-mol accent">NaOH</span>
+              <span class="xp-react-op">+</span>
+              <span class="xp-react-mol accent">H₂↑</span>
+            </div>
+          </div>
+          <p class="xp-card-body">Natri + Nước tạo ra ngọn lửa tím và khí Hydro bùng cháy. <strong>Nguy hiểm nhưng ngoạn
+              mục.</strong></p>
+          <div class="xp-burst">💥</div>
+        </div>
+
+      </div>
+
+      <!-- Bottom strip: element spotlight horizontal scroll -->
+      <div class="xp-spotlight-wrap">
+        <div class="xp-spotlight-label">
+          <span class="xp-kicker-line"></span>
+          <span>SPOTLIGHT NGUYÊN TỐ</span>
+        </div>
+        <div class="xp-spotlight-scroll">
+          <div class="xp-spot-card" style="--spot-color:#f59e0b">
+            <span class="xp-spot-num">79</span>
+            <span class="xp-spot-sym">Au</span>
+            <span class="xp-spot-name">Gold</span>
+            <span class="xp-spot-fact">Kim loại quý nhất</span>
+          </div>
+          <div class="xp-spot-card" style="--spot-color:#60a5fa">
+            <span class="xp-spot-num">1</span>
+            <span class="xp-spot-sym">H</span>
+            <span class="xp-spot-name">Hydrogen</span>
+            <span class="xp-spot-fact">Nhẹ nhất vũ trụ</span>
+          </div>
+          <div class="xp-spot-card" style="--spot-color:#14b8a6">
+            <span class="xp-spot-num">6</span>
+            <span class="xp-spot-sym">C</span>
+            <span class="xp-spot-name">Carbon</span>
+            <span class="xp-spot-fact">Nền tảng sự sống</span>
+          </div>
+          <div class="xp-spot-card" style="--spot-color:#a78bfa">
+            <span class="xp-spot-num">2</span>
+            <span class="xp-spot-sym">He</span>
+            <span class="xp-spot-name">Helium</span>
+            <span class="xp-spot-fact">Từ Mặt Trời</span>
+          </div>
+          <div class="xp-spot-card" style="--spot-color:#f43f5e">
+            <span class="xp-spot-num">11</span>
+            <span class="xp-spot-sym">Na</span>
+            <span class="xp-spot-name">Sodium</span>
+            <span class="xp-spot-fact">Cháy trong nước</span>
+          </div>
+          <div class="xp-spot-card" style="--spot-color:#22c55e">
+            <span class="xp-spot-num">8</span>
+            <span class="xp-spot-sym">O</span>
+            <span class="xp-spot-name">Oxygen</span>
+            <span class="xp-spot-fact">Thở mỗi giây</span>
+          </div>
+          <div class="xp-spot-card" style="--spot-color:#fb923c">
+            <span class="xp-spot-num">26</span>
+            <span class="xp-spot-sym">Fe</span>
+            <span class="xp-spot-name">Iron</span>
+            <span class="xp-spot-fact">Lõi Trái Đất</span>
+          </div>
+          <div class="xp-spot-card" style="--spot-color:#c084fc">
+            <span class="xp-spot-num">47</span>
+            <span class="xp-spot-sym">Ag</span>
+            <span class="xp-spot-name">Silver</span>
+            <span class="xp-spot-fact">Diệt khuẩn tự nhiên</span>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ═══ CTA BOTTOM ═══ -->
+    <section class="mg-cta-section" id="mg-cta-section">
+      <div class="mg-cta-inner">
+        <div class="mg-cta-left">
+          <div class="mg-label-row">
+            <span class="mg-label-bar mg-label-bar-white"></span>
+            <span class="mg-label-text mg-label-white" id="mg-cta-kicker">SẴN SÀNG CHƯA?</span>
+          </div>
+          <h2 class="mg-cta-heading" id="mg-cta-heading">Tham Gia<br><em>GloryChem</em><br>Ngay Hôm Nay</h2>
+        </div>
+        <div class="mg-cta-right">
+          <p class="mg-cta-desc" id="mg-cta-desc">Miễn phí hoàn toàn. Không cần cài đặt. Chỉ cần đăng ký và bắt đầu
+            chinh phục Hóa học cùng hàng nghìn học sinh trên cả nước.</p>
+          <div class="mg-cta-btns">
+            <button class="btn-mg-primary btn-mg-white" id="mg-cta-btn-register" onclick="openM('register')">Đăng Ký
+              Miễn Phí</button>
+            <button class="btn-mg-ghost btn-mg-ghost-white" id="mg-cta-btn-action" onclick="gp('leaderboard')">Xem Bảng
+              Xếp Hạng →</button>
+          </div>
+          <div class="mg-cta-note" id="mg-cta-note">✓ Miễn phí · ✓ Không cần cài đặt · ✓ Học sinh THPT toàn quốc</div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ═══ LEADERBOARD ═══ -->
+  <div id="page-leaderboard" class="page">
+    <div class="lb-head">
+      <div class="slabel" style="justify-content:center;display:flex">🏆 Bảng Xếp Hạng</div>
+      <h1>Top Chiến Binh</h1>
+      <p>Xếp hạng toàn bộ người chơi theo điểm ELO — cập nhật theo thời gian thực</p>
+    </div>
+
+    <!-- Podium top 3 -->
+    <div class="lb-podium" id="lb-podium">
+      <div class="lb-pod-slot lb-pod-2" id="lb-pod-2">
+        <div class="lb-pod-av" id="lb-pod-av-2">?</div>
+        <div class="lb-pod-crown">🥈</div>
+        <div class="lb-pod-name" id="lb-pod-name-2">—</div>
+        <div class="lb-pod-elo" id="lb-pod-elo-2">—</div>
+        <div class="lb-pod-bar" style="height:90px;background:linear-gradient(to top,#94a3b8,#cbd5e1)"><span
+            class="lb-pod-rank">2</span></div>
+      </div>
+      <div class="lb-pod-slot lb-pod-1" id="lb-pod-1">
+        <div class="lb-pod-av" id="lb-pod-av-1">?</div>
+        <div class="lb-pod-crown">🥇</div>
+        <div class="lb-pod-name" id="lb-pod-name-1">—</div>
+        <div class="lb-pod-elo" id="lb-pod-elo-1">—</div>
+        <div class="lb-pod-bar" style="height:120px;background:linear-gradient(to top,#d97706,#fbbf24)"><span
+            class="lb-pod-rank">1</span></div>
+      </div>
+      <div class="lb-pod-slot lb-pod-3" id="lb-pod-3">
+        <div class="lb-pod-av" id="lb-pod-av-3">?</div>
+        <div class="lb-pod-crown">🥉</div>
+        <div class="lb-pod-name" id="lb-pod-name-3">—</div>
+        <div class="lb-pod-elo" id="lb-pod-elo-3">—</div>
+        <div class="lb-pod-bar" style="height:70px;background:linear-gradient(to top,#92400e,#d97706,#fcd34d)"><span
+            class="lb-pod-rank">3</span></div>
+      </div>
+    </div>
+
+    <!-- My rank card (chỉ hiện khi đã login) -->
+    <div id="lb-my-rank-card" style="display:none">
+      <div class="lb-my-card">
+        <div class="lb-my-left">
+          <div class="lb-my-badge" id="lb-my-badge">#—</div>
+          <div class="lb-my-av" id="lb-my-av">?</div>
+          <div>
+            <div class="lb-my-name" id="lb-my-name">Bạn</div>
+            <div class="lb-my-sub" id="lb-my-sub">@username · Electron</div>
+          </div>
+        </div>
+        <div class="lb-my-right">
+          <div class="lb-my-stat">
+            <div class="lb-my-stat-val" id="lb-my-elo">—</div>
+            <div class="lb-my-stat-lbl">ELO</div>
+          </div>
+          <div class="lb-my-stat">
+            <div class="lb-my-stat-val" id="lb-my-wins">—</div>
+            <div class="lb-my-stat-lbl">Thắng</div>
+          </div>
+          <div class="lb-my-stat">
+            <div class="lb-my-stat-val" id="lb-my-rank-label">—</div>
+            <div class="lb-my-stat-lbl">Cấp bậc</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="lb-filter-bar">
+      <button class="lb-filter-btn active" id="lbf-all" onclick="lbSetFilter('all',this)">🌐 Tất Cả</button>
+      <button class="lb-filter-btn" id="lbf-week" onclick="lbSetFilter('week',this)">📅 Tuần Này</button>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:.5rem">
+        <span id="lb-total-count" style="font-size:.78rem;color:var(--text-4)"></span>
+        <button onclick="loadLeaderboard()" class="lb-refresh-btn" title="Làm mới">↻</button>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="lb-table-wrap">
+      <div class="lb-table-header">
+        <span style="width:52px;text-align:center">#</span>
+        <span style="flex:1">Người chơi</span>
+        <span style="width:90px;text-align:center">ELO</span>
+        <span style="width:70px;text-align:center">Thắng</span>
+        <span style="width:70px;text-align:center">Thua</span>
+        <span style="width:90px;text-align:center">Cấp bậc</span>
+      </div>
+      <div id="lb-list">
+        <div class="lb-loading">
+          <div class="lb-spin">⚗️</div>
+          <div>Đang tải dữ liệu...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ BẢNG TUẦN HOÀN ═══ -->
+  <div id="page-periodic" class="page">
+    <div id="discovery-selection" class="discovery-grid">
+      <div class="lb-head" style="grid-column: 1 / -1; margin-bottom: 2rem;">
+        <div class="slabel" style="justify-content:center;display:flex">✨ Trung Tâm Khám Phá</div>
+        <h1>Khám Phá Cùng GloryChem</h1>
+        <p>Lựa chọn phương thức bạn muốn khám phá thế giới Hóa học diệu kỳ</p>
+      </div>
+
+      <!-- Card 1: Bảng tuần hoàn -->
+      <div class="disc-card" onclick="showPeriodicTable()">
+        <div class="disc-card-glow"></div>
+        <div class="disc-card-icon">⚛️</div>
+        <div class="disc-card-content">
+          <h3>Bảng Tuần Hoàn</h3>
+          <p>Tìm hiểu chi tiết về 118 nguyên tố, cấu tạo nguyên tử 3D và những sự thật thú vị.</p>
+          <div class="disc-card-badge">Tương tác 3D</div>
+        </div>
+        <button class="disc-card-btn">Bắt Đầu ←</button>
+      </div>
+
+      <!-- Card 2: Glory Chem Defense -->
+      <div class="disc-card disc-card-alt" onclick="window.open('/GloryDefense', '_blank')">
+        <div class="disc-card-glow"></div>
+        <div class="disc-card-icon">🧪</div>
+        <div class="disc-card-content">
+          <h3>Glory Chem Defense</h3>
+          <p>Trò chơi bảo vệ phòng thí nghiệm. Sử dụng các loại cây hóa học để tiêu diệt Zombie!</p>
+          <div class="disc-card-badge">Minigame</div>
+        </div>
+        <button class="disc-card-btn">Chơi Ngay ←</button>
+      </div>
+    </div>
+
+    <!-- Container cho Bảng Tuần Hoàn (Ẩn mặc định) -->
+    <div id="periodic-content" style="display:none">
+      <div class="lb-head" style="margin-bottom: 2rem; position: relative;">
+        <button class="back-discovery" onclick="backToDiscovery()">← Quay lại Khám Phá</button>
+        <div class="slabel" style="justify-content:center;display:flex">⚛️ Khám Phá Nguyên Tố</div>
+        <h1>Bảng Tuần Hoàn</h1>
+        <p> Click vào từng nguyên tố để khám phá chi tiết. Cấu tạo nguyên tử theo mô hình cổ điển</p>
+      </div>
+
+    <!-- Mobile Tabs (Chỉ mọc ra ở mobile) -->
+    <div id="pt-mobile-tabs" class="pt-mobile-tabs">
+      <button class="pt-m-tab active" onclick="switchPtMode('sp', this)">Khối S & P (Nhóm chính)</button>
+      <button class="pt-m-tab" onclick="switchPtMode('d', this)">Khối D (Chuyển tiếp)</button>
+      <button class="pt-m-tab" onclick="switchPtMode('f', this)">Khối F</button>
+    </div>
+
+    <div id="periodic-wrap">
+      <div id="periodic-table-container" class="pt-mode-sp"></div>
+      <div id="element-detail-overlay">
+        <!-- 3D Atom canvas -->
+        <div id="atom-3d-container"></div>
+        <div id="ed-content"></div>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <!-- ═══ CHALLENGE ═══ -->
+  <div id="page-challenge" class="page">
+    <div class="ch-head">
+      <div class="slabel" style="justify-content:center;display:flex">⚔️ Đấu Trường</div>
+      <h1>Thách Đấu</h1>
+      <p>Tìm đối thủ và chứng minh kiến thức Hóa học của bạn</p>
+    </div>
+
+    <!-- LOGGED OUT -->
+    <div id="s-out" class="lock">
+      <div class="lock-vis">🔐</div>
+      <h2>Cần Đăng Nhập</h2>
+      <p>Bạn cần có tài khoản để tham gia thách đấu, theo dõi điểm số và leo bảng xếp hạng toàn quốc.</p>
+      <div class="lock-btns">
+        <button class="btn btn-teal btn-lg" onclick="openM('login')">🔑 Đăng Nhập</button>
+        <button class="btn btn-ot btn-lg" onclick="openM('register')">✨ Đăng Ký Miễn Phí</button>
+      </div>
+      <div class="lock-preview">
+        <div
+          style="background:var(--bg-white);border:1px solid var(--border);border-radius:14px;padding:1.15rem;margin-bottom:.7rem;text-align:left">
+          <div style="font-weight:700;margin-bottom:4px;font-family:var(--font-h)">⚡ Tốc Chiến 1v1</div>
+          <div style="font-size:.8rem;color:var(--text-3)">Ghép đôi ngẫu nhiên theo ELO</div>
+        </div>
+        <div
+          style="background:var(--bg-white);border:1px solid var(--border);border-radius:14px;padding:1.15rem;text-align:left">
+          <div style="font-weight:700;margin-bottom:4px;font-family:var(--font-h)">👥 Thách Đấu Bạn Bè</div>
+          <div style="font-size:.8rem;color:var(--text-3)">Tạo phòng riêng và mời bạn bè</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOGGED IN — ARENA HUB -->
+    <div id="s-in" class="arena" style="display:none">
+      <div class="pbar">
+        <div class="pav" id="pav">?</div>
+        <div style="flex:1">
+          <div class="pname" id="pname">Đang tải...</div>
+          <div class="pmeta" id="pmeta">@username · Electron</div>
+        </div>
+        <div class="pelo">
+          <div class="peloval" id="peloval">1200</div>
+          <div class="pelolbl">ELO Rating</div>
+        </div>
+      </div>
+
+      <!-- Mode selection cards -->
+      <div class="mgrid">
+        <div class="mc" onclick="startQuickMatch()">
+          <span class="mc-icon">⚡</span>
+          <div class="mt">Tốc Chiến Ngẫu Nhiên</div>
+          <div class="md">Ghép đôi tự động · Chọn chủ đề · 60 giây kịch tính</div>
+        </div>
+        <button class="mc" onclick="openLobbyRooms()">
+          <span class="mc-icon">🏠</span>
+          <div class="mt">Phòng thi đấu</div>
+          <div class="md">Công khai · Tối đa 5 người</div>
+        </button>
+        <div class="mc" onclick="openTournamentModal()">
+          <span class="mc-icon">🏆</span>
+          <div class="mt">Giải Đấu</div>
+          <div class="md">Tham gia hoặc tổ chức giải đấu real-time</div>
+        </div>
+        <div class="mc" onclick="openAIArenaModal()">
+          <span class="mc-icon">🤖</span>
+          <div class="mt">Thử Thách AI</div>
+          <div class="md">Đấu 1v1 với GloryBot · Tùy chỉnh độ khó</div>
+        </div>
+      </div>
+
+      <div class="hist-card">
+        <div class="hist-label">// Lịch sử gần đây</div>
+        <div id="hist-list">
+          <div class="hist-empty">Chưa có trận đấu nào. Hãy chiến thôi! ⚔️</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+     ĐẤU TRƯỜNG — FULL SCREEN OVERLAY
+════════════════════════════════════════ -->
+  <div id="arena-overlay" style="display:none;position:fixed;inset:0;z-index:500;background:var(--bg);overflow-y:auto">
+
+    <!-- ── BƯỚC 1: ĐANG TÌM ĐỐI THỦ ── -->
+    <div id="ar-searching"
+      style="display:none;min-height:100vh;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem">
+      <div style="font-size:4rem;margin-bottom:1rem;animation:float 2s ease-in-out infinite">⚔️</div>
+      <div style="font-family:var(--font-h);font-size:1.6rem;font-weight:800;margin-bottom:.5rem">Đang tìm đối thủ...
+      </div>
+      <div style="color:var(--text-3);font-size:.9rem;margin-bottom:2rem" id="ar-search-sub">Đang ghép đôi theo ELO của
+        bạn</div>
+      <div class="search-pulse">
+        <div class="sp-ring"></div>
+        <div class="sp-ring sp2"></div>
+        <div class="sp-ring sp3"></div>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.8rem">
+          🔬</div>
+      </div>
+      <div style="margin-top:2rem;color:var(--text-4);font-size:.82rem" id="ar-wait-time">Đã chờ: 0 giây</div>
+      <button onclick="cancelSearch()"
+        style="margin-top:1.5rem;background:none;border:1.5px solid var(--border-2);border-radius:10px;padding:.6rem 1.4rem;cursor:pointer;font-family:var(--font-b);font-weight:600;color:var(--text-3);transition:all .2s"
+        onmouseover="this.style.borderColor='var(--rose)';this.style.color='var(--rose)'"
+        onmouseout="this.style.borderColor='var(--border-2)';this.style.color='var(--text-3)'">✕ Hủy tìm kiếm</button>
+    </div>
+
+    <!-- ── BƯỚC 2: PHÒNG CHỜ — CHỌN CHỦ ĐỀ ── -->
+    <div id="ar-lobby" style="display:none;min-height:100vh;padding:2rem 1rem">
+      <div style="max-width:780px;margin:0 auto">
+        <!-- Header với 2 player -->
+        <div style="text-align:center;margin-bottom:1.5rem">
+          <div
+            style="font-family:var(--font-h);font-size:1.1rem;font-weight:800;color:var(--text-3);letter-spacing:.05em;text-transform:uppercase;font-size:.75rem;margin-bottom:.75rem">
+            ⚔️ PHÒNG CHỜ</div>
+          <div id="lobby-timer-bar"
+            style="display:flex;align-items:center;justify-content:center;gap:.5rem;margin-bottom:1.5rem">
+            <span style="font-size:.82rem;color:var(--text-3)">Thời gian chọn:</span>
+            <span id="lobby-countdown"
+              style="font-family:var(--font-m);font-weight:800;font-size:1.2rem;color:var(--teal)">90</span>
+            <span style="font-size:.82rem;color:var(--text-3)">giây</span>
+          </div>
+        </div>
+
+        <!-- Hai player đối mặt -->
+        <div id="lobby-2p-area"
+          style="display:grid;grid-template-columns:1fr auto 1fr;gap:1rem;align-items:start;margin-bottom:2rem">
+          <!-- Player trái (mình) -->
+          <div class="lobby-player-card" id="lp-me">
+            <div class="lpc-av" id="lp-me-av">?</div>
+            <div class="lpc-name" id="lp-me-name">Bạn</div>
+            <div class="lpc-elo" id="lp-me-elo">ELO: 1200</div>
+            <div class="lpc-rec" id="lp-me-rec">— — —</div>
+            <div id="lp-me-ready" class="lpc-status wait">⏳ Đang chọn...</div>
+          </div>
+          <!-- VS -->
+          <div style="display:flex;flex-direction:column;align-items:center;padding-top:2rem;gap:.5rem">
+            <div
+              style="font-family:var(--font-h);font-size:1.8rem;font-weight:900;color:var(--rose);letter-spacing:-2px;text-shadow:0 2px 8px rgba(225,29,72,.25)">
+              VS</div>
+            <div style="width:1px;height:80px;background:linear-gradient(to bottom,var(--rose),transparent)"></div>
+          </div>
+          <!-- Player phải (đối thủ) -->
+          <div class="lobby-player-card" id="lp-opp" style="text-align:right">
+            <div class="lpc-av" id="lp-opp-av" style="margin-left:auto">?</div>
+            <div class="lpc-name" id="lp-opp-name">Đối thủ</div>
+            <div class="lpc-elo" id="lp-opp-elo">ELO: 1200</div>
+            <div class="lpc-rec" id="lp-opp-rec">— — —</div>
+            <div id="lp-opp-ready" class="lpc-status wait">⏳ Đang chọn...</div>
+          </div>
+        </div>
+        <!-- FFA lobby player grid (hiện trong FFA mode) -->
+        <div id="lobby-ffa-area" style="display:none;margin-bottom:2rem"></div>
+
+        <!-- Chọn chủ đề -->
+        <div
+          style="background:var(--bg-white);border:1px solid var(--border);border-radius:var(--rl);padding:1.5rem;box-shadow:var(--shadow)">
+          <div style="font-family:var(--font-h);font-weight:800;font-size:1rem;margin-bottom:.4rem">📚 Chọn 3 chủ đề yêu
+            thích</div>
+          <div style="font-size:.82rem;color:var(--text-3);margin-bottom:1.2rem">Hệ thống sẽ chọn ngẫu nhiên 1 chủ đề từ
+            pool của cả 2</div>
+          <div id="topic-grid"></div>
+          <div style="margin-top:1.2rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
+            <div style="font-size:.82rem;color:var(--text-3)">Đã chọn: <strong id="topic-count">0</strong>/3</div>
+            <button id="btn-ready" onclick="setReady()" style="
+            flex:1;min-width:160px;padding:.75rem 1.5rem;
+            background:linear-gradient(135deg,var(--teal),#0891b2);
+            color:#fff;font-family:var(--font-h);font-weight:800;font-size:.9rem;
+            border:none;border-radius:11px;cursor:pointer;transition:all .2s;
+            box-shadow:0 3px 12px rgba(13,148,136,.3);
+          ">⚔️ Sẵn Sàng Chiến!</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── BƯỚC 3: ĐẤU TRƯỜNG ── -->
+    <div id="ar-battle" style="display:none;min-height:100vh;padding:1rem">
+      <div style="max-width:720px;margin:0 auto">
+
+        <!-- Scoreboard -->
+        <div id="battle-2p-scoreboard"
+          style="display:grid;grid-template-columns:1fr auto 1fr;gap:.75rem;align-items:center;margin-bottom:1rem">
+          <div class="battle-score-card" id="bs-me">
+            <div class="bsc-av" id="bs-me-av">?</div>
+            <div class="bsc-name" id="bs-me-name">Bạn</div>
+            <div class="bsc-score" id="bs-me-score">0</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-family:var(--font-m);font-size:2rem;font-weight:800;color:var(--rose)" id="battle-timer">60
+            </div>
+            <div style="font-size:.65rem;color:var(--text-4);letter-spacing:1px">GIÂY</div>
+            <div style="margin-top:.5rem;font-size:.7rem;font-weight:700;color:var(--text-3)" id="battle-topic-label">
+              Chủ đề</div>
+          </div>
+          <div class="battle-score-card right" id="bs-opp">
+            <div class="bsc-av" id="bs-opp-av">?</div>
+            <div class="bsc-name" id="bs-opp-name">Đối thủ</div>
+            <div class="bsc-score" id="bs-opp-score">0</div>
+          </div>
+        </div>
+        <!-- FFA scoreboard (hiện trong FFA mode) -->
+        <div id="ffa-scoreboard"
+          style="display:none;flex-direction:column;gap:.3rem;margin-bottom:1rem;background:var(--bg-white);border:1px solid var(--border);border-radius:12px;padding:.75rem">
+        </div>
+
+        <!-- Progress bar -->
+        <div style="background:var(--border);border-radius:100px;height:5px;margin-bottom:1.2rem;overflow:hidden">
+          <div id="battle-progress"
+            style="height:100%;background:linear-gradient(90deg,var(--teal),#0891b2);border-radius:100px;transition:width 1s linear;width:100%">
+          </div>
+        </div>
+
+        <!-- Câu hỏi -->
+        <div id="battle-q-wrap"
+          style="background:var(--bg-white);border:1px solid var(--border);border-radius:var(--rl);padding:1.75rem;box-shadow:var(--shadow);margin-bottom:1rem;min-height:180px">
+          <div style="display:flex;gap:.6rem;align-items:center;margin-bottom:1rem">
+            <span id="battle-q-num" style="font-family:var(--font-m);font-size:.7rem;color:var(--text-4)">Câu
+              1/10</span>
+            <span id="battle-q-type" class="q-type-badge"></span>
+            <span id="battle-q-topic" style="font-size:.7rem;color:var(--teal);font-weight:700;margin-left:auto"></span>
+          </div>
+          <div id="battle-q-text"
+            style="font-family:var(--font-h);font-size:1.05rem;font-weight:700;line-height:1.6;margin-bottom:1.2rem">
+            Đang tải câu hỏi...</div>
+          <!-- Trắc nghiệm -->
+          <div id="battle-mcq" style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem"></div>
+          <!-- Điền số -->
+          <div id="battle-input" style="display:none">
+            <div style="display:flex;gap:.6rem">
+              <input id="battle-ans-inp" type="text" placeholder="Nhập đáp án số..."
+                style="flex:1;padding:.75rem 1rem;border:2px solid var(--border-2);border-radius:11px;font-family:var(--font-m);font-size:1rem;font-weight:700;outline:none;transition:border .2s"
+                onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--border-2)'"
+                onkeydown="if(event.key==='Enter')submitAns()">
+              <button id="submit-ans-btn" onclick="submitAns()"
+                style="padding:.75rem 1.4rem;background:linear-gradient(135deg,var(--teal),#0891b2);color:#fff;border:none;border-radius:11px;font-family:var(--font-h);font-weight:800;cursor:pointer;white-space:nowrap">Trả
+                lời ↵</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Feedback flash -->
+        <div id="battle-feedback"
+          style="display:none;text-align:center;padding:.75rem;border-radius:11px;font-weight:700;font-size:.9rem;margin-bottom:.75rem">
+        </div>
+
+        <!-- Opp action indicator -->
+        <div id="opp-answered"
+          style="display:none;text-align:center;font-size:.8rem;color:var(--text-4);margin-bottom:.5rem">
+          <span id="opp-name-ind"></span> đã trả lời câu này ⚡
+        </div>
+        <div id="cooldown-indicator"
+          style="display:none; text-align:center; margin-top:0.5rem; font-size:0.8rem; color:var(--rose); font-weight:bold">
+          ⏳ Đóng băng: <span id="cooldown-seconds">3</span>s
+        </div>
+      </div>
+    </div>
+
+    <!-- ── BƯỚC 4: KẾT QUẢ ── -->
+    <div id="ar-result"
+      style="display:none;min-height:100vh;display:none;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center">
+      <div id="result-emoji" style="font-size:5rem;margin-bottom:1rem;animation:float 2s ease-in-out infinite"></div>
+      <div id="result-title" style="font-family:var(--font-h);font-size:2rem;font-weight:900;margin-bottom:.4rem"></div>
+      <div id="result-sub" style="color:var(--text-3);margin-bottom:1.5rem;font-size:.9rem"></div>
+      <div id="result-2p-scores"
+        style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;max-width:420px;width:100%;margin-bottom:1.5rem">
+        <div class="result-stat-card">
+          <div class="rsc-val" id="rs-me-score">0</div>
+          <div class="rsc-lbl" id="rs-me-name">Bạn</div>
+        </div>
+        <div class="result-stat-card">
+          <div class="rsc-val" id="rs-opp-score">0</div>
+          <div class="rsc-lbl" id="rs-opp-name">Đối thủ</div>
+        </div>
+      </div>
+      <!-- FFA ranked result list -->
+      <div id="ffa-result-list" style="display:none;width:100%;max-width:480px;margin-bottom:1.5rem"></div>
+      <div id="result-elo-change"
+        style="font-size:.9rem;margin-bottom:1.5rem;padding:.6rem 1.2rem;border-radius:100px;font-weight:700"></div>
+      <div style="display:flex;gap:.8rem;flex-wrap:wrap;justify-content:center">
+        <button onclick="startQuickMatch()"
+          style="padding:.75rem 1.6rem;background:linear-gradient(135deg,var(--teal),#0891b2);color:#fff;border:none;border-radius:12px;font-family:var(--font-h);font-weight:800;cursor:pointer;font-size:.9rem;box-shadow:0 4px 14px rgba(13,148,136,.35)">⚡
+          Tìm Trận Mới</button>
+        <button onclick="closeArena()"
+          style="padding:.75rem 1.6rem;background:transparent;color:var(--text-2);border:1.5px solid var(--border-2);border-radius:12px;font-family:var(--font-b);font-weight:700;cursor:pointer;font-size:.9rem">←
+          Về Đấu Trường</button>
+      </div>
+    </div>
+
+
+    <!-- Overlay đóng băng -->
+    <div id="cooldown-overlay"
+      style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.75); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; flex-direction:column;">
+      <div style="position:relative; width:120px; height:120px;">
+        <svg viewBox="0 0 100 100" style="width:100%; height:100%; transform:rotate(-90deg);">
+          <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="6" />
+          <circle id="cooldown-circle" cx="50" cy="50" r="45" fill="none" stroke="var(--teal)" stroke-width="6"
+            stroke-linecap="round" stroke-dasharray="282.6" stroke-dashoffset="0"
+            style="transition:stroke-dashoffset 1s linear;" />
+        </svg>
+        <div id="cooldown-seconds-big"
+          style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:2rem; font-weight:800; color:white; font-family:var(--font-m);">
+          3</div>
+      </div>
+      <div style="color:white; margin-top:1rem; font-weight:600; font-size:0.9rem;">Đang đóng băng...</div>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════
+     FRIEND ARENA MODAL
+════════════════════════════════════ -->
+
+
+
+
+  <!-- ════════════════════════════════════════
+     LOBBY ROOMS LIST MODAL
+════════════════════════════════════════ -->
+  <div class="overlay" id="ov-lobby">
+    <div class="modal" style="max-width:560px;max-height:90vh;overflow-y:auto">
+      <button class="mcl" onclick="closeLobbyRooms()">✕</button>
+      <div class="mtop" style="border-bottom:none;padding-bottom:0">
+        <div class="mlogo">
+          <div class="mk">🏠</div>
+          <div class="mn">Glory<span>Chem</span></div>
+          <div class="ms">Phòng Thi Đấu · Tối đa 5 người</div>
+        </div>
+      </div>
+      <div class="mbody" style="padding-top:.75rem">
+        <!-- Action bar -->
+        <div style="display:flex;gap:.6rem;margin-bottom:1.1rem">
+          <button class="btn btn-teal" style="flex:1" onclick="openCreateRoomForm()">➕ Tạo Phòng Mới</button>
+          <button class="btn btn-ghost" onclick="loadLobbyRooms()" title="Làm mới">🔄</button>
+        </div>
+        <!-- Rooms list -->
+        <div
+          style="font-family:var(--font-m);font-size:.65rem;color:var(--text-4);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:.65rem">
+          🟢 Phòng đang hoạt động</div>
+        <div id="lobby-rooms-list"
+          style="display:flex;flex-direction:column;gap:.6rem;max-height:380px;overflow-y:auto">
+          <div style="text-align:center;padding:2rem;color:var(--text-4);font-size:.85rem">
+            <div style="font-size:2rem;margin-bottom:.5rem">🏠</div>
+            Đang tải danh sách phòng...
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+     CREATE ROOM MODAL
+════════════════════════════════════════ -->
+  <div class="overlay" id="ov-create-room">
+    <div class="modal" style="max-width:420px">
+      <button class="mcl" onclick="closeCreateRoomForm()">✕</button>
+      <div class="mtop" style="border-bottom:none;padding-bottom:0">
+        <div class="mlogo">
+          <div class="mk">🏠</div>
+          <div class="mn">Glory<span>Chem</span></div>
+          <div class="ms">Tạo phòng thi đấu mới</div>
+        </div>
+      </div>
+      <div class="mbody" style="padding-top:.75rem">
+        <div class="abox" id="a-create-room"></div>
+        <div class="fg" style="margin-bottom:.9rem">
+          <label style="font-size:.82rem;font-weight:700;color:var(--text-2);margin-bottom:.4rem;display:block">Tên
+            phòng</label>
+          <div class="iw">
+            <span class="ii">🏠</span>
+            <input class="finp" type="text" id="cr-name" placeholder="Phòng của tôi" maxlength="40">
+          </div>
+        </div>
+        <!-- Room type toggle -->
+        <div style="margin-bottom:1rem">
+          <label style="font-size:.82rem;font-weight:700;color:var(--text-2);margin-bottom:.55rem;display:block">Loại
+            phòng</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
+            <label class="cr-type-option" id="cr-opt-public" onclick="selectRoomType('public')">
+              <input type="radio" name="cr-type" value="public" checked style="display:none">
+              <span style="font-size:1.4rem">🌐</span>
+              <div>
+                <div style="font-weight:700;font-size:.88rem">Công khai</div>
+                <div style="font-size:.72rem;color:var(--text-3)">Ai cũng có thể vào</div>
+              </div>
+            </label>
+            <label class="cr-type-option" id="cr-opt-private" onclick="selectRoomType('private')">
+              <input type="radio" name="cr-type" value="private" style="display:none">
+              <span style="font-size:1.4rem">🔒</span>
+              <div>
+                <div style="font-weight:700;font-size:.88rem">Riêng tư</div>
+                <div style="font-size:.72rem;color:var(--text-3)">Cần mật khẩu</div>
+              </div>
+            </label>
+          </div>
+        </div>
+        <!-- Password field (hidden by default) -->
+        <div class="fg" id="cr-pw-wrap" style="display:none;margin-bottom:.9rem">
+          <label style="font-size:.82rem;font-weight:700;color:var(--text-2);margin-bottom:.4rem;display:block">Mật khẩu
+            phòng</label>
+          <div class="iw">
+            <span class="ii">🔑</span>
+            <input class="finp" type="password" id="cr-password" placeholder="Nhập mật khẩu...">
+            <button class="eyeb" type="button" onclick="eye('cr-password',this)">👁</button>
+          </div>
+        </div>
+        <button class="asub" id="b-create-room" type="button" onclick="submitCreateRoom()">
+          <span class="bt">🏠 Tạo Phòng →</span>
+          <span class="bl" style="display:none"><span class="spin">↻</span> Đang tạo...</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+     LOBBY ROOM DETAIL MODAL
+════════════════════════════════════════ -->
+  <div class="overlay" id="ov-lobby-detail">
+    <div class="modal" style="max-width:900px;max-height:90vh;width:95%;overflow-y:auto">
+      <button class="mcl" onclick="leaveLobbyRoom()">✕</button>
+      <div class="mtop" style="border-bottom:none;padding-bottom:0">
+        <div class="mlogo">
+          <div class="mk" id="lr-type-icon">👥</div>
+          <div class="mn" id="lobby-room-name">Phòng</div>
+          <div class="ms">
+            <span id="lr-privacy-badge"
+              style="background:rgba(13,148,136,.12);color:var(--teal);padding:.15rem .55rem;border-radius:100px;font-size:.7rem;font-weight:700;margin-right:.4rem">🌐
+              Công khai</span>
+            <span id="lobby-player-count">0</span>/5 người chơi
+          </div>
+        </div>
+      </div>
+      <div class="mbody" style="padding-top:.75rem">
+        <div style="display:flex;flex-wrap:wrap;gap:1.5rem">
+          <!-- Cột trái: Thông tin phòng -->
+          <div style="flex:1;min-width:300px;display:flex;flex-direction:column">
+            <!-- Host badge -->
+            <div id="lr-host-info"
+              style="display:flex;align-items:center;gap:.5rem;margin-bottom:1rem;padding:.6rem .85rem;background:var(--amber-lt);border:1px solid rgba(217,119,6,.15);border-radius:10px;font-size:.8rem;color:#92400e">
+              <span>👑</span>
+              <span>Chủ phòng: <strong id="lr-host-name">...</strong></span>
+              <span id="lr-you-host"
+                style="display:none;margin-left:auto;font-size:.7rem;background:#fef3c7;padding:.1rem .45rem;border-radius:100px">Bạn</span>
+            </div>
+
+            <!-- Players grid -->
+            <div
+              style="font-family:var(--font-m);font-size:.65rem;color:var(--text-4);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:.65rem">
+              👥 Thành viên phòng</div>
+            <div id="lobby-players-list"
+              style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.6rem;margin-bottom:1.5rem">
+            </div>
+
+            <!-- Empty slots -->
+            <div id="lobby-empty-slots" style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1.5rem"></div>
+
+            <!-- Action buttons -->
+            <div style="display:flex;flex-direction:column;gap:.6rem;margin-top:auto">
+              <!-- Host only -->
+              <div id="lr-host-actions" style="display:none">
+                <button id="btn-start-lobby-battle" class="btn btn-teal"
+                  style="width:100%;padding:.85rem;background:var(--text-4);cursor:not-allowed" disabled
+                  onclick="startLobbyBattle()">⚔️ Đang chờ người chơi sẵn sàng...</button>
+              </div>
+              <!-- Guest only -->
+              <div id="lr-guest-actions" style="display:none">
+                <button id="btn-lobby-ready" class="btn btn-teal"
+                  style="width:100%;padding:.85rem;background:linear-gradient(135deg,#eab308,#ca8a04);"
+                  onclick="toggleLobbyReady()">✅ Sẵn Sàng</button>
+              </div>
+              <!-- All players -->
+              <div style="display:flex;gap:.6rem">
+                <button class="btn btn-ghost" style="flex:1" onclick="leaveLobbyRoom()">🚪 Rời Phòng</button>
+              </div>
+              <!-- Room link share -->
+              <div id="lr-share-pw"
+                style="display:none;padding:.6rem .85rem;background:var(--bg-soft);border:1px dashed var(--border-2);border-radius:10px;font-size:.78rem;color:var(--text-3);text-align:center">
+                🔒 Phòng riêng tư · Chia sẻ mật khẩu cho bạn bè muốn tham gia
+              </div>
+            </div>
+          </div>
+
+          <!-- Cột phải: Mời bạn bè -->
+          <div
+            style="flex:1;min-width:300px;background:var(--bg-soft);border-radius:12px;padding:1.25rem;border:1px solid var(--border)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem">
+              <div style="font-family:var(--font-h);font-size:.9rem;font-weight:800;color:var(--text-2);">👥 Thách Đấu
+                Bạn Bè</div>
+              <button class="btn btn-ghost" onclick="refreshOnlineUI()" style="padding:.3rem .5rem;font-size:.75rem"
+                title="Làm mới">🔄 Làm mới</button>
+            </div>
+            <!-- Search box -->
+            <div style="position:relative;margin-bottom:1rem">
+              <span style="position:absolute;left:.9rem;top:50%;transform:translateY(-50%);font-size:.9rem">🔍</span>
+              <input id="friend-search" type="text" placeholder="Tìm bằng tên đăng nhập..."
+                oninput="searchFriends(this.value)"
+                style="width:100%;padding:.7rem 1rem .7rem 2.4rem;border:2px solid var(--border-2);border-radius:11px;font-family:var(--font-b);font-size:.88rem;outline:none;transition:border .2s;background:var(--bg-white)"
+                onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--border-2)'">
+            </div>
+
+            <!-- Online players list -->
+            <div
+              style="font-family:var(--font-m);font-size:.65rem;color:var(--text-4);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:.65rem">
+              🟢 Đang Online</div>
+            <div id="online-list"
+              style="display:flex;flex-direction:column;gap:.5rem;max-height:280px;overflow-y:auto;padding-right:4px">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+     PASSWORD PROMPT MODAL (for private rooms)
+════════════════════════════════════════ -->
+  <div class="overlay" id="ov-room-password">
+    <div class="modal" style="max-width:380px">
+      <button class="mcl" onclick="closeRoomPasswordModal()">✕</button>
+      <div class="mtop" style="border-bottom:none;padding-bottom:0">
+        <div class="mlogo">
+          <div class="mk">🔒</div>
+          <div class="mn">Glory<span>Chem</span></div>
+          <div class="ms">Nhập mật khẩu để vào phòng</div>
+        </div>
+      </div>
+      <div class="mbody" style="padding-top:.75rem">
+        <div class="abox" id="a-room-pw"></div>
+        <div class="fg" style="margin-bottom:1rem">
+          <div class="iw">
+            <span class="ii">🔑</span>
+            <input class="finp" type="password" id="rp-password" placeholder="Mật khẩu phòng..."
+              onkeydown="if(event.key==='Enter')submitRoomPassword()">
+            <button class="eyeb" type="button" onclick="eye('rp-password',this)">👁</button>
+          </div>
+        </div>
+        <button class="asub" id="b-room-pw" type="button" onclick="submitRoomPassword()">
+          <span class="bt">🚪 Vào Phòng →</span>
+          <span class="bl" style="display:none"><span class="spin">↻</span></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+     INVITE RECEIVED MODAL
+════════════════════════════════════════ -->
+  <div class="overlay" id="ov-invite">
+    <div class="modal" style="max-width:380px;text-align:center">
+      <div style="padding:2rem 1.5rem">
+        <div style="font-size:3rem;margin-bottom:.85rem;animation:float 2s ease-in-out infinite">⚔️</div>
+        <div style="font-family:var(--font-h);font-weight:800;font-size:1.2rem;margin-bottom:.4rem">Lời Mời Thách Đấu!
+        </div>
+        <div style="font-size:.88rem;color:var(--text-3);margin-bottom:.3rem"><strong id="inv-from-name"></strong> muốn
+          thách đấu bạn</div>
+        <div style="font-size:.8rem;color:var(--teal);font-weight:700;margin-bottom:.5rem" id="inv-from-elo"></div>
+        <div id="inv-room-wrap"
+          style="display:none;font-size:.8rem;color:var(--text-3);margin-bottom:1.2rem;padding:.45rem .85rem;background:var(--bg-soft);border-radius:8px;display:inline-block">
+          🏠 Phòng: <strong id="inv-room-name"></strong>
+        </div>
+        <div style="height:.5rem"></div>
+        <div style="display:flex;gap:.75rem;justify-content:center">
+          <button onclick="acceptInvite()"
+            style="flex:1;padding:.8rem;background:linear-gradient(135deg,var(--teal),#0891b2);color:#fff;border:none;border-radius:11px;font-family:var(--font-h);font-weight:800;cursor:pointer;font-size:.9rem;box-shadow:0 4px 14px rgba(13,148,136,.3)">✅
+            Chấp Nhận</button>
+          <button onclick="rejectInvite()"
+            style="flex:1;padding:.8rem;background:var(--rose-lt);color:var(--rose);border:1.5px solid rgba(225,29,72,.2);border-radius:11px;font-family:var(--font-b);font-weight:700;cursor:pointer">❌
+            Từ Chối</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PROFILE PAGE ═══ -->
+  <div id="page-profile" class="page">
+    <div class="profile-wrap">
+
+      <!-- Header card -->
+      <div class="profile-header">
+        <div class="ph-avatar-wrap">
+          <div class="ph-avatar" id="ph-av">?</div>
+          <label class="av-upload-label" title="Đổi ảnh đại diện">
+            <span id="av-upload-btn" class="av-upload-btn">📷 Đổi ảnh</span>
+            <input type="file" id="av-file-input" accept="image/jpeg,image/png,image/webp,image/gif"
+              style="display:none" onchange="if(this.files[0]) uploadAvatar(this.files[0]); this.value='';">
+          </label>
+          <div class="av-upload-hint">JPG, PNG, WebP · Tối đa 3MB</div>
+        </div>
+        <div class="ph-info">
+          <div class="ph-name" id="ph-name">Đang tải...</div>
+          <div class="ph-un" id="ph-un">@username</div>
+          <div class="ph-badge">⚡ Electron</div>
+        </div>
+      </div>
+
+      <!-- Tab switcher -->
+      <div class="ptabs">
+        <button class="ptab active" id="pt-info" onclick="swPTab('info')">👤 Thông Tin Cá Nhân</button>
+        <button class="ptab" id="pt-sec" onclick="swPTab('sec')">🔒 Bảo Mật</button>
+      </div>
+
+      <!-- ── TAB: THÔNG TIN CÁ NHÂN ── -->
+      <div class="pcard active" id="pc-info">
+        <div class="pcard-title">Thông Tin Cá Nhân</div>
+        <div class="pcard-sub">Cập nhật thông tin hồ sơ của bạn</div>
+        <div class="pf-abox" id="info-alert"></div>
+
+        <div class="pf-grid">
+          <div class="pf">
+            <label>Họ và Tên</label>
+            <input class="pinp" type="text" id="p-fullname" placeholder="Nguyễn Văn A" autocomplete="name">
+          </div>
+          <div class="pf">
+            <label>Tên đăng nhập</label>
+            <input class="pinp" type="text" id="p-username" placeholder="chemmaster" autocomplete="username">
+            <div class="pf-hint">Chỉ chứa chữ, số, dấu gạch dưới (_)</div>
+          </div>
+        </div>
+
+        <div class="pf">
+          <label>Email</label>
+          <input class="pinp" type="email" id="p-email" disabled>
+          <div class="pf-hint">Email không thể thay đổi sau khi đăng ký</div>
+        </div>
+
+        <div class="pf">
+          <label>Ngày sinh</label>
+          <input class="pinp" type="date" id="p-dob">
+        </div>
+
+        <div class="p-actions">
+          <button class="psave" id="p-save-info" onclick="saveInfo()">
+            <span id="p-save-info-txt">💾 Lưu thay đổi</span>
+          </button>
+          <button class="pcancel" onclick="loadProfileFields()">↺ Hoàn tác</button>
+        </div>
+      </div>
+
+      <!-- ── TAB: BẢO MẬT ── -->
+      <div class="pcard" id="pc-sec">
+        <div class="pcard-title">Đổi Mật Khẩu</div>
+        <div class="pcard-sub">Để bảo mật tài khoản, hãy dùng mật khẩu mạnh và không chia sẻ với ai</div>
+        <div class="pf-abox" id="sec-alert"></div>
+
+        <div class="sec-warn">
+          <span class="sec-warn-icon">⚠️</span>
+          <div>
+            <span>Sau khi đổi mật khẩu, bạn sẽ cần đăng nhập lại trên tất cả thiết bị.</span>
+            <br><br>
+            <button class="sec-fp-link" type="button" onclick="openForgotFromProfile()">🔑 Không nhớ mật khẩu hiện tại?
+              Gửi email đặt lại</button>
+          </div>
+        </div>
+
+        <div class="pf">
+          <label>Mật khẩu hiện tại</label>
+          <div class="piw">
+            <input class="pinp" type="password" id="p-pw-cur" placeholder="••••••••" autocomplete="current-password">
+            <button class="peyeb" type="button" onclick="peye('p-pw-cur',this)">👁</button>
+          </div>
+        </div>
+
+        <div class="pcard-divider"></div>
+
+        <div class="pf-grid">
+          <div class="pf">
+            <label>Mật khẩu mới</label>
+            <div class="piw">
+              <input class="pinp" type="password" id="p-pw-new" placeholder="Tối thiểu 8 ký tự"
+                oninput="ppws(this.value)" autocomplete="new-password">
+              <button class="peyeb" type="button" onclick="peye('p-pw-new',this)">👁</button>
+            </div>
+            <div class="ppws">
+              <div class="pps" id="pp1"></div>
+              <div class="pps" id="pp2"></div>
+              <div class="pps" id="pp3"></div>
+              <div class="pps" id="pp4"></div>
+            </div>
+          </div>
+          <div class="pf">
+            <label>Xác nhận mật khẩu mới</label>
+            <div class="piw">
+              <input class="pinp" type="password" id="p-pw-cf" placeholder="Nhập lại mật khẩu mới"
+                autocomplete="new-password">
+              <button class="peyeb" type="button" onclick="peye('p-pw-cf',this)">👁</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-actions">
+          <button class="psave" id="p-save-pw" onclick="savePw()">
+            <span id="p-save-pw-txt">🔒 Đổi Mật Khẩu</span>
+          </button>
+          <button class="pcancel" onclick="clearPwForm()">✕ Hủy</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══ AUTH MODAL ═══ -->
+  <div class="overlay" id="ov">
+    <div class="modal" id="mo" role="dialog" aria-modal="true" aria-label="Đăng nhập / Đăng ký">
+      <button class="mcl" id="mcl" type="button" aria-label="Đóng">✕</button>
+      <div class="mtop">
+        <div class="mlogo">
+          <div class="mk">⚗️</div>
+          <div class="mn">Glory<span>Chem</span></div>
+          <div class="ms">Đấu Trường Hóa Học THPT</div>
+        </div>
+        <div class="mtabs">
+          <button class="mt-tab active" id="tl" type="button" onclick="swTab('login')">Đăng Nhập</button>
+          <button class="mt-tab" id="tr" type="button" onclick="swTab('register')">Đăng Ký</button>
+        </div>
+      </div>
+
+      <div class="mbody">
+        <!-- LOGIN FORM -->
+        <div id="fl">
+          <div class="abox" id="al"></div>
+          <div class="fg">
+            <label>Email hoặc Tên đăng nhập</label>
+            <div class="iw"><span class="ii">👤</span><input class="finp" type="text" id="li"
+                placeholder="email@example.com hoặc username" autocomplete="username"></div>
+          </div>
+          <div class="fg">
+            <label>Mật Khẩu</label>
+            <div class="iw"><span class="ii">🔒</span><input class="finp" type="password" id="lp" placeholder="••••••••"
+                autocomplete="current-password"><button class="eyeb" type="button" onclick="eye('lp',this)">👁</button>
+            </div>
+          </div>
+          <a class="fgl" href="#" onclick="swTab('forgot');return false">Quên mật khẩu?</a>
+          <button class="asub" id="bli" type="button" onclick="doLogin()">
+            <span class="bt">Đăng Nhập →</span>
+            <span class="bl" style="display:none"><span class="spin">↻</span> Đang xử lý...</span>
+          </button>
+          <div class="divdr">
+            <div class="dl"></div>
+            <div class="dt">chưa có tài khoản?</div>
+            <div class="dl"></div>
+          </div>
+          <div class="swl"><a href="#" onclick="swTab('register');return false">Đăng ký ngay →</a></div>
+        </div>
+
+        <!-- FORGOT PASSWORD FORM -->
+        <div id="ffp">
+          <button class="fp-back" type="button" onclick="swTab('login')">← Quay lại đăng nhập</button>
+          <div class="fp-title">🔑 Quên mật khẩu?</div>
+          <div class="fp-sub">Nhập email đã đăng ký. Chúng tôi sẽ gửi link đặt lại mật khẩu cho bạn.</div>
+          <div class="abox" id="afp"></div>
+          <div class="fp-success" id="fp-ok">
+            <div class="fp-icon">📧</div>
+            <h3>Email đã được gửi!</h3>
+            <p>Kiểm tra hộp thư của bạn và nhấn vào link trong email để đặt lại mật khẩu.<br><br>Không thấy email? Hãy
+              kiểm tra thư mục Spam.</p>
+          </div>
+          <div id="fp-form-body">
+            <div class="fg">
+              <label>Email đã đăng ký</label>
+              <div class="iw"><span class="ii">✉️</span><input class="finp" type="email" id="fpe"
+                  placeholder="email@example.com" autocomplete="email"></div>
+            </div>
+            <button class="asub" id="bfp" type="button" onclick="doForgotPw()">
+              <span class="bt">Gửi Link Đặt Lại →</span>
+              <span class="bl" style="display:none"><span class="spin">↻</span> Đang gửi...</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- REGISTER FORM -->
+        <div id="fr" style="display:none">
+          <div class="abox" id="ar"></div>
+          <div class="frow">
+            <div class="fg"><label>Họ và Tên</label>
+              <div class="iw"><span class="ii">📝</span><input class="finp" type="text" id="rn"
+                  placeholder="Nguyễn Văn A" autocomplete="name"></div>
+            </div>
+            <div class="fg"><label>Tên đăng nhập</label>
+              <div class="iw"><span class="ii">@</span><input class="finp" type="text" id="ru" placeholder="chemmaster"
+                  autocomplete="username"></div>
+            </div>
+          </div>
+          <div class="fg"><label>Email</label>
+            <div class="iw"><span class="ii">✉️</span><input class="finp" type="email" id="re"
+                placeholder="email@example.com" autocomplete="email"></div>
+          </div>
+          <div class="fg">
+            <label>Mật Khẩu</label>
+            <div class="iw"><span class="ii">🔒</span><input class="finp" type="password" id="rp"
+                placeholder="Tối thiểu 8 ký tự" oninput="pws(this.value)" autocomplete="new-password"><button
+                class="eyeb" type="button" onclick="eye('rp',this)">👁</button></div>
+            <div class="pws">
+              <div class="ps" id="s1"></div>
+              <div class="ps" id="s2"></div>
+              <div class="ps" id="s3"></div>
+              <div class="ps" id="s4"></div>
+            </div>
+          </div>
+          <div class="fg">
+            <label>Xác Nhận Mật Khẩu</label>
+            <div class="iw"><span class="ii">🔑</span><input class="finp" type="password" id="rc"
+                placeholder="Nhập lại mật khẩu" autocomplete="new-password"><button class="eyeb" type="button"
+                onclick="eye('rc',this)">👁</button></div>
+            <div class="ferr" id="ecf">Mật khẩu không khớp</div>
+          </div>
+          <button class="asub" id="brg" type="button" onclick="doReg()">
+            <span class="bt">Tạo Tài Khoản ✨</span>
+            <span class="bl" style="display:none"><span class="spin">↻</span> Đang tạo...</span>
+          </button>
+          <div class="divdr">
+            <div class="dl"></div>
+            <div class="dt">đã có tài khoản?</div>
+            <div class="dl"></div>
+          </div>
+          <div class="swl"><a href="#" onclick="swTab('login');return false">← Quay lại đăng nhập</a></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PROFILE FORGOT PASSWORD MODAL (dành cho user đã đăng nhập) ═══ -->
+  <div class="overlay" id="ov-pfp" style="display:none;align-items:center;justify-content:center">
+    <div class="modal" id="mo-pfp" role="dialog" aria-modal="true" style="max-width:440px">
+      <button class="mcl" type="button" aria-label="Đóng" onclick="closePFP()">✕</button>
+      <div class="mtop" style="border-bottom:none;padding-bottom:0">
+        <div class="mlogo">
+          <div class="mk">📧</div>
+          <div class="mn">Glory<span>Chem</span></div>
+          <div class="ms">Đặt lại mật khẩu qua email</div>
+        </div>
+      </div>
+      <div class="mbody" style="padding-top:.5rem">
+
+        <!-- Trạng thái mặc định: xác nhận gửi -->
+        <div id="pfp-body">
+          <div style="
+          background:linear-gradient(135deg,rgba(204,251,241,.6),rgba(219,234,254,.6));
+          border:1px solid rgba(13,148,136,.15);
+          border-radius:13px;padding:1.1rem 1.2rem;margin-bottom:1.3rem;
+          display:flex;gap:.85rem;align-items:flex-start;
+        ">
+            <span style="font-size:1.35rem;flex-shrink:0;margin-top:.05rem">💡</span>
+            <div style="font-size:.83rem;color:var(--text-2);line-height:1.68;letter-spacing:-.01em">
+              Chúng tôi sẽ gửi <strong>link đặt lại mật khẩu</strong> đến email của bạn.<br>
+              Sau khi click vào link, bạn có thể tạo mật khẩu mới mà không cần nhớ mật khẩu cũ.
+            </div>
+          </div>
+
+          <!-- Email hiển thị (read-only) -->
+          <div class="fg" style="margin-bottom:1.1rem">
+            <label style="font-size:.8rem;font-weight:700;color:var(--text-3);display:block;margin-bottom:.45rem">Email
+              nhận link đặt lại</label>
+            <div style="
+            display:flex;align-items:center;gap:.65rem;
+            background:var(--bg-soft);border:1.5px solid var(--border);
+            border-radius:11px;padding:.7rem 1rem;
+          ">
+              <span style="font-size:1rem">✉️</span>
+              <span id="pfp-email-display"
+                style="font-weight:700;color:var(--text);font-size:.9rem;letter-spacing:-.01em"></span>
+              <span style="margin-left:auto;font-size:.7rem;font-weight:700;
+              background:var(--teal-lt);color:var(--teal-dark);
+              padding:.18rem .55rem;border-radius:100px;letter-spacing:.01em">ĐÃ XÁC NHẬN</span>
+            </div>
+          </div>
+
+          <div class="abox" id="a-pfp"></div>
+
+          <button class="asub" id="b-pfp" type="button" onclick="doSendProfileReset()">
+            <span class="bt">📧 Gửi Link Đặt Lại Mật Khẩu →</span>
+            <span class="bl" style="display:none"><span class="spin">↻</span> Đang gửi...</span>
+          </button>
+
+          <div style="text-align:center;margin-top:.9rem">
+            <button type="button" onclick="closePFP()" style="
+            background:none;border:none;cursor:pointer;
+            font-size:.81rem;color:var(--text-4);font-family:var(--font-b);
+            transition:color .15s;
+          " onmouseover="this.style.color='var(--text-3)'" onmouseout="this.style.color='var(--text-4)'">
+              Hủy bỏ
+            </button>
+          </div>
+        </div>
+
+        <!-- Trạng thái thành công -->
+        <div id="pfp-success" style="display:none;text-align:center;padding:1rem 0 .5rem">
+          <div style="
+          width:72px;height:72px;border-radius:50%;margin:0 auto 1.1rem;
+          background:linear-gradient(135deg,var(--green-lt),rgba(204,251,241,.8));
+          border:2px solid rgba(22,163,74,.2);
+          display:flex;align-items:center;justify-content:center;font-size:2rem;
+          animation:float 3s ease-in-out infinite;
+        ">📬</div>
+          <div
+            style="font-family:var(--font-h);font-weight:800;font-size:1.15rem;color:var(--green);margin-bottom:.55rem;letter-spacing:-.03em">
+            Email đã được gửi!
+          </div>
+          <div style="font-size:.84rem;color:var(--text-3);line-height:1.75;margin-bottom:.6rem">
+            Hãy kiểm tra hộp thư tại<br>
+            <strong id="pfp-sent-email" style="color:var(--text-2)"></strong>
+          </div>
+          <div style="
+          background:var(--amber-lt);border:1px solid rgba(217,119,6,.18);
+          border-radius:10px;padding:.75rem 1rem;
+          font-size:.79rem;color:#92400e;line-height:1.6;margin-bottom:1.4rem;
+          text-align:left;display:flex;gap:.65rem;align-items:flex-start;
+        ">
+            <span style="flex-shrink:0">⚠️</span>
+            <span>Link chỉ có hiệu lực <strong>1 giờ</strong>. Không thấy email? Kiểm tra thư mục <strong>Spam</strong>
+              hoặc <strong>Junk</strong>.</span>
+          </div>
+          <button class="asub" type="button" onclick="closePFP()"
+            style="background:linear-gradient(135deg,var(--teal),#0891b2)">
+            Đã hiểu, đóng lại ✓
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+     TOURNAMENT SELECTION MODAL
+════════════════════════════════════════ -->
+  <div class="overlay" id="ov-tournament">
+    <div class="modal" style="max-width:540px">
+      <button class="mcl" onclick="closeTournamentModal()">✕</button>
+      <div class="mtop" style="border-bottom:none;padding-bottom:0">
+        <div class="mlogo">
+          <div class="mk">🏆</div>
+          <div class="mn">Glory<span>Chem</span></div>
+          <div class="ms">Hệ Thống Giải Đấu Quiz</div>
+        </div>
+      </div>
+      <div class="mbody" style="padding-top:1.25rem">
+        <div class="tour-choice-grid">
+          <div class="tour-choice-card tour-student" onclick="window.location='/play'">
+            <div class="tcc-glow"></div>
+            <div class="tcc-icon">🎒</div>
+            <div class="tcc-content">
+              <div class="tcc-title">Tham Gia</div>
+              <p class="tcc-desc">Dành cho học sinh. Nhập mã PIN và bắt đầu chinh phục đấu trường.</p>
+            </div>
+            <div class="tcc-foot">
+              <span>Bắt đầu ngay</span>
+              <span class="tcc-arrow">→</span>
+            </div>
+          </div>
+          <div class="tour-choice-card tour-teacher" onclick="window.location='/teacher'">
+            <div class="tcc-glow"></div>
+            <div class="tcc-icon">👨‍🏫</div>
+            <div class="tcc-content">
+              <div class="tcc-title">Tổ Chức</div>
+              <p class="tcc-desc">Dành cho giáo viên, người chủ trì. Soạn câu hỏi và quản lý giải đấu..</p>
+            </div>
+            <div class="tcc-foot">
+              <span>Vào quản lý</span>
+              <span class="tcc-arrow">→</span>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:1.25rem;text-align:center">
+          <p style="font-size:.78rem;color:var(--text-4);line-height:1.6;max-width:380px;margin:0 auto">
+            GloryChem Tournament mang đến trải nghiệm học tập kịch tính bám sát chương trình THPT mới.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ RESET PASSWORD MODAL (từ email link) ═══ -->
+  <div class="overlay" id="ov-reset" style="display:none;align-items:center;justify-content:center">
+    <div class="modal" id="mo-reset" role="dialog" aria-modal="true" aria-label="Đặt mật khẩu mới"
+      style="max-width:420px">
+      <div class="mtop" style="border-bottom:none;padding-bottom:0">
+        <div class="mlogo">
+          <div class="mk">🔑</div>
+          <div class="mn">Glory<span>Chem</span></div>
+          <div class="ms" id="reset-subtitle">Đặt mật khẩu mới cho tài khoản</div>
+        </div>
+      </div>
+      <div class="mbody">
+        <!-- Form đặt mật khẩu mới -->
+        <div id="reset-form-body">
+          <div class="abox" id="a-reset"></div>
+          <div class="fg">
+            <label>Mật khẩu mới</label>
+            <div class="iw">
+              <span class="ii">🔒</span>
+              <input class="finp" type="password" id="reset-pw" placeholder="Tối thiểu 8 ký tự"
+                oninput="pws(this.value)" autocomplete="new-password">
+              <button class="eyeb" type="button" onclick="eye('reset-pw',this)">👁</button>
+            </div>
+            <div class="pws">
+              <div class="ps" id="rs1"></div>
+              <div class="ps" id="rs2"></div>
+              <div class="ps" id="rs3"></div>
+              <div class="ps" id="rs4"></div>
+            </div>
+          </div>
+          <div class="fg">
+            <label>Xác nhận mật khẩu mới</label>
+            <div class="iw">
+              <span class="ii">🔑</span>
+              <input class="finp" type="password" id="reset-pw-cf" placeholder="Nhập lại mật khẩu mới"
+                autocomplete="new-password">
+              <button class="eyeb" type="button" onclick="eye('reset-pw-cf',this)">👁</button>
+            </div>
+          </div>
+          <button class="asub" id="b-reset" type="button" onclick="doResetPw()">
+            <span class="bt">🔒 Đặt Mật Khẩu Mới →</span>
+            <span class="bl" style="display:none"><span class="spin">↻</span> Đang lưu...</span>
+          </button>
+        </div>
+        <!-- Trạng thái thành công -->
+        <div id="reset-success" style="display:none;text-align:center;padding:1.5rem 0">
+          <div style="font-size:2.8rem;margin-bottom:.85rem">✅</div>
+          <div
+            style="font-family:var(--font-h);font-weight:800;font-size:1.1rem;color:var(--green);margin-bottom:.5rem">
+            Đặt mật khẩu thành công!</div>
+          <div style="font-size:.84rem;color:var(--text-3);line-height:1.7;margin-bottom:1.4rem">Mật khẩu của bạn đã
+            được cập nhật.<br>Hãy đăng nhập lại để tiếp tục.</div>
+          <button class="asub" type="button" onclick="closeResetModal();openM('login')">Đăng Nhập →</button>
+        </div>
+        <!-- Trạng thái link hết hạn / lỗi -->
+        <div id="reset-expired" style="display:none;text-align:center;padding:1rem 0">
+          <div style="font-size:2.4rem;margin-bottom:.85rem">⏰</div>
+          <div style="font-family:var(--font-h);font-weight:800;font-size:1rem;color:var(--rose);margin-bottom:.5rem">
+            Link đã hết hạn!</div>
+          <div style="font-size:.84rem;color:var(--text-3);line-height:1.7;margin-bottom:1.4rem">Link đặt lại mật khẩu
+            chỉ có hiệu lực trong <strong>1 giờ</strong>.<br>Vui lòng yêu cầu gửi lại email.</div>
+          <div class="fg">
+            <div class="iw"><span class="ii">✉️</span><input class="finp" type="email" id="reset-email-retry"
+                placeholder="Nhập lại email của bạn" autocomplete="email"></div>
+          </div>
+          <div class="abox" id="a-reset-retry" style="margin-top:.5rem"></div>
+          <button class="asub" id="b-reset-retry" type="button" onclick="doResendReset()" style="margin-top:.75rem">
+            <span class="bt">📧 Gửi Lại Email →</span>
+            <span class="bl" style="display:none"><span class="spin">↻</span> Đang gửi...</span>
+          </button>
+          <div style="margin-top:1rem"><a href="#" style="font-size:.81rem;color:var(--text-3)"
+              onclick="closeResetModal();return false">← Quay lại trang chủ</a></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ LESSON PAGE ═══ -->
+  <div id="page-lesson" class="page">
+
+    <!-- ── Grade tabs header ── -->
+    <div class="ls-header">
+      <div class="ls-header-top">
+        <div class="ls-header-icon">📚</div>
+        <div class="ls-header-text">
+          <h2>Bài Học Hóa Học</h2>
+          <p>Lý thuyết có hệ thống · Trắc nghiệm luyện tập · Lớp 10 – 12</p>
+        </div>
+      </div>
+      <div class="ls-grade-tabs">
+        <button class="ls-grade-tab active" data-grade="10" onclick="switchLessonGrade(10)">
+          ⚛️ Lớp 10 <span class="ls-grade-badge">😊</span>
+        </button>
+        <button class="ls-grade-tab" data-grade="11" onclick="switchLessonGrade(11)">
+          ⚗️ Lớp 11 <span class="ls-grade-badge">😁</span>
+        </button>
+        <button class="ls-grade-tab" data-grade="12" onclick="switchLessonGrade(12)">
+          🧬 Lớp 12 <span class="ls-grade-badge">😘</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Main layout: sidebar + content ── -->
+    <div class="ls-layout">
+
+      <!-- Sidebar: chapter / lesson list -->
+      <aside class="ls-sidebar" id="ls-sidebar">
+        <!-- Filled dynamically by lesson.js -->
+      </aside>
+
+      <!-- Main content area -->
+      <main class="ls-content" id="ls-content">
+        <!-- Filled dynamically by lesson.js -->
+      </main>
+
+    </div>
+  </div>
+
+  <div class="tw" id="tw"></div>
+  <script src="/static/js/script.js"></script>
+  <script src="/static/js/data/data10.js"></script>
+  <script src="/static/js/data/data11.js"></script>
+  <script src="/static/js/data/data12.js"></script>
+  <script src="/static/js/lesson.js"></script>
+  <script src="/static/js/elements.js"></script>
+  <script src="/static/js/periodic.js"></script>
+
+  <!-- ═══ BOTTOM NAV (Mobile) ═══ -->
+  <nav class="bottom-nav" id="bottom-nav">
+    <button class="bn-item active" id="bn-home" onclick="gp('home')">
+      <span class="bn-icon">🏠</span>
+      <span class="bn-label">Trang Chủ</span>
+    </button>
+    <button class="bn-item" id="bn-challenge" onclick="gp('challenge')">
+      <span class="bn-icon">⚔️</span>
+      <span class="bn-label">Thách Đấu</span>
+    </button>
+
+
+    <button class="bn-item" id="bn-periodic" onclick="gp('periodic')">
+      <span class="bn-icon">✨</span>
+      <span class="bn-label">Khám Phá</span>
+    </button>
+
+
+    <button class="bn-item" id="bn-lesson" onclick="gp('lesson')">
+      <span class="bn-icon">📚</span>
+      <span class="bn-label">Kiến Thức</span>
+    </button>
+
+    <button class="bn-item" id="bn-forum" onclick="gp('forum')">
+      <span class="bn-icon">💬</span>
+      <span class="bn-label">Diễn Đàn</span>
+    </button>
+
+    <button class="bn-item" id="bn-leaderboard" onclick="gp('leaderboard')">
+      <span class="bn-icon">🏆</span>
+      <span class="bn-label">Xếp Hạng</span>
+    </button>
+
+  </nav>
+
+  <!-- ═══ AI ARENA MODAL ═══ -->
+  <div class="overlay" id="ov-ai-arena">
+    <div class="modal" id="mo-ai-arena" style="max-width:480px">
+      <button class="mcl" type="button" onclick="closeAIArenaModal()">✕</button>
+      <div class="mtop">
+        <div class="mlogo">
+          <div class="mk">🤖</div>
+          <div class="mn">AI Bot<span>Arena</span></div>
+          <div class="ms">Luyện tập cùng trí tuệ nhân tạo</div>
+        </div>
+      </div>
+      <div class="mbody">
+        <div class="ai-bot-card">
+          <div class="ai-bot-av">🤖</div>
+          <div style="flex:1">
+            <div class="ai-bot-name">GloryBot Core</div>
+            <div class="ai-bot-version">NEURAL NETWORK v2.5</div>
+          </div>
+        </div>
+
+        <div class="fg" style="margin-bottom:1.2rem">
+          <label style="display:block;margin-bottom:0.5rem;font-weight:700">1. Chọn Chủ Đề Ôn Luyện</label>
+          <div class="ai-topic-grid" id="ai-topic-grid">
+            <!-- Topics will be injected here via JS -->
+          </div>
+        </div>
+
+        <div class="fg">
+          <label style="display:block;margin-bottom:0.5rem;font-weight:700">2. Chọn Độ Khó</label>
+          <div class="ai-diff-grid">
+            <button class="ai-diff-btn selected" data-diff="easy" onclick="selectAIDiff('easy', this)">
+              <div class="ad-title">Dễ</div>
+              <div class="ad-desc">Bot phản xạ chậm</div>
+            </button>
+            <button class="ai-diff-btn" data-diff="medium" onclick="selectAIDiff('medium', this)">
+              <div class="ad-title">Thường</div>
+              <div class="ad-desc">Cân bằng</div>
+            </button>
+            <button class="ai-diff-btn" data-diff="hard" onclick="selectAIDiff('hard', this)">
+              <div class="ad-title">Khó</div>
+              <div class="ad-desc">Bot trả lời cực nhanh</div>
+            </button>
+            <button class="ai-diff-btn" data-diff="insane" onclick="selectAIDiff('insane', this)">
+              <div class="ad-title">Cực Khó</div>
+              <div class="ad-desc">Thử thách giới hạn</div>
+            </button>
+          </div>
+        </div>
+
+        <button class="asub" style="margin-top:1.5rem" onclick="startAIBattle()">
+          <span class="bt">Bắt Đầu Thử Thách ⚔️</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+
+  <div id="page-forum" class="page">
+
+    <!-- Header -->
+    <div class="fr-header">
+      <div class="fr-header-inner">
+        <div class="fr-header-left">
+          <div class="fr-overline">
+            <span class="fr-overline-bar"></span>
+            <span>CỘNG ĐỒNG GLORYCHEM</span>
+          </div>
+          <h1 class="fr-title">Diễn Đàn <em>Hóa Học</em></h1>
+          <p class="fr-sub">Chia sẻ mẹo học · Cách ghi nhớ · Hỏi đáp kiến thức THPT</p>
+        </div>
+        <button class="fr-btn-new" onclick="frOpenNewPost()">
+          <span class="fr-btn-icon">✏️</span> Đăng Bài Mới
+        </button>
+      </div>
+    </div>
+
+    <!-- Filter tabs -->
+    <div class="fr-tabs">
+      <button class="fr-tab active" data-cat="all" onclick="frSetTab('all')">
+        🗂️ Tất Cả <span class="fr-tab-count" id="fr-tab-count-all">0</span>
+      </button>
+      <button class="fr-tab" data-cat="tip" onclick="frSetTab('tip')">
+        💡 Mẹo Học <span class="fr-tab-count" id="fr-tab-count-tip">0</span>
+      </button>
+      <button class="fr-tab" data-cat="memory" onclick="frSetTab('memory')">
+        🧠 Ghi Nhớ <span class="fr-tab-count" id="fr-tab-count-memory">0</span>
+      </button>
+      <button class="fr-tab" data-cat="question" onclick="frSetTab('question')">
+        ❓ Câu Hỏi <span class="fr-tab-count" id="fr-tab-count-question">0</span>
+      </button>
+    </div>
+
+    <!-- List view -->
+    <div id="fr-list-view">
+      <div class="fr-body">
+        <!-- Posts -->
+        <div class="fr-posts">
+          <div id="fr-posts-list" class="fr-posts">
+            <!-- Rendered by forum.js -->
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <aside class="fr-sidebar">
+          <div class="fr-sidebar-card">
+            <div class="fr-sidebar-title">📋 Nội Quy Diễn Đàn</div>
+            <div class="fr-rule-item">
+              <span class="fr-rule-num">1</span>
+              <span>Chia sẻ kiến thức Hóa học THPT chính xác, có nguồn gốc rõ ràng</span>
+            </div>
+            <div class="fr-rule-item">
+              <span class="fr-rule-num">2</span>
+              <span>Đặt câu hỏi cụ thể, nêu rõ chỗ chưa hiểu để được hỗ trợ tốt nhất</span>
+            </div>
+            <div class="fr-rule-item">
+              <span class="fr-rule-num">3</span>
+              <span>Tôn trọng và khuyến khích lẫn nhau, không spam hay nội dung tiêu cực</span>
+            </div>
+            <div class="fr-rule-item">
+              <span class="fr-rule-num">4</span>
+              <span>Mẹo học / ghi nhớ phải gắn với chương trình Hóa học</span>
+            </div>
+            <div class="fr-rule-item">
+              <span class="fr-rule-num">5</span>
+              <span>Nếu có hành vi thô tục hoặc không phù hợp sẽ bị khóa tài khoản</span>
+            </div>
+          </div>
+
+          <div class="fr-sidebar-card">
+            <div class="fr-sidebar-title">🗂️ Danh Mục</div>
+            <div class="fr-cat-item" onclick="frSetTab('all')">
+              <div class="fr-cat-left">🗂️ Tất Cả Bài Viết</div>
+              <span class="fr-cat-count" id="fr-cat-count-all">0</span>
+            </div>
+            <div class="fr-cat-item" onclick="frSetTab('tip')">
+              <div class="fr-cat-left">💡 Mẹo Học</div>
+              <span class="fr-cat-count" id="fr-cat-count-tip">0</span>
+            </div>
+            <div class="fr-cat-item" onclick="frSetTab('memory')">
+              <div class="fr-cat-left">🧠 Ghi Nhớ</div>
+              <span class="fr-cat-count" id="fr-cat-count-memory">0</span>
+            </div>
+            <div class="fr-cat-item" onclick="frSetTab('question')">
+              <div class="fr-cat-left">❓ Câu Hỏi</div>
+              <span class="fr-cat-count" id="fr-cat-count-question">0</span>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- Detail view -->
+    <div class="fr-detail" id="fr-detail-view">
+      <button class="fr-back-btn" onclick="frBackToList()">← Quay lại diễn đàn</button>
+      <div class="fr-detail-inner">
+        <div>
+          <!-- Post detail -->
+          <div class="fr-post-detail" id="fr-post-detail-wrap">
+            <!-- Rendered by forum.js -->
+          </div>
+
+          <!-- Comments section -->
+          <div class="fr-comments">
+            <div class="fr-comments-title">
+              Bình Luận
+              <span class="fr-comments-count" id="fr-comments-count-badge">0</span>
+            </div>
+
+            <!-- Comment form hoặc login prompt -->
+            <div id="fr-comment-form-wrap">
+              <!-- Rendered by forum.js -->
+            </div>
+
+            <!-- Comment list -->
+            <div class="fr-comment-list" id="fr-comment-list">
+              <!-- Rendered by forum.js -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <aside class="fr-sidebar">
+          <div class="fr-sidebar-card">
+            <div class="fr-sidebar-title">💡 Gợi Ý Trả Lời</div>
+            <div class="fr-rule-item">
+              <span class="fr-rule-num">✓</span>
+              <span>Giải thích rõ ràng, có ví dụ minh họa cụ thể</span>
+            </div>
+            <div class="fr-rule-item">
+              <span class="fr-rule-num">✓</span>
+              <span>Nêu phương trình hóa học nếu có liên quan</span>
+            </div>
+            <div class="fr-rule-item">
+              <span class="fr-rule-num">✓</span>
+              <span>Có thể gợi ý thêm tài liệu tham khảo</span>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ NEW POST MODAL ═══ -->
+  <div class="fr-modal-overlay" id="fr-post-overlay" onclick="if(event.target===this)frCloseNewPost()">
+    <div class="fr-modal">
+      <div class="fr-modal-head">
+        <div class="fr-modal-icon">✏️</div>
+        <div class="fr-modal-head-text">
+          <h3>Đăng Bài Mới</h3>
+          <p>Chia sẻ kiến thức với cộng đồng GloryChem</p>
+        </div>
+        <button class="fr-modal-close" onclick="frCloseNewPost()">✕</button>
+      </div>
+      <div class="fr-modal-body">
+        <!-- Category -->
+        <div class="fg">
+          <label>Loại Bài Viết</label>
+          <div class="fr-cat-selector">
+            <div class="fr-cat-opt selected" data-val="tip" onclick="frSelectCat('tip')">
+              <span class="fr-cat-opt-icon">💡</span>
+              <span class="fr-cat-opt-label">Mẹo Học</span>
+              <span class="fr-cat-opt-desc">Chiến thuật ôn tập</span>
+            </div>
+            <div class="fr-cat-opt" data-val="memory" onclick="frSelectCat('memory')">
+              <span class="fr-cat-opt-icon">🧠</span>
+              <span class="fr-cat-opt-label">Ghi Nhớ</span>
+              <span class="fr-cat-opt-desc">Cách nhớ nhanh</span>
+            </div>
+            <div class="fr-cat-opt" data-val="question" onclick="frSelectCat('question')">
+              <span class="fr-cat-opt-icon">❓</span>
+              <span class="fr-cat-opt-label">Câu Hỏi</span>
+              <span class="fr-cat-opt-desc">Hỏi đáp kiến thức</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Title -->
+        <div class="fg">
+          <label>Tiêu Đề <span style="color:var(--rose)">*</span></label>
+          <input class="fr-inp-title" id="fr-inp-title" type="text"
+            placeholder="VD: Mẹo nhớ bảng tuần hoàn chỉ trong 1 tuần..." maxlength="200">
+        </div>
+
+        <!-- Content -->
+        <div class="fg">
+          <label>Nội Dung <span style="color:var(--rose)">*</span></label>
+          <textarea class="fr-inp-content" id="fr-inp-content"
+            placeholder="Chia sẻ chi tiết mẹo học, cách ghi nhớ hoặc câu hỏi của bạn..." maxlength="3000"
+            oninput="frUpdateCharCount()"></textarea>
+          <div class="fr-char-count" id="fr-char-count">0 / 3000</div>
+        </div>
+
+        <!-- Alert -->
+        <div class="fr-modal-alert" id="fr-post-alert"></div>
+
+        <!-- Submit -->
+        <button class="asub" id="fr-post-submit-btn" onclick="frSubmitPost()">
+          <span id="fr-post-submit-text">🚀 Đăng Bài →</span>
+          <span id="fr-post-submit-load" style="display:none">
+            <span class="spin">↻</span> Đang đăng...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ DELETE POST CONFIRM MODAL ═══ -->
+  <div class="fr-modal-overlay" id="fr-delete-confirm-overlay" onclick="if(event.target===this)frCloseDeleteConfirm()">
+    <div class="fr-modal sm">
+      <div class="fr-modal-body" style="text-align:center; padding: 2.8rem 2rem;">
+        <div class="fr-modal-delete-icon">🗑️</div>
+        <h3 class="fr-modal-delete-title">Xác Nhận Xóa?</h3>
+        <p class="fr-modal-delete-sub">Bài viết này sẽ bị xóa vĩnh viễn và không thể khôi phục. Bạn có chắc chắn muốn tiếp tục?</p>
+        
+        <div class="fr-modal-delete-btns">
+          <button class="fr-btn-cancel-del" onclick="frCloseDeleteConfirm()">Hủy Bỏ</button>
+          <button class="fr-btn-confirm-do-del" id="fr-btn-do-delete" onclick="frExecuteDelete()">Đúng, Xóa Nó!</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ DELETE COMMENT CONFIRM MODAL ═══ -->
+  <div class="fr-modal-overlay" id="fr-del-comment-overlay" onclick="if(event.target===this)frCloseDelComment()">
+    <div class="fr-modal sm">
+      <div class="fr-modal-body" style="text-align:center; padding: 2.5rem 1.8rem;">
+        <div class="fr-modal-delete-icon" style="font-size:2.4rem;margin-bottom:0.8rem">💬🗑️</div>
+        <h3 class="fr-modal-delete-title" style="font-size:1.15rem">Xóa Bình Luận?</h3>
+        <p class="fr-modal-delete-sub" style="font-size:.84rem;margin-bottom:1.5rem">Bình luận của bạn sẽ biến mất mãi mãi. Bạn chắc chứ?</p>
+        
+        <div class="fr-modal-delete-btns">
+          <button class="fr-btn-cancel-del" onclick="frCloseDelComment()">Quay Lại</button>
+          <button class="fr-btn-confirm-do-del" id="fr-btn-do-del-comment" onclick="frExecuteDelComment()">Xóa Ngay</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <script src="/static/js/forum.js"></script>
+
+</body>
+
+</html>
