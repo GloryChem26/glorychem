@@ -955,11 +955,11 @@ function gp(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   G('page-' + id).classList.add('active');
   document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
-  const m = { home: 'nl-home', challenge: 'nl-challenge', leaderboard: 'nl-leaderboard', lesson: 'nl-lesson', forum: 'nl-forum' };
+  const m = { home: 'nl-home', challenge: 'nl-challenge', periodic: 'nl-periodic', leaderboard: 'nl-leaderboard', lesson: 'nl-lesson', forum: 'nl-forum' };
   if (m[id]) G(m[id])?.classList.add('active');
   // Sync bottom nav
   document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('active'));
-  const bm = { home: 'bn-home', challenge: 'bn-challenge', leaderboard: 'bn-leaderboard', profile: 'bn-profile', lesson: 'bn-lesson', forum: 'bn-forum' };
+  const bm = { home: 'bn-home', challenge: 'bn-challenge', periodic: 'bn-periodic', leaderboard: 'bn-leaderboard', profile: 'bn-profile', lesson: 'bn-lesson', forum: 'bn-forum' };
   if (bm[id]) G(bm[id])?.classList.add('active');
 
   // Load leaderboard khi chuyển tab
