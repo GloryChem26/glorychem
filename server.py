@@ -885,7 +885,7 @@ def index():
 
 @app.route("/GloryDefense")
 def glory_defense():
-    return send_from_directory("game", "index.html")
+    return send_from_directory("game/GloryDefense", "index.html")
 
 
 @app.route("/<path:filename>")

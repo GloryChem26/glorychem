@@ -24,6 +24,7 @@
   <link rel="stylesheet" href="/static/css/periodic.css">
   <link rel="stylesheet" href="/static/css/nav-redesign.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <script src="/static/js/question.js"></script>
   <script>
     (function () {
@@ -606,17 +607,31 @@
         <button class="disc-card-btn">Bắt Đầu ←</button>
       </div>
 
-      <!-- Card 2: Glory Chem Defense -->
-      <div class="disc-card disc-card-alt" onclick="window.open('/GloryDefense', '_blank')">
+      <!-- Card 3: Khám phá phân tử 3D -->
+      <div class="disc-card disc-card-molecule" onclick="showMoleculeExplorer()">
         <div class="disc-card-glow"></div>
-        <div class="disc-card-icon">🧪</div>
+        <div class="disc-card-icon">🧬</div>
         <div class="disc-card-content">
-          <h3>Glory Chem Defense</h3>
-          <p>Trò chơi bảo vệ phòng thí nghiệm. Sử dụng các loại cây hóa học để tiêu diệt Zombie!</p>
-          <div class="disc-card-badge">Minigame</div>
+          <h3>Phân Tử 3D</h3>
+          <p>Quan sát mô hình phân tử trực quan với liên kết thật, hình học không gian chuẩn VSEPR và thông tin nhanh.
+          </p>
+          <div class="disc-card-badge">Tương tác xoay/zoom</div>
         </div>
-        <button class="disc-card-btn">Chơi Ngay ←</button>
+        <button class="disc-card-btn">Khám Phá ←</button>
       </div>
+    </div>
+
+
+    <!-- Card 2: Glory Chem Defense -->
+    <div class="disc-card disc-card-alt" onclick="window.open('/GloryDefense', '_blank')">
+      <div class="disc-card-glow"></div>
+      <div class="disc-card-icon">🧪</div>
+      <div class="disc-card-content">
+        <h3>Glory Chem Defense</h3>
+        <p>Trò chơi bảo vệ phòng thí nghiệm. Sử dụng các loại cây hóa học để tiêu diệt Zombie!</p>
+        <div class="disc-card-badge">Minigame</div>
+      </div>
+      <button class="disc-card-btn">Chơi Ngay ←</button>
     </div>
 
     <!-- Container cho Bảng Tuần Hoàn (Ẩn mặc định) -->
@@ -628,21 +643,55 @@
         <p> Click vào từng nguyên tố để khám phá chi tiết. Cấu tạo nguyên tử theo mô hình cổ điển</p>
       </div>
 
-    <!-- Mobile Tabs (Chỉ mọc ra ở mobile) -->
-    <div id="pt-mobile-tabs" class="pt-mobile-tabs">
-      <button class="pt-m-tab active" onclick="switchPtMode('sp', this)">Khối S & P (Nhóm chính)</button>
-      <button class="pt-m-tab" onclick="switchPtMode('d', this)">Khối D (Chuyển tiếp)</button>
-      <button class="pt-m-tab" onclick="switchPtMode('f', this)">Khối F</button>
-    </div>
+      <!-- Mobile Tabs (Chỉ mọc ra ở mobile) -->
+      <div id="pt-mobile-tabs" class="pt-mobile-tabs">
+        <button class="pt-m-tab active" onclick="switchPtMode('sp', this)">Khối S & P (Nhóm chính)</button>
+        <button class="pt-m-tab" onclick="switchPtMode('d', this)">Khối D (Chuyển tiếp)</button>
+        <button class="pt-m-tab" onclick="switchPtMode('f', this)">Khối F</button>
+      </div>
 
-    <div id="periodic-wrap">
-      <div id="periodic-table-container" class="pt-mode-sp"></div>
-      <div id="element-detail-overlay">
-        <!-- 3D Atom canvas -->
-        <div id="atom-3d-container"></div>
-        <div id="ed-content"></div>
+      <div id="periodic-wrap">
+        <div id="periodic-table-container" class="pt-mode-sp"></div>
+        <div id="element-detail-overlay">
+          <!-- 3D Atom canvas -->
+          <div id="atom-3d-container"></div>
+          <div id="ed-content"></div>
+        </div>
       </div>
     </div>
+
+    <!-- Container cho Khám phá Phân tử 3D (Ẩn mặc định) -->
+    <div id="molecule-content" style="display:none">
+      <div class="lb-head molecule-head" style="margin-bottom: 2rem; position: relative;">
+        <button class="back-discovery" onclick="backToDiscovery()">← Quay lại Khám Phá</button>
+        <div class="slabel" style="justify-content:center;display:flex">🧬 Mô Hình Phân Tử Tương Tác</div>
+        <h1>Thư Viện Phân Tử 3D</h1>
+        <p>Chọn phân tử để xoay, phóng to/thu nhỏ và quan sát cấu trúc không gian thực tế.</p>
+      </div>
+
+      <div class="molecule-explorer-wrap">
+        <aside class="molecule-sidebar">
+          <div class="molecule-search-row">
+            <input id="molecule-search-input" type="text" placeholder="Tìm: nước, methane, NH3..."
+              oninput="filterMoleculeList(this.value)">
+          </div>
+          <div id="molecule-list" class="molecule-list"></div>
+        </aside>
+
+        <section class="molecule-stage">
+          <div id="molecule-3d-view"></div>
+          <div class="molecule-hint">Kéo chuột để xoay · Lăn chuột để zoom · Chuột phải để pan</div>
+        </section>
+
+        <aside class="molecule-info">
+          <div class="molecule-info-card">
+            <div class="molecule-formula" id="molecule-formula">H2O</div>
+            <h3 id="molecule-name">Nước</h3>
+            <p id="molecule-desc">Phân tử cơ bản cho sự sống, hình học gấp khúc do 2 cặp e không liên kết.</p>
+          </div>
+          <div class="molecule-stats" id="molecule-stats"></div>
+        </aside>
+      </div>
     </div>
   </div>
 
@@ -2049,8 +2098,9 @@
       <div class="fr-modal-body" style="text-align:center; padding: 2.8rem 2rem;">
         <div class="fr-modal-delete-icon">🗑️</div>
         <h3 class="fr-modal-delete-title">Xác Nhận Xóa?</h3>
-        <p class="fr-modal-delete-sub">Bài viết này sẽ bị xóa vĩnh viễn và không thể khôi phục. Bạn có chắc chắn muốn tiếp tục?</p>
-        
+        <p class="fr-modal-delete-sub">Bài viết này sẽ bị xóa vĩnh viễn và không thể khôi phục. Bạn có chắc chắn muốn
+          tiếp tục?</p>
+
         <div class="fr-modal-delete-btns">
           <button class="fr-btn-cancel-del" onclick="frCloseDeleteConfirm()">Hủy Bỏ</button>
           <button class="fr-btn-confirm-do-del" id="fr-btn-do-delete" onclick="frExecuteDelete()">Đúng, Xóa Nó!</button>
@@ -2065,11 +2115,13 @@
       <div class="fr-modal-body" style="text-align:center; padding: 2.5rem 1.8rem;">
         <div class="fr-modal-delete-icon" style="font-size:2.4rem;margin-bottom:0.8rem">💬🗑️</div>
         <h3 class="fr-modal-delete-title" style="font-size:1.15rem">Xóa Bình Luận?</h3>
-        <p class="fr-modal-delete-sub" style="font-size:.84rem;margin-bottom:1.5rem">Bình luận của bạn sẽ biến mất mãi mãi. Bạn chắc chứ?</p>
-        
+        <p class="fr-modal-delete-sub" style="font-size:.84rem;margin-bottom:1.5rem">Bình luận của bạn sẽ biến mất mãi
+          mãi. Bạn chắc chứ?</p>
+
         <div class="fr-modal-delete-btns">
           <button class="fr-btn-cancel-del" onclick="frCloseDelComment()">Quay Lại</button>
-          <button class="fr-btn-confirm-do-del" id="fr-btn-do-del-comment" onclick="frExecuteDelComment()">Xóa Ngay</button>
+          <button class="fr-btn-confirm-do-del" id="fr-btn-do-del-comment" onclick="frExecuteDelComment()">Xóa
+            Ngay</button>
         </div>
       </div>
     </div>
@@ -2078,12 +2130,12 @@
 
   <script src="/static/js/forum.js"></script>
   <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js', { scope: '/' });
-    });
-  }
-</script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' });
+      });
+    }
+  </script>
 
 </body>
 
