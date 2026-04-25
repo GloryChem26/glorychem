@@ -235,9 +235,10 @@ const GloryChemAI = (() => {
                    : renderMode === 'wireframe' ? 0.06 * scale
                    : info.r * 0.28 * scale;
       const geo = new THREE.SphereGeometry(radius, 24, 24);
-      const mat = new THREE.MeshPhongMaterial({
+      const mat = new THREE.MeshStandardMaterial({
         color: info.color,
-        shininess: 80,
+        roughness: 0.4,
+        metalness: 0.15,
         wireframe: renderMode === 'wireframe',
       });
       const mesh = new THREE.Mesh(geo, mat);
@@ -263,7 +264,7 @@ const GloryChemAI = (() => {
         const order = b.order || 1;
         const bondRadius = 0.05 * scale;
         const geo = new THREE.CylinderGeometry(bondRadius, bondRadius, len, 12);
-        const mat = new THREE.MeshPhongMaterial({ color: 0x888888, shininess: 40 });
+        const mat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.5, metalness: 0.1 });
 
         if (order === 1) {
           const mesh = new THREE.Mesh(geo, mat);

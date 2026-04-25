@@ -815,8 +815,8 @@ function render3DAtom(el, baseColor) {
   const electronCol = '#fbbf24';
 
   const nucleusGroup = new THREE.Group();
-  const protonMat = new THREE.MeshPhongMaterial({ color: baseColor, shininess: 80 });
-  const neutronMat = new THREE.MeshPhongMaterial({ color: neutronCol, shininess: 80 });
+  const protonMat = new THREE.MeshStandardMaterial({ color: baseColor, roughness: 0.4, metalness: 0.15 });
+  const neutronMat = new THREE.MeshStandardMaterial({ color: neutronCol, roughness: 0.4, metalness: 0.15 });
   const nucleonGeo = new THREE.SphereGeometry(0.6, 16, 16);
 
   // Generate a cluster of spheres for the nucleus based on atomic number
@@ -840,10 +840,12 @@ function render3DAtom(el, baseColor) {
   const shells = el.shells || [2, 8]; // fallback
 
   const electronGeo = new THREE.SphereGeometry(0.3, 16, 16);
-  const electronMat = new THREE.MeshPhongMaterial({
+  const electronMat = new THREE.MeshStandardMaterial({
     color: electronCol,
     emissive: '#f59e0b',
-    emissiveIntensity: 0.5
+    emissiveIntensity: 0.5,
+    roughness: 0.4,
+    metalness: 0.15
   });
 
   const orbitMat = new THREE.LineBasicMaterial({ color: orbitCol, transparent: true, opacity: orbitOpacity });
@@ -1332,10 +1334,10 @@ function render3DMolecule(mol) {
     const atomColor = atom.el === 'H' && !isDark ? 0xcbd5e1 : style.color;
     const mesh = new THREE.Mesh(
       new THREE.SphereGeometry(style.radius, 28, 28),
-      new THREE.MeshPhongMaterial({
+      new THREE.MeshStandardMaterial({
         color: atomColor,
-        shininess: 90,
-        specular: isDark ? 0xf8fafc : 0x1e293b
+        roughness: 0.4,
+        metalness: 0.15
       })
     );
     mesh.position.set(atom.pos[0], atom.pos[1], atom.pos[2]);
