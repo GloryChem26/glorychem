@@ -962,6 +962,10 @@ function gp(id) {
   const bm = { home: 'bn-home', challenge: 'bn-challenge', periodic: 'bn-periodic', leaderboard: 'bn-leaderboard', profile: 'bn-profile', lesson: 'bn-lesson', forum: 'bn-forum' };
   if (bm[id]) G(bm[id])?.classList.add('active');
 
+  // Reset các sub-views của tab Khám Phá (Periodic, AI)
+  if (typeof hidePeriodicTable === 'function') hidePeriodicTable();
+  if (typeof GloryChemAI !== 'undefined' && typeof GloryChemAI.hide === 'function') GloryChemAI.hide();
+
   // Load leaderboard khi chuyển tab
   if (id === 'leaderboard') {
     // Chỉ load lại nếu dữ liệu cũ hơn 30 giây để tránh làm lag web
@@ -986,9 +990,6 @@ function gp(id) {
       initLessonPage();
     }
   }
-
-
-
 }
 
 // ══ PROFILE PAGE ══
@@ -1295,7 +1296,7 @@ function cleanupRoom() {
   // === GIẢI PHÁP TỔNG LỰC: QUÉT SẠCH TẤT CẢ KÊNH ĐANG TREO ===
   if (typeof sb !== 'undefined' && sb.removeAllChannels) {
     sb.removeAllChannels();
-    
+
     // Đặt lại các tham chiếu kênh toàn cục (vì removeAllChannels đã giết chúng)
     if (typeof PRESENCE_CH !== 'undefined') PRESENCE_CH = null;
     if (typeof FA !== 'undefined') FA.inviteChannel = null;
@@ -1306,16 +1307,16 @@ function cleanupRoom() {
       if (typeof subscribeToInvites === 'function') subscribeToInvites();
     }, 100);
   }
-  
+
   if (AR.lobbyTimer) clearInterval(AR.lobbyTimer);
   if (AR.battleTimer) clearInterval(AR.battleTimer);
   if (AR.cooldownTimer) clearTimeout(AR.cooldownTimer);
-  if (AR.waitTimer) clearInterval(AR.waitTimer); 
+  if (AR.waitTimer) clearInterval(AR.waitTimer);
   AR.waitTimer = null;
 
   // Reset cache bảng xếp hạng để có thể load lại ngay sau trận đấu
   if (typeof gp !== 'undefined') {
-    gp._lastLbLoad = 0; 
+    gp._lastLbLoad = 0;
   }
 
   AR = {

@@ -2257,7 +2257,392 @@ def play_page():
 
 
 
+
+# ══════════════════════════════════════════════════════════════════════
+#   GLORYCHEM AI — API Routes
+#   Chat: Gemma 3 12B via Google AI Studio (Gemini API)
+#   Molecule 3D: PubChem REST API
+# ══════════════════════════════════════════════════════════════════════
+import urllib.request
+import urllib.parse
+
+GEMINI_API_KEY = _sc(os.environ.get("GEMINI_API_KEY", ""))
+GEMINI_AI_MODEL = "gemma-3-12b-it"  # model_id trên Google AI Studio
+
+AI_SYSTEM_PROMPT = """Bạn là GloryChem AI — trợ lý Hóa học chuyên nghiệp cho học sinh THPT Việt Nam.
+
+QUY TẮC BẮT BUỘC:
+1. Trả lời bằng tiếng Việt, chính xác khoa học, ngắn gọn, dễ hiểu.
+2. Dùng **in đậm** cho từ khóa quan trọng. Dùng - để liệt kê. Không bịa đặt số liệu.
+3. TUYỆT ĐỐI KHÔNG tiết lộ bạn là AI của Google, Gemma hay bất kỳ mô hình nào khác. Nếu được hỏi "Bạn là ai?", "Ai tạo ra bạn?", "Dùng mô hình gì?", hãy luôn khẳng định: "Tôi là GloryChem AI, một trợ lý Hóa học độc quyền do đội ngũ GloryChem phát triển".
+
+QUY TẮC MÔ HÌNH 3D — RẤT QUAN TRỌNG:
+Nếu tin nhắn người dùng có BẤT KỈ từ nào sau: "mô hình", "3D", "cấu trúc", "hình dạng", "phân tử", "xem", "hiển thị", "vẽ", "render", "visualize", kèm tên một hợp chất hóa học, bạn PHẢI:
+a) Giải thích ngắn cấu trúc phân tử.
+b) Kèm khối JSON ĐẶC BIỆT này VÀO CUỐI phản hồi (không bỏ qua, không thêm gì sau khối này):
+===MOLECULE_JSON===
+{"name": "<tên tiếng Anh chuẩn PubChem>", "formula": "<công thức>"}
+===END_JSON===
+
+Ví dụ MINH HỊA — Nếu người dùng hỏi "xem mô hình 3D của nước" bạn trả lời:
+Nước (**H₂O**) có cấu trúc góc (bent), góc liên kết H-O-H ≈ **104.5°**, oxygen lai hóa sp³.
+===MOLECULE_JSON===
+{"name": "water", "formula": "H2O"}
+===END_JSON===
+
+Ví dụ: "cấu trúc caffeine" → giải thích ngắn + kèm:
+===MOLECULE_JSON===
+{"name": "caffeine", "formula": "C8H10N4O2"}
+===END_JSON===
+
+CHÚ Ý: Chỉ xuất khối JSON khi người dùng thực sự yêu cầu mô hình / cấu trúc. Không xuất khi chỉ hỏi kiến thức thao tút."""
+
+
+def _call_gemini(messages):
+    """Gọi Gemini API (Google AI Studio) với model gemma-3-12b-it.
+
+    Lưu ý: Gemma models KHÔNG hỗ trợ systemInstruction.
+    System prompt được ghép vào tin nhắn user đầu tiên.
+    Gemini yêu cầu lượt user/model phải luân phiên đúng thứ tự.
+    """
+    import json as _json
+    if not GEMINI_API_KEY:
+        raise ValueError("Thiếu GEMINI_API_KEY trong .env. Lấy key tại: aistudio.google.com/apikey")
+
+    # Tách system prompt
+    system_text = ""
+    chat_messages = []
+    for m in messages:
+        if m["role"] == "system":
+            system_text = m["content"]
+        else:
+            chat_messages.append(m)
+
+    # Build Gemini contents — phải bắt đầu bằng "user" và luân phiên user/model
+    contents = []
+    for i, m in enumerate(chat_messages):
+        role = "user" if m["role"] == "user" else "model"
+        text = m["content"]
+        # Ghép system prompt vào tin nhắn user đầu tiên
+        if i == 0 and role == "user" and system_text:
+            text = f"{system_text}\n\n---\n\n{text}"
+        # Bỏ qua nếu hai lượt liên tiếp cùng role (Gemini không cho phép)
+        if contents and contents[-1]["role"] == role:
+            contents[-1]["parts"][0]["text"] += "\n" + text
+        else:
+            contents.append({"role": role, "parts": [{"text": text}]})
+
+    # Gemini bắt buộc content cuối phải là "user"
+    if not contents or contents[-1]["role"] != "user":
+        contents.append({"role": "user", "parts": [{"text": "Tiếp tục"}]})
+
+    body = {
+        "contents": contents,
+        "generationConfig": {"maxOutputTokens": 1024, "temperature": 0.7},
+    }
+    payload = _json.dumps(body).encode()
+    url = (f"https://generativelanguage.googleapis.com/v1beta/models/"
+           f"{GEMINI_AI_MODEL}:generateContent?key={GEMINI_API_KEY}")
+    req = urllib.request.Request(
+        url, data=payload,
+        headers={"Content-Type": "application/json"},
+        method="POST"
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            return _json.loads(resp.read())
+    except urllib.error.HTTPError as e:
+        # Log response body để debug
+        body_bytes = e.read()
+        print(f"[AI] Gemini HTTP {e.code}: {body_bytes.decode('utf-8', errors='replace')[:500]}")
+        raise
+
+
+def _detect_3d_request(user_msg, ai_reply):
+    """Fallback: nhận biết yêu cầu xem mô hình 3D khi AI không xuất MOLECULE_JSON.
+
+    Chiến lược:
+    1. Kiểm tra user message có chứa keywords 3D/cấu trúc không.
+    2. Nếu có, tìm tên chất trong user message bằng regex pattern.
+    3. Trả về dict {name, formula} hoặc None.
+    """
+    import re as _re
+
+    # Keywords báo hiệu yêu cầu 3D/cấu trúc
+    TRIGGER_KEYWORDS = [
+        r'\bm[ôo]\s*h[iì]nh\b',     # mô hình
+        r'\b3[Dd]\b',                # 3D
+        r'\bc[aâ]u\s*tr[uú]c\b',   # cấu trúc
+        r'\bh[iì]nh\s*d[aạ]ng\b',  # hình dạng
+        r'\bph[aâ]n\s*t[uử]\b',     # phân tử
+        r'\bxem\s+(?:ch[aấ]t|ph[aâ]n)\b',
+        r'\bhi[eê]n\s*th[iị]\b',    # hiển thị
+        r'\brender\b',
+        r'\bvisualiz',
+        r'\bstructure\b',
+    ]
+
+    msg_lower = user_msg.lower()
+    is_3d_request = any(_re.search(kw, msg_lower) for kw in TRIGGER_KEYWORDS)
+    if not is_3d_request:
+        return None
+
+    # Danh sách tên chất phổ biến (tiếng Việt → tiếng Anh PubChem)
+    KNOWN_COMPOUNDS = {
+        # Tiếng Việt
+        'nước': ('water', 'H2O'),
+        'muối': ('sodium chloride', 'NaCl'),
+        'đường': ('glucose', 'C6H12O6'),
+        'amoniac': ('ammonia', 'NH3'),
+        'metan': ('methane', 'CH4'),
+        'etan': ('ethane', 'C2H6'),
+        'propan': ('propane', 'C3H8'),
+        'butan': ('butane', 'C4H10'),
+        'etanol': ('ethanol', 'C2H5OH'),
+        'metanol': ('methanol', 'CH3OH'),
+        'benzen': ('benzene', 'C6H6'),
+        'toluen': ('toluene', 'C7H8'),
+        'axeton': ('acetone', 'C3H6O'),
+        'axit axetic': ('acetic acid', 'CH3COOH'),
+        'giấm': ('acetic acid', 'CH3COOH'),
+        'axít clohidric': ('hydrochloric acid', 'HCl'),
+        'axit sunfuric': ('sulfuric acid', 'H2SO4'),
+        'axit nitric': ('nitric acid', 'HNO3'),
+        'natri hidroxit': ('sodium hydroxide', 'NaOH'),
+        'canxi cacbonat': ('calcium carbonate', 'CaCO3'),
+        'cacbon dioxit': ('carbon dioxide', 'CO2'),
+        'khí cacbonic': ('carbon dioxide', 'CO2'),
+        'oxi': ('oxygen', 'O2'),
+        'nitơ': ('nitrogen', 'N2'),
+        'hidro': ('hydrogen', 'H2'),
+        'clo': ('chlorine', 'Cl2'),
+        'caffeine': ('caffeine', 'C8H10N4O2'),
+        'aspirin': ('aspirin', 'C9H8O4'),
+        'glucose': ('glucose', 'C6H12O6'),
+        'fructose': ('fructose', 'C6H12O6'),
+        'sucrose': ('sucrose', 'C12H22O11'),
+        'cholesterol': ('cholesterol', 'C27H46O'),
+        'adrenaline': ('adrenaline', 'C9H13NO3'),
+        'dopamine': ('dopamine', 'C8H11NO2'),
+        'penicillin': ('penicillin', 'C16H18N2O4S'),
+        'paracetamol': ('paracetamol', 'C8H9NO2'),
+        'ibuprofen': ('ibuprofen', 'C13H18O2'),
+        'vitamin c': ('ascorbic acid', 'C6H8O6'),
+        # Công thức trực tiếp
+        'h2o': ('water', 'H2O'),
+        'co2': ('carbon dioxide', 'CO2'),
+        'nh3': ('ammonia', 'NH3'),
+        'ch4': ('methane', 'CH4'),
+        'nacl': ('sodium chloride', 'NaCl'),
+        'c6h6': ('benzene', 'C6H6'),
+        'c2h5oh': ('ethanol', 'C2H5OH'),
+        'c8h10n4o2': ('caffeine', 'C8H10N4O2'),
+    }
+
+    for keyword, (eng_name, formula) in KNOWN_COMPOUNDS.items():
+        if keyword in msg_lower:
+            return {'name': eng_name, 'formula': formula}
+
+    # Nếu không match known list, tìm công thức hoá học trong message
+    formula_match = _re.search(
+        r'\b([A-Z][a-z]?(?:\d+)?(?:[A-Z][a-z]?(?:\d+)?){1,})\b', user_msg
+    )
+    if formula_match:
+        formula = formula_match.group(1)
+        return {'name': formula, 'formula': formula}
+
+    # Cuối cùng: tìm tên chất sau keywords phổ biến
+    name_patterns = [
+        r'(?:m[ôo]\s*h[iì]nh|c[aâ]u\s*tr[uú]c|3[Dd]|xem|hi[eê]n\s*th[iị])[^a-zA-Z\u00C0-\u024F]*([A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F\s]{2,20})',
+        r'([A-Za-z\u00C0-\u024F]{3,})\s+(?:l[aà]|c[oó]|có\s+c[aâ]u\s*tr[uú]c)',
+    ]
+    for pat in name_patterns:
+        m = _re.search(pat, user_msg, _re.IGNORECASE)
+        if m:
+            candidate = m.group(1).strip()
+            if len(candidate) > 2 and candidate.lower() not in ('cua', 'cho', 'cai', 'mot'):
+                return {'name': candidate, 'formula': ''}
+
+    return None
+
+
+def _extract_molecule_json(text):
+    """Parse ===MOLECULE_JSON=== block from AI reply."""
+    import json as _json, re as _re
+    m = _re.search(r'===MOLECULE_JSON===\s*(\{.*?\})\s*===END_JSON===', text, _re.DOTALL)
+    if m:
+        try:
+            return _json.loads(m.group(1))
+        except Exception:
+            return None
+    return None
+
+
+def _clean_reply(text):
+    """Remove ===MOLECULE_JSON=== block from display text."""
+    import re as _re
+    return _re.sub(r'\s*===MOLECULE_JSON===.*?===END_JSON===', '', text, flags=_re.DOTALL).strip()
+
+
+@app.route("/api/ai/chat", methods=["POST"])
+@rate_limit(limit=20, period=60)
+def api_ai_chat():
+    """GloryChem AI chat endpoint — Gemma 3 12B via Google AI Studio."""
+    import json as _json
+    try:
+        body = request.get_json(force=True) or {}
+        user_msg = (body.get("message") or "").strip()
+        history  = body.get("history", [])  # [{role, content}, ...]
+
+        if not user_msg:
+            return jsonify({"error": "Tin nhắn rỗng"}), 400
+        if len(user_msg) > 2000:
+            return jsonify({"error": "Tin nhắn quá dài (tối đa 2000 ký tự)"}), 400
+        if not GEMINI_API_KEY:
+            return jsonify({"error": "Chưa cấu hình GEMINI_API_KEY trong .env. Lấy key miễn phí tại aistudio.google.com/apikey"}), 500
+
+        # Build messages (system + lịch sử hội thoại + tin nhắn mới)
+        messages = [{"role": "system", "content": AI_SYSTEM_PROMPT}]
+        for h in history[-8:]:  # giữ 8 lượt gần nhất để tiết kiệm token
+            if h.get("role") in ("user", "assistant") and h.get("content"):
+                messages.append({"role": h["role"], "content": str(h["content"])[:1000]})
+        messages.append({"role": "user", "content": user_msg})
+
+        # Gọi Gemini API
+        result    = _call_gemini(messages)
+        raw_reply = result["candidates"][0]["content"]["parts"][0]["text"]
+
+        mol_data = _extract_molecule_json(raw_reply)
+        clean    = _clean_reply(raw_reply)
+
+        # ── Fallback: Nếu AI không xuất MOLECULE_JSON nhưng user rõ ràng yêu cầu 3D ──
+        if not mol_data:
+            mol_data = _detect_3d_request(user_msg, raw_reply)
+            if mol_data:
+                print(f"[AI] Fallback 3D detect: {mol_data}")
+
+        # If molecule detected, pre-fetch CID from PubChem
+        mol_response = None
+        if mol_data:
+            try:
+                mol_name = urllib.parse.quote(mol_data.get("name", ""))
+                cid_url  = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{mol_name}/cids/JSON"
+                with urllib.request.urlopen(cid_url, timeout=5) as r:
+                    cid_data = _json.loads(r.read())
+                cid = cid_data["IdentifierList"]["CID"][0]
+                mol_response = {"name": mol_data.get("name"), "formula": mol_data.get("formula", ""), "cid": cid}
+            except Exception as e:
+                print(f"[AI] PubChem CID lookup failed: {e}")
+                mol_response = {"name": mol_data.get("name"), "formula": mol_data.get("formula", ""), "cid": None}
+
+        return jsonify({"reply": clean, "molecule": mol_response})
+
+    except Exception as e:
+        print(f"[API] /api/ai/chat error: {e}")
+        import traceback; traceback.print_exc()
+        return jsonify({"error": f"Lỗi xử lý: {str(e)[:200]}"}), 500
+
+
+@app.route("/api/ai/molecule3d")
+@rate_limit(limit=30, period=60)
+def api_ai_molecule3d():
+    """Fetch 3D conformer data from PubChem for rendering."""
+    import json as _json
+    cid  = request.args.get("cid")
+    name = request.args.get("name", "").strip()
+
+    try:
+        # Resolve CID from name if needed
+        if not cid and name:
+            enc = urllib.parse.quote(name)
+            url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{enc}/cids/JSON"
+            with urllib.request.urlopen(url, timeout=8) as r:
+                data = _json.loads(r.read())
+            cid = str(data["IdentifierList"]["CID"][0])
+
+        if not cid:
+            return jsonify({"error": "Không tìm thấy chất"}), 404
+
+        # Fetch 3D conformer (SDF → parse atoms & bonds)
+        sdf_url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{cid}/record/JSON?record_type=3d"
+        with urllib.request.urlopen(sdf_url, timeout=10) as r:
+            mol_json = _json.loads(r.read())
+
+        # Lấy thêm thông tin chi tiết từ Property API (bởi vì record_type=3d thường thiếu metadata này)
+        ext_props = {}
+        try:
+            prop_url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{cid}/property/IUPACName,MolecularFormula,MolecularWeight,Complexity,MonoisotopicMass/JSON"
+            with urllib.request.urlopen(prop_url, timeout=5) as r:
+                prop_data = _json.loads(r.read())
+                ext_props = prop_data.get("PropertyTable", {}).get("Properties", [{}])[0]
+        except Exception as e:
+            print(f"[API] PubChem Property fetch failed: {e}")
+
+        record = mol_json["PC_Compounds"][0]
+        atoms_block  = record.get("atoms", {})
+        coords_block = record.get("coords", [{}])[0].get("conformers", [{}])[0]
+        bonds_block  = record.get("bonds", {})
+        props        = {p["urn"]["label"]: p["value"] for p in record.get("props", []) if "label" in p.get("urn", {})}
+
+        elements = atoms_block.get("element", [])
+        xs = coords_block.get("x", [])
+        ys = coords_block.get("y", [])
+        zs = coords_block.get("z", [])
+
+        # Map element numbers → symbols
+        ELEM_MAP = {1:"H",2:"He",3:"Li",4:"Be",5:"B",6:"C",7:"N",8:"O",9:"F",10:"Ne",
+                    11:"Na",12:"Mg",13:"Al",14:"Si",15:"P",16:"S",17:"Cl",18:"Ar",
+                    19:"K",20:"Ca",26:"Fe",29:"Cu",30:"Zn",35:"Br",47:"Ag",53:"I",79:"Au"}
+        atoms_out = [{"element": ELEM_MAP.get(e, str(e)), "x": x, "y": y, "z": z}
+                     for e, x, y, z in zip(elements, xs, ys, zs)]
+
+        bonds_out = []
+        if bonds_block:
+            aids1 = bonds_block.get("aid1", [])
+            aids2 = bonds_block.get("aid2", [])
+            orders = bonds_block.get("order", [])
+            for i, (a, b) in enumerate(zip(aids1, aids2)):
+                order = orders[i] if i < len(orders) else 1
+                bonds_out.append({"begin": a - 1, "end": b - 1, "order": order})
+
+        # Metadata nâng cao
+        formula = ext_props.get("MolecularFormula", props.get("Molecular Formula", ""))
+        weight  = ext_props.get("MolecularWeight", props.get("Molecular Weight", ""))
+        iupac   = ext_props.get("IUPACName", props.get("IUPAC Name", ""))
+        complexity = ext_props.get("Complexity", props.get("Complexity", "—"))
+        exact_mass = ext_props.get("MonoisotopicMass", props.get("Exact Mass", "—"))
+
+        # Thử lấy thêm thông tin từ title/synonym API nếu cần (tùy chọn)
+        # Ở đây chúng ta parse tối đa từ props có sẵn
+        desc = props.get("Description", "")
+        if not desc:
+            # Fallback desc
+            if formula:
+                desc = f"Hợp chất hóa học có công thức {formula}. Khối lượng phân tử: {weight} g/mol."
+
+        return jsonify({
+            "cid":     cid,
+            "name":    iupac or name or f"Hợp chất CID {cid}",
+            "formula": formula,
+            "weight":  weight,
+            "desc":    desc,
+            "complexity": complexity,
+            "exact_mass": exact_mass,
+            "atoms":   atoms_out,
+            "bonds":   bonds_out,
+        })
+
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return jsonify({"error": f"Không tìm thấy chất '{name or cid}' trong PubChem"}), 404
+        return jsonify({"error": f"PubChem API lỗi {e.code}"}), 502
+    except Exception as e:
+        print(f"[API] /api/ai/molecule3d error: {e}")
+        import traceback; traceback.print_exc()
+        return jsonify({"error": f"Lỗi xử lý: {str(e)[:200]}"}), 500
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     print(f"[Server] GloryChem starting on port {port}")
-    socketio.run(app, host="0.0.0.0", port=port, debug=False, allow_unsafe_werkzeug=True)
+    socketio.run(app, host="0.0.0.0", port=port, debug=False, allow_unsafe_werkzeug=True)

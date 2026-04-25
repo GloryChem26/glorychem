@@ -76,6 +76,7 @@ nav.nav-scrolled {
   border-radius: 14px;
   transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .nav-links a:hover {

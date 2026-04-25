@@ -23,6 +23,7 @@
   <link rel="stylesheet" href="/static/css/lesson.css">
   <link rel="stylesheet" href="/static/css/periodic.css">
   <link rel="stylesheet" href="/static/css/nav-redesign.css">
+  <link rel="stylesheet" href="/static/css/glorychem-ai.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <script src="/static/js/question.js"></script>
@@ -623,6 +624,18 @@
       </div>
 
 
+      <!-- Card: GloryChem AI -->
+      <div class="disc-card disc-card-ai" onclick="showGloryChemAI()">
+        <div class="disc-card-glow"></div>
+        <div class="disc-card-icon">🤖</div>
+        <div class="disc-card-content">
+          <h3>GloryChem AI</h3>
+          <p>Trợ lý Hóa học thông minh — hỏi đáp kiến thức, nhận diện chất và xem mô hình phân tử 3D tương tác.</p>
+          <div class="disc-card-badge">✨ AI · Trí tuệ nhân tạo</div>
+        </div>
+        <button class="disc-card-btn">Trò Chuyện ←</button>
+      </div>
+
       <!-- Card 2: Glory Chem Defense -->
       <div class="disc-card disc-card-alt" onclick="window.open('/GloryDefense', '_blank')">
         <div class="disc-card-glow"></div>
@@ -672,7 +685,7 @@
       <div class="lb-head molecule-head" style="margin-bottom: 2rem; position: relative;">
         <button class="back-discovery" onclick="backToDiscovery()">← Quay lại Khám Phá</button>
         <div class="slabel" style="justify-content:center;display:flex">🧬 Mô Hình Phân Tử Tương Tác</div>
-        <h1>Thư Viện Phân Tử 3D</h1>
+        <h1>Thư Viện Phân Tử 3D </h1>
         <p>Chọn phân tử để xoay, phóng to/thu nhỏ và quan sát cấu trúc không gian thực tế.</p>
       </div>
 
@@ -700,6 +713,115 @@
         </aside>
       </div>
     </div>
+
+    <!-- ═══ GloryChem AI Content ═══ -->
+    <div id="glorychem-ai-content">
+      <!-- Header -->
+      <div class="ai-page-header">
+        <button class="ai-back-btn" onclick="GloryChemAI.hide()">
+          ← <span>Quay lại</span>
+        </button>
+        <div class="ai-header-center">
+          <div class="ai-header-label">TRỢ LÝ HÓA HỌC</div>
+          <h1 class="ai-header-title">Glory<span>Chem AI</span></h1>
+          <p class="ai-header-sub">Hỏi bất kỳ điều gì về Hóa học · Xem mô hình 3D phân tử</p>
+        </div>
+      </div>
+
+      <!-- Main layout -->
+      <div class="ai-main-layout">
+
+        <!-- Chat Panel -->
+        <div class="ai-chat-panel">
+          <!-- Topbar -->
+          <div class="ai-chat-topbar">
+            <div class="ai-avatar">🤖</div>
+            <div class="ai-topbar-info">
+              <div class="ai-topbar-name">GloryChem AI</div>
+              <div class="ai-topbar-status">
+                <span class="ai-status-dot"></span>
+                <span>Trực tuyến · GloryChem AI</span>
+              </div>
+            </div>
+            <div style="display:flex;gap:.5rem">
+              <button class="ai-topbar-btn" id="ai-clear-btn" title="Xóa hội thoại">🗑️</button>
+            </div>
+          </div>
+
+          <!-- Messages -->
+          <div class="ai-messages" id="ai-messages">
+            <!-- Typing indicator -->
+            <div class="ai-typing" id="ai-typing" style="display:none">
+              <div
+                style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#a855f7);display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0">
+                🤖</div>
+              <div class="ai-typing-dots">
+                <span></span><span></span><span></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Input -->
+          <div class="ai-input-area">
+            <div class="ai-input-wrap">
+              <textarea class="ai-textarea" id="ai-textarea" placeholder="Hỏi về Hóa học hoặc yêu cầu xem mô hình 3D..."
+                rows="1"></textarea>
+            </div>
+            <button class="ai-send-btn" id="ai-send-btn" title="Gửi (Enter)">➤</button>
+          </div>
+        </div>
+
+        <!-- 3D Viewer Panel -->
+        <div class="ai-viewer-panel">
+          <!-- Overlay for expanded mode -->
+          <div class="ai-3d-overlay" id="ai-3d-overlay"></div>
+
+          <!-- 3D Card -->
+          <div class="ai-3d-card" id="ai-3d-card">
+            <div class="ai-3d-header">
+              <div class="ai-3d-header-icon">⚗️</div>
+              <div class="ai-3d-header-text">
+                <div class="ai-3d-title">Mô Hình Phân Tử 3D</div>
+                <div class="ai-3d-subtitle">GloryChem - Cấu trúc 3D</div>
+              </div>
+              <button class="ai-3d-expand-btn" id="ai-3d-expand-btn" title="Phóng to">⛶</button>
+            </div>
+            <div class="ai-3d-canvas-wrap">
+              <canvas id="ai-molecule-canvas"></canvas>
+              <div class="ai-3d-empty" id="ai-3d-empty">
+                <div class="ai-3d-empty-icon">🧬</div>
+                <div class="ai-3d-empty-text">Yêu cầu AI tạo mô hình 3D để xem tại đây</div>
+              </div>
+              <div class="ai-3d-loading" id="ai-3d-loading">
+                <div class="ai-3d-spinner"></div>
+                <div class="ai-3d-loading-text">Đang tải dữ liệu từ mô hình 3D...</div>
+              </div>
+            </div>
+            <div class="ai-3d-controls">
+              <button class="ai-3d-ctrl-btn active" data-mode="ballstick">⚪ Ball-Stick</button>
+              <button class="ai-3d-ctrl-btn" data-mode="spacefill">🔵 Space Fill</button>
+              <button class="ai-3d-ctrl-btn" data-mode="wireframe">🕸️ Wireframe</button>
+              <div class="ai-3d-hint">Kéo để xoay · Scroll để zoom</div>
+            </div>
+          </div>
+
+          <!-- Molecule Info -->
+          <div class="ai-mol-info-card" id="ai-mol-info-card">
+            <div id="ai-mol-empty-state" class="ai-mol-empty-state">
+              <div class="ai-mol-empty-icon">🔬</div>
+              <div class="ai-mol-empty-text">Thông tin phân tử sẽ hiển thị ở đây</div>
+            </div>
+            <div id="ai-mol-info-inner" class="ai-mol-info-inner" style="display:none">
+              <div class="ai-mol-formula" id="ai-mol-formula">—</div>
+              <h3 class="ai-mol-name" id="ai-mol-name">—</h3>
+              <p class="ai-mol-desc" id="ai-mol-desc"></p>
+              <div class="ai-mol-stats" id="ai-mol-stats"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- ═══ CHALLENGE ═══ -->
@@ -1796,6 +1918,10 @@
   <script src="/static/js/lesson.js"></script>
   <script src="/static/js/elements.js"></script>
   <script src="/static/js/periodic.js"></script>
+  <script src="/static/js/glorychem-ai.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => GloryChemAI.init());
+  </script>
 
   <!-- ═══ BOTTOM NAV (Mobile) ═══ -->
   <nav class="bottom-nav" id="bottom-nav">
