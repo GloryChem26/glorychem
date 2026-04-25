@@ -157,6 +157,17 @@ const GloryChemAI = (() => {
       renderMolecule(data);
       updateMolInfo(data);
     } catch (err) {
+      // ── Reset về mặc định khi lỗi ──
+      currentMolData = null;
+      if (scene) {
+        while (scene.children.length > 3) scene.remove(scene.children[3]);
+      }
+      if (camera) camera.position.set(0, 0, 15);
+      if (controls) controls.reset();
+      
+      if (elMolEmptyState) elMolEmptyState.style.display = 'block';
+      if (elMolInfoInner) elMolInfoInner.style.display = 'none';
+
       el3dEmpty.classList.remove('hidden');
       el3dEmpty.querySelector('.ai-3d-empty-text').textContent = `⚠️ ${err.message}`;
     } finally {
