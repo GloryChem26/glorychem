@@ -148,16 +148,55 @@ def broadcast_presence():
 #   SECURITY & AUTH HELPERS
 # ══════════════════════════════════════
 def get_user_from_request():
+    """
+    Verify JWT bằng HTTP call trực tiếp — KHÔNG dùng shared supabase_auth client.
+    
+    Lý do: supabase_auth client (GoTrue) lưu auth state nội bộ và KHÔNG thread-safe.
+    Khi nhiều request đến đồng thời (Flask threading mode), các thread cùng gọi
+    supabase_auth.auth.get_user() sẽ ghi đè state của nhau → deadlock → server treo,
+    response không bao giờ được gửi về → client fetch() treo vô thời hạn → UI đơ.
+    
+    Fix: dùng requests.get() trực tiếp đến Supabase Auth REST API — stateless,
+    mỗi call tạo HTTP connection riêng, hoàn toàn thread-safe.
+    """
+    import urllib.request as _ur
+    import urllib.error  as _ue
+    import json          as _json
+
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
         return None
     token = auth_header.split(" ")[1]
+    if not token or token == "undefined" or token == "null":
+        return None
+
     try:
-        # ✅ Dùng supabase_auth (ANON key) để verify JWT
-        # KHÔNG dùng supabase (SERVICE_ROLE) — tránh corrupt admin headers
-        res = supabase_auth.auth.get_user(token)
-        if res and res.user:
-            return res.user
+        req = _ur.Request(
+            f"{SUPABASE_URL}/auth/v1/user",
+            headers={
+                "apikey":        SUPABASE_ANON_KEY,
+                "Authorization": f"Bearer {token}",
+            },
+        )
+        with _ur.urlopen(req, timeout=8) as resp:
+            data = _json.loads(resp.read())
+
+        if not data.get("id"):
+            return None
+
+        # Trả về object tương thích với res.user cũ (chỉ cần .id và .email)
+        class _User:
+            __slots__ = ("id", "email")
+            def __init__(self, d):
+                self.id    = d["id"]
+                self.email = d.get("email", "")
+
+        return _User(data)
+
+    except _ue.HTTPError as e:
+        # 401 = token hết hạn / không hợp lệ — log nhẹ thôi
+        if e.code != 401:
+            print(f"[AUTH] Supabase verify HTTP {e.code}: {e.reason}")
     except Exception as e:
         print(f"[AUTH] JWT Verify error: {e}")
     return None
@@ -597,37 +636,24 @@ def api_forum_posts():
         return jsonify(cached)
 
     try:
-        # Thử lấy data có kèm join profile
-        try:
-            query = (
-                supabase.table("forum_posts")
-                .select("id, user_id, title, content, category, comment_count, created_at, profiles:user_id(full_name, avatar_url)")
-                .order("created_at", desc=True)
-                .limit(50)
-            )
-            if cat != "all":
-                query = query.eq("category", cat)
-            res = query.execute()
-            data = res.data or []
-        except Exception as join_err:
-            print(f"[Forum] Join failed, falling back to manual fetch: {join_err}")
-            # Fallback: lấy bài trước, sau đó lấy profile
-            query = (
-                supabase.table("forum_posts")
-                .select("id, user_id, title, content, category, comment_count, created_at")
-                .order("created_at", desc=True)
-                .limit(50)
-            )
-            if cat != "all":
-                query = query.eq("category", cat)
-            res = query.execute()
-            data = res.data or []
-            
-            if data:
-                uids = list(set(p["user_id"] for p in data))
-                profiles = _fetch_profiles_safe(uids)
-                for p in data:
-                    p["profiles"] = profiles.get(p["user_id"])
+        # Không dùng PostgREST join (forum_posts không có FK đến profiles).
+        # Lấy bài viết trước, batch-fetch profiles theo user_id — luôn hoạt động.
+        query = (
+            supabase.table("forum_posts")
+            .select("id, user_id, title, content, category, comment_count, created_at")
+            .order("created_at", desc=True)
+            .limit(50)
+        )
+        if cat != "all":
+            query = query.eq("category", cat)
+        res  = query.execute()
+        data = res.data or []
+
+        if data:
+            uids     = list(set(p["user_id"] for p in data))
+            profiles = _fetch_profiles_safe(uids)
+            for p in data:
+                p["profiles"] = profiles.get(p["user_id"])
 
         _cache_set(cache_key, data)
         return jsonify(data)
@@ -668,31 +694,22 @@ def api_forum_comments(post_id):
         return jsonify(cached)
 
     try:
-        data = []
-        try:
-            res = (
-                supabase.table("forum_comments")
-                .select("id, content, created_at, profiles:user_id(full_name, avatar_url)")
-                .eq("post_id", post_id)
-                .order("created_at", desc=False)
-                .execute()
-            )
-            data = res.data or []
-        except Exception as join_err:
-            print(f"[Forum] Comments join failed: {join_err}")
-            res = (
-                supabase.table("forum_comments")
-                .select("id, user_id, content, created_at")
-                .eq("post_id", post_id)
-                .order("created_at", desc=False)
-                .execute()
-            )
-            data = res.data or []
-            if data:
-                uids = list(set(c["user_id"] for c in data))
-                profiles = _fetch_profiles_safe(uids)
-                for c in data:
-                    c["profiles"] = profiles.get(c["user_id"])
+        # Không dùng PostgREST join (forum_comments không có FK đến profiles).
+        # Lấy comments trước, batch-fetch profiles theo user_id — luôn hoạt động.
+        res = (
+            supabase.table("forum_comments")
+            .select("id, user_id, content, created_at")
+            .eq("post_id", post_id)
+            .order("created_at", desc=False)
+            .execute()
+        )
+        data = res.data or []
+
+        if data:
+            uids     = list(set(c["user_id"] for c in data))
+            profiles = _fetch_profiles_safe(uids)
+            for c in data:
+                c["profiles"] = profiles.get(c["user_id"])
 
         _cache_set(cache_key, data)
         return jsonify(data)
@@ -2256,18 +2273,11 @@ def play_page():
 
 
 
-
-
-# ══════════════════════════════════════════════════════════════════════
-#   GLORYCHEM AI — API Routes
-#   Chat: Gemma 3 12B via Google AI Studio (Gemini API)
-#   Molecule 3D: PubChem REST API
-# ══════════════════════════════════════════════════════════════════════
 import urllib.request
 import urllib.parse
 
 GEMINI_API_KEY = _sc(os.environ.get("GEMINI_API_KEY", ""))
-GEMINI_AI_MODEL = "gemma-3-12b-it"  # model_id trên Google AI Studio
+GEMINI_AI_MODEL = "gemma-3-12b-it"  
 
 AI_SYSTEM_PROMPT = """Bạn là GloryChem AI — trợ lý Hóa học chuyên nghiệp cho học sinh THPT Việt Nam.
 

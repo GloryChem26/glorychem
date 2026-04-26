@@ -13,24 +13,24 @@
    STATE
 ─────────────────────────────────────── */
 const FR = {
-  posts:         [],         // danh sách bài đang hiển thị
-  currentCat:    'all',      // bộ lọc danh mục
-  currentPost:   null,       // bài đang xem chi tiết
-  comments:      [],         // bình luận của bài hiện tại
-  loading:       false,      // đang tải posts
-  submitting:    false,      // đang submit bài/comment
-  inited:        false,      // đã init chưa
-  selectedCat:   'tip',      // category đang chọn trong modal tạo bài
-  counts:        { all: 0, tip: 0, memory: 0, question: 0 },
+  posts: [],         // danh sách bài đang hiển thị
+  currentCat: 'all',      // bộ lọc danh mục
+  currentPost: null,       // bài đang xem chi tiết
+  comments: [],         // bình luận của bài hiện tại
+  loading: false,      // đang tải posts
+  submitting: false,      // đang submit bài/comment
+  inited: false,      // đã init chưa
+  selectedCat: 'tip',      // category đang chọn trong modal tạo bài
+  counts: { all: 0, tip: 0, memory: 0, question: 0 },
 };
 
 /* ──────────────────────────────────────
    CATEGORY CONFIG
 ─────────────────────────────────────── */
 const FR_CATS = {
-  tip:      { label: 'Mẹo Học',   icon: '💡', desc: 'Chiến thuật ôn tập' },
-  memory:   { label: 'Ghi Nhớ',   icon: '🧠', desc: 'Cách nhớ nhanh'     },
-  question: { label: 'Câu Hỏi',   icon: '❓', desc: 'Hỏi đáp kiến thức'  },
+  tip: { label: 'Mẹo Học', icon: '💡', desc: 'Chiến thuật ôn tập' },
+  memory: { label: 'Ghi Nhớ', icon: '🧠', desc: 'Cách nhớ nhanh' },
+  question: { label: 'Câu Hỏi', icon: '❓', desc: 'Hỏi đáp kiến thức' },
 };
 
 /* ──────────────────────────────────────
@@ -39,28 +39,28 @@ const FR_CATS = {
 function frG(id) { return document.getElementById(id); }
 
 function frTimeAgo(dateStr) {
-  const now  = Date.now();
+  const now = Date.now();
   const diff = now - new Date(dateStr).getTime();
-  const m    = Math.floor(diff / 60000);
-  const h    = Math.floor(m / 60);
-  const d    = Math.floor(h / 24);
-  if (m < 1)  return 'vừa xong';
+  const m = Math.floor(diff / 60000);
+  const h = Math.floor(m / 60);
+  const d = Math.floor(h / 24);
+  if (m < 1) return 'vừa xong';
   if (m < 60) return `${m} phút trước`;
   if (h < 24) return `${h} giờ trước`;
-  if (d < 7)  return `${d} ngày trước`;
+  if (d < 7) return `${d} ngày trước`;
   return new Date(dateStr).toLocaleDateString('vi-VN');
 }
 
 function frEsc(str) {
   if (!str) return '';
   return String(str)
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
 
 function frAvatar(profile, size = 'sm') {
-  const name   = profile?.full_name || profile?.email?.split('@')[0] || '?';
+  const name = profile?.full_name || profile?.email?.split('@')[0] || '?';
   const letter = name.charAt(0).toUpperCase();
   if (profile?.avatar_url) {
     return `<img src="${frEsc(profile.avatar_url)}" alt="${frEsc(name)}" onerror="this.parentNode.textContent='${letter}'">`;
@@ -143,16 +143,16 @@ async function frLoadCounts() {
    RENDER LIST VIEW
 ─────────────────────────────────────── */
 function frRenderListView() {
-  const listEl   = frG('fr-list-view');
+  const listEl = frG('fr-list-view');
   const detailEl = frG('fr-detail-view');
-  if (listEl)   listEl.style.display   = '';
+  if (listEl) listEl.style.display = '';
   if (detailEl) detailEl.classList.remove('active');
 }
 
 function frRenderSkeletons() {
   const container = frG('fr-posts-list');
   if (!container) return;
-  container.innerHTML = [1,2,3].map(() => `
+  container.innerHTML = [1, 2, 3].map(() => `
     <div class="fr-skeleton">
       <div style="display:flex;gap:.75rem;align-items:center;margin-bottom:1rem">
         <div class="fr-sk-circle"></div>
@@ -201,9 +201,9 @@ function frRenderPostsError() {
 }
 
 function frPostCardHTML(p) {
-  const cat    = FR_CATS[p.category] || FR_CATS.tip;
+  const cat = FR_CATS[p.category] || FR_CATS.tip;
   const author = p.profiles?.full_name || 'Ẩn danh';
-  const av     = frAvatar(p.profiles);
+  const av = frAvatar(p.profiles);
   const preview = (p.content || '').slice(0, 160);
   const cCount = p.comment_count || 0;
 
@@ -256,9 +256,9 @@ async function frOpenPost(postId) {
   FR.currentPost = post;
 
   // Chuyển sang detail view
-  const listEl   = frG('fr-list-view');
+  const listEl = frG('fr-list-view');
   const detailEl = frG('fr-detail-view');
-  if (listEl)   listEl.style.display = 'none';
+  if (listEl) listEl.style.display = 'none';
   if (detailEl) detailEl.classList.add('active');
 
   // Scroll lên đầu
@@ -280,9 +280,9 @@ function frRenderPostDetail(p) {
   const container = frG('fr-post-detail-wrap');
   if (!container) return;
 
-  const cat    = FR_CATS[p.category] || FR_CATS.tip;
+  const cat = FR_CATS[p.category] || FR_CATS.tip;
   const author = p.profiles?.full_name || 'Ẩn danh';
-  const av     = frAvatar(p.profiles, 'md');
+  const av = frAvatar(p.profiles, 'md');
 
   container.setAttribute('data-cat', p.category);
   container.innerHTML = `
@@ -369,7 +369,7 @@ function frRenderComments() {
 
 function frCommentHTML(c) {
   const author = c.profiles?.full_name || 'Ẩn danh';
-  const av     = frAvatar(c.profiles);
+  const av = frAvatar(c.profiles);
 
   return `
     <div class="fr-comment" id="comment-${c.id}">
@@ -425,11 +425,11 @@ async function frExecuteDelComment() {
   try {
     const session = (await sb.auth.getSession()).data.session;
     const token = session?.access_token;
-    
+
     const url = `/api/forum/posts/${encodeURIComponent(FR.currentPost.id)}/comments/${encodeURIComponent(frCommentIdToDelete)}`;
     const res = await fetch(url, {
-      method:  'DELETE',
-      headers: { 
+      method: 'DELETE',
+      headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
@@ -443,7 +443,7 @@ async function frExecuteDelComment() {
     // Cập nhật state cục bộ
     FR.comments = FR.comments.filter(c => c.id !== frCommentIdToDelete);
     FR.currentPost.comment_count = Math.max(0, (FR.currentPost.comment_count || 1) - 1);
-    
+
     // Cập nhật UI
     const countEl = frG('fr-comments-count-badge');
     if (countEl) countEl.textContent = FR.comments.length;
@@ -520,8 +520,8 @@ async function frSubmitComment() {
   if (FR.submitting) return;
   if (!FR.currentPost) return;
 
-  const input   = frG('fr-comment-input');
-  const btn     = frG('fr-comment-btn');
+  const input = frG('fr-comment-input');
+  const btn = frG('fr-comment-btn');
   const btnText = frG('fr-comment-btn-text');
   const content = input?.value?.trim() || '';
 
@@ -540,18 +540,28 @@ async function frSubmitComment() {
   if (btn) btn.disabled = true;
   if (btnText) btnText.textContent = '↻ Đang gửi...';
 
+  // AbortController: tự động huỷ fetch sau 15s nếu server không phản hồi
+  const _cmtCtrl = new AbortController();
+  const _cmtTimeout = setTimeout(() => _cmtCtrl.abort(), 15000);
+
   try {
     const session = (await sb.auth.getSession()).data.session;
     const token = session?.access_token;
 
+    if (!token) {
+      throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+    }
+
     const res = await fetch(`/api/forum/posts/${encodeURIComponent(FR.currentPost.id)}/comments`, {
       method: 'POST',
-      headers: { 
+      signal: _cmtCtrl.signal,
+      headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({ content }),
     });
+    clearTimeout(_cmtTimeout);
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.error || `HTTP ${res.status}`);
@@ -577,8 +587,13 @@ async function frSubmitComment() {
     }, 100);
 
   } catch (e) {
+    clearTimeout(_cmtTimeout);
     console.error('[Forum] submitComment:', e);
-    frSetAlert('fr-comment-alert', 'err', '❌ Gửi bình luận thất bại. Thử lại sau!');
+    if (e.name === 'AbortError') {
+      frSetAlert('fr-comment-alert', 'err', '❌ Hết thời gian chờ (15s). Server không phản hồi, vui lòng thử lại!');
+    } else {
+      frSetAlert('fr-comment-alert', 'err', `❌ Gửi thất bại: ${e.message || 'Thử lại sau!'}`);
+    }
   } finally {
     FR.submitting = false;
     if (btn) btn.disabled = false;
@@ -597,9 +612,9 @@ function frOpenNewPost() {
 
   // Reset form
   frSelectCat('tip');
-  const titleInp   = frG('fr-inp-title');
+  const titleInp = frG('fr-inp-title');
   const contentInp = frG('fr-inp-content');
-  if (titleInp)   titleInp.value   = '';
+  if (titleInp) titleInp.value = '';
   if (contentInp) contentInp.value = '';
   frClrAlert('fr-post-alert');
   frUpdateCharCount();
@@ -629,7 +644,7 @@ function frSelectCat(cat) {
 
 function frUpdateCharCount() {
   const contentInp = frG('fr-inp-content');
-  const countEl    = frG('fr-char-count');
+  const countEl = frG('fr-char-count');
   if (!contentInp || !countEl) return;
 
   const len = contentInp.value.length;
@@ -637,16 +652,16 @@ function frUpdateCharCount() {
   countEl.textContent = `${len} / ${MAX}`;
   countEl.className = 'fr-char-count';
   if (len > MAX * 0.85) countEl.classList.add('warn');
-  if (len > MAX)        countEl.classList.add('over');
+  if (len > MAX) countEl.classList.add('over');
 }
 
 async function frSubmitPost() {
   if (!U) { openM('login'); return; }
   if (FR.submitting) return;
 
-  const title   = (frG('fr-inp-title')?.value || '').trim();
+  const title = (frG('fr-inp-title')?.value || '').trim();
   const content = (frG('fr-inp-content')?.value || '').trim();
-  const cat     = FR.selectedCat;
+  const cat = FR.selectedCat;
 
   frClrAlert('fr-post-alert');
 
@@ -668,25 +683,36 @@ async function frSubmitPost() {
   }
 
   FR.submitting = true;
-  const btn     = frG('fr-post-submit-btn');
+  const btn = frG('fr-post-submit-btn');
   const btnText = frG('fr-post-submit-text');
   const btnLoad = frG('fr-post-submit-load');
-  if (btn)     btn.disabled = true;
+  if (btn) btn.disabled = true;
   if (btnText) btnText.style.display = 'none';
   if (btnLoad) btnLoad.style.display = 'inline-flex';
+
+  // AbortController: tự động huỷ fetch sau 15s nếu server không phản hồi.
+  // Ngăn tình trạng UI đơ vĩnh viễn khi server bị deadlock (bug supabase_auth threading).
+  const _postCtrl = new AbortController();
+  const _postTimeout = setTimeout(() => _postCtrl.abort(), 15000);
 
   try {
     const session = (await sb.auth.getSession()).data.session;
     const token = session?.access_token;
 
+    if (!token) {
+      throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+    }
+
     const res = await fetch('/api/forum/posts', {
       method: 'POST',
-      headers: { 
+      signal: _postCtrl.signal,
+      headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({ title, content, category: cat }),
     });
+    clearTimeout(_postTimeout);
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.error || `HTTP ${res.status}`);
@@ -709,11 +735,16 @@ async function frSubmitPost() {
     }, 1200);
 
   } catch (e) {
+    clearTimeout(_postTimeout);
     console.error('[Forum] submitPost:', e);
-    frSetAlert('fr-post-alert', 'err', '❌ Đăng bài thất bại. Vui lòng thử lại!');
+    if (e.name === 'AbortError') {
+      frSetAlert('fr-post-alert', 'err', '❌ Hết thời gian chờ (15s). Server không phản hồi, vui lòng thử lại!');
+    } else {
+      frSetAlert('fr-post-alert', 'err', `❌ Đăng bài thất bại: ${e.message || 'Vui lòng thử lại!'}`);
+    }
   } finally {
     FR.submitting = false;
-    if (btn)     btn.disabled = false;
+    if (btn) btn.disabled = false;
     if (btnText) btnText.style.display = 'inline';
     if (btnLoad) btnLoad.style.display = 'none';
   }
@@ -756,8 +787,8 @@ async function frExecuteDelete() {
 
     const url = `/api/forum/posts/${encodeURIComponent(frPostIdToDelete)}`;
     const res = await fetch(url, {
-      method:  'DELETE',
-      headers: { 
+      method: 'DELETE',
+      headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
