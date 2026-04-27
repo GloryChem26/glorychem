@@ -166,20 +166,26 @@ const GloryChemAI = (() => {
         cid: data.cid || cid || ''
       });
     } catch (err) {
-      // ── Reset về mặc định khi lỗi ──
+      // ── Reset về mặc định khi lỗi 3D ──
       currentMolData = null;
       if (scene) {
         while (scene.children.length > 3) scene.remove(scene.children[3]);
       }
       if (camera) camera.position.set(0, 0, 15);
       if (controls) controls.reset();
-      
+
       if (elMolEmptyState) elMolEmptyState.style.display = 'block';
       if (elMolInfoInner) elMolInfoInner.style.display = 'none';
-      resetImageCarousel(`⚠️ Không tải được ảnh: ${err.message}`);
 
       el3dEmpty.classList.remove('hidden');
       el3dEmpty.querySelector('.ai-3d-empty-text').textContent = `⚠️ ${err.message}`;
+
+      // ── Vẫn tiếp tục tìm ảnh thực tế dù 3D thất bại ──
+      if (name) {
+        fetchAndRenderImages({ name, formula: '', cid: cid || '' });
+      } else {
+        resetImageCarousel(`⚠️ Không tải được ảnh: ${err.message}`);
+      }
     } finally {
       el3dLoading.classList.remove('active');
     }
