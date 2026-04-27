@@ -191,13 +191,13 @@
     <!-- ═══ STATS TICKER ═══ -->
     <div class="mg-ticker">
       <div class="mg-ticker-inner">
-        <div class="mg-ticker-item"><span class="mg-ticker-val" data-target="2847">0</span><span
-            class="mg-ticker-lbl">Người chơi</span></div>
+        <div class="mg-ticker-item"><span class="mg-ticker-val" data-target="4458">0</span><span
+            class="mg-ticker-lbl">Lượt truy cập</span></div>
         <div class="mg-ticker-sep">✦</div>
-        <div class="mg-ticker-item"><span class="mg-ticker-val" data-target="150">0</span><span
+        <div class="mg-ticker-item"><span class="mg-ticker-val" data-target="373">0</span><span
             class="mg-ticker-lbl">Câu hỏi THPT</span></div>
         <div class="mg-ticker-sep">✦</div>
-        <div class="mg-ticker-item"><span class="mg-ticker-val" data-target="12">0</span><span class="mg-ticker-lbl">Chủ
+        <div class="mg-ticker-item"><span class="mg-ticker-val" data-target="36">0</span><span class="mg-ticker-lbl">Chủ
             đề</span></div>
         <div class="mg-ticker-sep">✦</div>
         <div class="mg-ticker-item"><span class="mg-ticker-val" data-target="98">0</span><span class="mg-ticker-lbl">%
@@ -824,8 +824,26 @@
             </div>
           </div>
 
-          <!-- Molecule Info -->
-          <div class="ai-mol-info-card" id="ai-mol-info-card">
+          <div class="ai-image-card" id="ai-image-card">
+            <div class="ai-image-head">
+              <div class="ai-image-title">Ảnh thực tế liên quan</div>
+              <div class="ai-image-subtitle">Hiển thị song song với mô hình 3D</div>
+            </div>
+            <div class="ai-image-empty" id="ai-image-empty">Chưa có ảnh. Hãy hỏi AI về một chất để tải ảnh tự động.</div>
+            <div class="ai-image-loading" id="ai-image-loading">Đang tải ảnh thực tế...</div>
+            <div class="ai-image-carousel" id="ai-image-carousel" style="display:none">
+              <button class="ai-image-nav prev" id="ai-image-prev" aria-label="Ảnh trước">‹</button>
+              <div class="ai-image-viewport" id="ai-image-viewport">
+                <div class="ai-image-track" id="ai-image-track"></div>
+              </div>
+              <button class="ai-image-nav next" id="ai-image-next" aria-label="Ảnh tiếp theo">›</button>
+            </div>
+            <div class="ai-image-dots" id="ai-image-dots"></div>
+          </div>
+
+          <!-- Molecule Info (Collapsed) -->
+          <details class="ai-mol-info-card ai-mol-info-collapsible" id="ai-mol-info-card">
+            <summary class="ai-mol-summary">Thông tin phân tử</summary>
             <div id="ai-mol-empty-state" class="ai-mol-empty-state">
               <div class="ai-mol-empty-icon">🔬</div>
               <div class="ai-mol-empty-text">Thông tin phân tử sẽ hiển thị ở đây</div>
@@ -836,7 +854,7 @@
               <p class="ai-mol-desc" id="ai-mol-desc"></p>
               <div class="ai-mol-stats" id="ai-mol-stats"></div>
             </div>
-          </div>
+          </details>
         </div>
       </div>
     </div>

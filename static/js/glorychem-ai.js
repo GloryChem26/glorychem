@@ -5,6 +5,8 @@ const GloryChemAI = (() => {
   // ── State ──
   let scene, camera, renderer, controls, animFrameId;
   let currentMolData = null;
+  let currentImageData = [];
+  let currentImageIndex = 0;
   let chatHistory = [];   // [{role, content}]
   let isLoading = false;
   let renderMode = 'ballstick';
@@ -13,7 +15,9 @@ const GloryChemAI = (() => {
   let elMessages, elTyping, elTextarea, elSendBtn,
       elCanvas, el3dEmpty, el3dLoading,
       elMolFormula, elMolName, elMolDesc, elMolStats,
-      elMolInfoCard, elMolEmptyState, elMolInfoInner;
+      elMolInfoCard, elMolEmptyState, elMolInfoInner,
+      elImageEmpty, elImageLoading, elImageCarousel, elImageTrack,
+      elImageDots, elImagePrev, elImageNext, elImageViewport;
 
   // ── Atom color & radius table ──
   const ATOM = {
@@ -156,6 +160,11 @@ const GloryChemAI = (() => {
       currentMolData = data;
       renderMolecule(data);
       updateMolInfo(data);
+      fetchAndRenderImages({
+        name: data.name || name,
+        formula: data.formula || '',
+        cid: data.cid || cid || ''
+      });
     } catch (err) {
       // ── Reset về mặc định khi lỗi ──
       currentMolData = null;
@@ -167,11 +176,133 @@ const GloryChemAI = (() => {
       
       if (elMolEmptyState) elMolEmptyState.style.display = 'block';
       if (elMolInfoInner) elMolInfoInner.style.display = 'none';
+      resetImageCarousel(`⚠️ Không tải được ảnh: ${err.message}`);
 
       el3dEmpty.classList.remove('hidden');
       el3dEmpty.querySelector('.ai-3d-empty-text').textContent = `⚠️ ${err.message}`;
     } finally {
       el3dLoading.classList.remove('active');
+    }
+  }
+
+  function resetImageCarousel(msg) {
+    currentImageData = [];
+    currentImageIndex = 0;
+    if (elImageTrack) elImageTrack.innerHTML = '';
+    if (elImageDots) elImageDots.innerHTML = '';
+    if (elImageCarousel) elImageCarousel.style.display = 'none';
+    if (elImageLoading) elImageLoading.style.display = 'none';
+    if (elImageEmpty) {
+      elImageEmpty.style.display = 'block';
+      if (msg) elImageEmpty.textContent = msg;
+    }
+  }
+
+  function updateCarouselPosition() {
+    if (!elImageTrack) return;
+    elImageTrack.style.transform = `translateX(-${currentImageIndex * 100}%)`;
+    if (elImageDots) {
+      elImageDots.querySelectorAll('.ai-image-dot').forEach((dot, idx) => {
+        dot.classList.toggle('active', idx === currentImageIndex);
+      });
+    }
+  }
+
+  function moveCarousel(step) {
+    if (!currentImageData.length) return;
+    currentImageIndex = (currentImageIndex + step + currentImageData.length) % currentImageData.length;
+    updateCarouselPosition();
+  }
+
+  function bindCarouselSwipe() {
+    if (!elImageViewport) return;
+    let startX = 0;
+    let endX = 0;
+    const threshold = 35;
+    elImageViewport.addEventListener('touchstart', (e) => {
+      startX = e.changedTouches[0].clientX;
+    }, { passive: true });
+    elImageViewport.addEventListener('touchend', (e) => {
+      endX = e.changedTouches[0].clientX;
+      const delta = endX - startX;
+      if (Math.abs(delta) < threshold) return;
+      if (delta > 0) moveCarousel(-1);
+      else moveCarousel(1);
+    }, { passive: true });
+  }
+
+  function renderImageCarousel(images, notice) {
+    currentImageData = images || [];
+    currentImageIndex = 0;
+    if (!currentImageData.length) {
+      resetImageCarousel(notice || 'Không tìm thấy ảnh thực tế phù hợp cho chất này.');
+      return;
+    }
+
+    elImageTrack.innerHTML = '';
+    elImageDots.innerHTML = '';
+
+    currentImageData.forEach((img, idx) => {
+      const slide = document.createElement('div');
+      slide.className = 'ai-image-slide';
+      const kindLabel = img.kind === 'structure'
+        ? 'Ảnh cấu trúc (PubChem)'
+        : (img.source === 'Wikipedia' || img.source === 'Wikimedia Commons')
+          ? 'Ảnh thực tế / ngữ cảnh'
+          : 'Ảnh liên quan';
+      slide.innerHTML = `
+        <img src="${img.url}" alt="${(img.title || 'Chemical image').replace(/"/g, '&quot;')}" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+        <div class="ai-image-empty" style="display:none;padding:1rem">Không tải được ảnh này.</div>
+        <div class="ai-image-caption">
+          <div class="ai-image-caption-title">${img.title || 'Ảnh liên quan hóa chất'}</div>
+          <div class="ai-image-caption-meta">${kindLabel} • ${img.source || 'Nguồn mở'} • ${img.license || 'Kiểm tra license tại nguồn'}</div>
+        </div>
+      `;
+      elImageTrack.appendChild(slide);
+
+      const dot = document.createElement('button');
+      dot.className = `ai-image-dot ${idx === 0 ? 'active' : ''}`;
+      dot.type = 'button';
+      dot.onclick = () => {
+        currentImageIndex = idx;
+        updateCarouselPosition();
+      };
+      elImageDots.appendChild(dot);
+    });
+
+    elImageEmpty.style.display = 'none';
+    elImageLoading.style.display = 'none';
+    elImageCarousel.style.display = 'flex';
+    updateCarouselPosition();
+  }
+
+  async function fetchAndRenderImages({ name, formula, cid }) {
+    if (!name && !formula && !cid) {
+      resetImageCarousel('Thiếu dữ liệu để tìm ảnh thực tế.');
+      return;
+    }
+    elImageEmpty.style.display = 'none';
+    elImageCarousel.style.display = 'none';
+    elImageLoading.style.display = 'block';
+
+    try {
+      const params = new URLSearchParams();
+      if (name) params.set('name', name);
+      if (formula) params.set('formula', formula);
+      if (cid) params.set('cid', cid);
+      const res = await fetch(`/api/ai/molecule-images?${params.toString()}`);
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || 'Không lấy được ảnh thực tế');
+
+      // Ưu tiên ảnh thực tế trước, rồi mới tới ảnh cấu trúc
+      const real = (data.real_images || []).map(x => ({ ...x, kind: x.kind || 'real' }));
+      const structure = (data.structure_images || []).map(x => ({ ...x, kind: 'structure' }));
+      const allImages = [...real, ...structure];
+      renderImageCarousel(allImages, data.notice);
+    } catch (err) {
+      resetImageCarousel(`⚠️ ${err.message}`);
+    } finally {
+      elImageLoading.style.display = 'none';
     }
   }
 
@@ -431,6 +562,14 @@ const GloryChemAI = (() => {
     elMolInfoCard  = document.getElementById('ai-mol-info-card');
     elMolEmptyState= document.getElementById('ai-mol-empty-state');
     elMolInfoInner = document.getElementById('ai-mol-info-inner');
+    elImageEmpty   = document.getElementById('ai-image-empty');
+    elImageLoading = document.getElementById('ai-image-loading');
+    elImageCarousel= document.getElementById('ai-image-carousel');
+    elImageTrack   = document.getElementById('ai-image-track');
+    elImageDots    = document.getElementById('ai-image-dots');
+    elImagePrev    = document.getElementById('ai-image-prev');
+    elImageNext    = document.getElementById('ai-image-next');
+    elImageViewport= document.getElementById('ai-image-viewport');
 
 
 
@@ -452,12 +591,16 @@ const GloryChemAI = (() => {
     document.getElementById('ai-clear-btn').onclick = () => {
       chatHistory = [];
       elMessages.innerHTML = '';
+      resetImageCarousel('Chưa có ảnh. Hãy hỏi AI về một chất để tải ảnh tự động.');
       appendMsg('assistant', mdToHtml('🧪 Xin chào! Tôi là **GloryChem AI**, trợ lý Hóa học thông minh.\n\nHãy hỏi tôi bất kỳ điều gì về Hóa học — từ cấu trúc phân tử đến phản ứng hóa học. Nếu bạn muốn xem mô hình 3D của một chất, hãy yêu cầu tôi!'));
     };
 
     // Expand logic
     document.getElementById('ai-3d-expand-btn').onclick = toggleExpand;
     document.getElementById('ai-3d-overlay').onclick = toggleExpand;
+    if (elImagePrev) elImagePrev.onclick = () => moveCarousel(-1);
+    if (elImageNext) elImageNext.onclick = () => moveCarousel(1);
+    bindCarouselSwipe();
 
     // ResizeObserver for canvas wrapper
     if (window.ResizeObserver) {

@@ -2504,6 +2504,385 @@ def _clean_reply(text):
     return _re.sub(r'\s*===MOLECULE_JSON===.*?===END_JSON===', '', text, flags=_re.DOTALL).strip()
 
 
+def _safe_quote(value):
+    return urllib.parse.quote((value or "").strip())
+
+def _http_get_json(url: str, timeout: int = 8):
+    """GET JSON with a stable User-Agent (MediaWiki often requires it)."""
+    import json as _json
+    req = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": "GloryChem/1.0 (image fetch; contact: admin@glorychem.local)",
+            "Accept": "application/json",
+        },
+        method="GET",
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return _json.loads(r.read())
+
+
+def _normalize_compound_for_real_images(name, formula=""):
+    """Chuyển tên kỹ thuật sang tên đời thường để tìm ảnh thực tế tốt hơn."""
+    raw = (name or "").strip()
+    low = raw.lower()
+    formula_low = (formula or "").strip().lower()
+
+    alias_map = {
+        "oxidane": "water",
+        "dihydrogen monoxide": "water",
+        "1,3,7-trimethylpurine-2,6-dione": "caffeine",
+        "methyltheobromine": "caffeine",
+    }
+    if low in alias_map:
+        return alias_map[low]
+
+    # Ưu tiên tên theo công thức phổ biến nếu name quá kỹ thuật
+    formula_alias = {
+        "h2o": "water",
+        "c8h10n4o2": "caffeine",
+    }
+    if formula_low in formula_alias:
+        return formula_alias[formula_low]
+
+    return raw
+
+
+def _build_real_image_queries(compound_name):
+    """Tạo nhiều query giúp ảnh thực tế phong phú hơn."""
+    base = (compound_name or "").strip()
+    if not base:
+        return []
+
+    low = base.lower()
+    # Ưu tiên ngữ cảnh đời thực cho caffeine
+    if low == "caffeine":
+        return [
+            "coffee beans",
+            "coffee bean close up",
+            "caffeine",
+            "coffee plant",
+            "caffeine laboratory",
+        ]
+
+    if low == "water":
+        return [
+            "river",
+            "sea",
+            "river water",
+            "sea water",
+        ]
+
+    return [
+        f"{base} chemical compound",
+        f"{base} laboratory",
+        base,
+    ]
+
+def _real_image_keywords(compound_name: str):
+    """Keyword bắt buộc để lọc ảnh Wikimedia tránh lạc đề."""
+    low = (compound_name or "").strip().lower()
+    if not low:
+        return []
+    if low == "caffeine":
+        # Ưu tiên ảnh đời thực về cà phê/hạt cà phê
+        return ["coffee", "bean", "beans", "espresso", "latte", "coffea", "roasted"]
+    if low == "water":
+        return ["water", "drinking", "bottle", "glass", "river", "lake", "sea"]
+    # default: yêu cầu chính tên chất xuất hiện trong title/url
+    return [low]
+
+def _real_image_blacklist(compound_name: str):
+    """Các từ khóa loại trừ để tránh lạc đề."""
+    low = (compound_name or "").strip().lower()
+    if not low:
+        return []
+    if low == "water":
+        # Tránh "water buffalo", "waterfowl", ...
+        return ["buffalo", "bison", "cow", "cattle", "ox", "yak", "goat", "sheep", "camel", "elephant", "bird", "duck", "goose", "waterfowl"]
+    if low == "caffeine":
+        # Tránh lạc sang ảnh đồ họa/biểu đồ, logo, v.v.
+        return ["logo", "icon", "diagram", "chart", "infographic", "structure", "svg"]
+    return ["logo", "icon"]
+
+def _real_image_min_hits(compound_name: str) -> int:
+    """Số keyword tối thiểu phải match để coi là liên quan."""
+    low = (compound_name or "").strip().lower()
+    if low == "caffeine":
+        # yêu cầu match >=2 để bám đúng "coffee bean"/"coffee"
+        return 2
+    if low == "water":
+        # nước dễ lạc sang nhiều chủ đề khác, siết chặt hơn
+        return 2
+    return 2
+
+
+def _is_real_image_viewable(width, height, min_side=180, min_ratio=0.42, max_ratio=2.4):
+    """
+    Lọc ảnh quá dọc hoặc quá ngang so với khung xem chuẩn.
+    ratio = width / height cần nằm trong [min_ratio, max_ratio].
+    """
+    try:
+        w = int(width or 0)
+        h = int(height or 0)
+    except Exception:
+        return False
+    if w <= 0 or h <= 0:
+        return False
+    if min(w, h) < min_side:
+        return False
+    ratio = w / float(h)
+    return min_ratio <= ratio <= max_ratio
+
+
+def _wikimedia_real_images(compound_name, limit=8):
+    """Lấy ảnh thực tế liên quan chất từ Wikimedia Commons."""
+    import re as _re
+
+    if not compound_name:
+        return []
+
+    queries = _build_real_image_queries(compound_name)
+    keywords = _real_image_keywords(compound_name)
+    blacklist = _real_image_blacklist(compound_name)
+    min_hits = _real_image_min_hits(compound_name)
+
+    seen = set()
+    results = []
+
+    for q in queries:
+        if len(results) >= limit:
+            break
+        try:
+            api = (
+                "https://commons.wikimedia.org/w/api.php"
+                f"?action=query&format=json&generator=search&gsrnamespace=6&gsrlimit=10"
+                f"&gsrsearch={_safe_quote(q)}&prop=imageinfo&iiprop=url|size|extmetadata&iiurlwidth=900"
+            )
+            data = _http_get_json(api, timeout=10)
+
+            pages = (data.get("query") or {}).get("pages") or {}
+            for page in pages.values():
+                title = page.get("title", "")
+                imageinfo = (page.get("imageinfo") or [])
+                if not imageinfo:
+                    continue
+                info = imageinfo[0]
+                full_url = info.get("url", "")
+                thumb_url = info.get("thumburl") or full_url
+                if not thumb_url or thumb_url in seen:
+                    continue
+                # Tránh PNG (nặng/đồ họa), ưu tiên ảnh chụp JPEG/WEBP
+                if not _re.search(r"\.(jpg|jpeg|webp)$", full_url, _re.IGNORECASE):
+                    continue
+
+                # Lọc ảnh quá dọc/quá ngang hoặc quá nhỏ cho khung xem
+                width = info.get("width")
+                height = info.get("height")
+                if not _is_real_image_viewable(width, height):
+                    continue
+
+                ext = (info.get("extmetadata") or {})
+                image_desc = ((ext.get("ImageDescription") or {}).get("value") or "").lower()
+                artist = (ext.get("Artist") or {}).get("value") or ""
+
+                # Relevance filter (tránh lạc đề)
+                hay = f"{title} {full_url} {image_desc}".lower()
+                hard_blacklist = [
+                    "logo", "icon", "infographic", "diagram", "chart", "schematic",
+                    "vector", "illustration", "molecular structure", "skeletal formula",
+                ]
+                if any(b in hay for b in hard_blacklist):
+                    continue
+                if blacklist and any(b in hay for b in blacklist):
+                    continue
+                hits = sum(1 for k in (keywords or []) if k in hay)
+                if keywords and hits < min_hits:
+                    continue
+
+                license_name = (
+                    (ext.get("LicenseShortName") or {}).get("value")
+                    or (ext.get("License") or {}).get("value")
+                    or "Wikimedia Commons"
+                )
+
+                seen.add(thumb_url)
+                results.append({
+                    # Dùng thumbnail để tránh lag, vẫn giữ full để mở nếu cần
+                    "url": thumb_url,
+                    "thumb": thumb_url,
+                    "full": full_url,
+                    "title": title.replace("File:", "").strip() or compound_name,
+                    "source": "Wikimedia Commons",
+                    "license": license_name,
+                    "author": artist,
+                    "kind": "real",
+                })
+                if len(results) >= limit:
+                    break
+        except Exception as e:
+            print(f"[AI] Wikimedia fetch failed ({q}): {e}")
+
+    return results
+
+
+def _pubchem_structure_images(cid):
+    """Lấy ảnh cấu trúc từ PubChem (luôn ổn định cho hóa chất có CID)."""
+    if not cid:
+        return []
+    cid = str(cid).strip()
+    if not cid:
+        return []
+    return [{
+        "url": f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{cid}/PNG?image_size=large",
+        "thumb": f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{cid}/PNG?image_size=small",
+        "title": f"Cấu trúc phân tử CID {cid}",
+        "source": "PubChem",
+        "license": "Public Domain (US Government data)",
+        "author": "",
+        "kind": "structure",
+    }]
+
+
+def _wikipedia_page_images(titles, limit=6):
+    """Lấy ảnh thumbnail từ Wikipedia (thường ra ảnh đời thực tốt cho 'coffee bean', 'water', ...)."""
+    if not titles:
+        return []
+
+    # Wikipedia API nhận titles phân cách bằng |
+    joined = "|".join([t.strip() for t in titles if t and t.strip()])[:800]
+    if not joined:
+        return []
+
+    out = []
+    seen = set()
+
+    try:
+        api = (
+            "https://en.wikipedia.org/w/api.php"
+            "?action=query&format=json&prop=pageimages|info&inprop=url"
+            "&piprop=thumbnail&pithumbsize=900&redirects=1"
+            f"&titles={_safe_quote(joined)}"
+        )
+        data = _http_get_json(api, timeout=10)
+
+        pages = (data.get("query") or {}).get("pages") or {}
+        # Giữ thứ tự ưu tiên theo titles đầu vào (vì dict pages không đảm bảo thứ tự)
+        by_title = {}
+        for p in pages.values():
+            t = (p.get("title") or "").strip()
+            if t:
+                by_title[t.lower()] = p
+
+        for wanted in [t.strip() for t in titles if t and t.strip()]:
+            if len(out) >= limit:
+                break
+            p = by_title.get(wanted.lower())
+            if not p:
+                continue
+            title = p.get("title", wanted)
+            thumb = (p.get("thumbnail") or {}).get("source")
+            t_width = (p.get("thumbnail") or {}).get("width")
+            t_height = (p.get("thumbnail") or {}).get("height")
+            page_url = p.get("fullurl", "")
+            if not thumb or thumb in seen:
+                continue
+            # Tránh PNG (thường là hình cấu trúc/đồ họa), ưu tiên JPG/WEBP
+            if str(thumb).lower().endswith(".png"):
+                continue
+            # Lọc ảnh không phù hợp khung xem
+            if not _is_real_image_viewable(t_width, t_height):
+                continue
+            seen.add(thumb)
+            out.append({
+                "url": thumb,
+                "thumb": thumb,
+                "title": title or "Wikipedia",
+                "source": "Wikipedia",
+                "license": "Theo giấy phép trang Wikipedia nguồn",
+                "author": "",
+                "kind": "real",
+                "page": page_url,
+            })
+    except Exception as e:
+        print(f"[AI] Wikipedia pageimages fetch failed: {e}")
+
+    return out
+
+
+@app.route("/api/ai/molecule-images")
+@rate_limit(limit=30, period=60)
+def api_ai_molecule_images():
+    """Trả về cả ảnh cấu trúc (PubChem) và ảnh thực tế (Wikimedia)."""
+    import json as _json
+
+    name = (request.args.get("name") or "").strip()
+    formula = (request.args.get("formula") or "").strip()
+    cid = (request.args.get("cid") or "").strip()
+
+    if not name and not formula and not cid:
+        return jsonify({"error": "Thiếu dữ liệu truy vấn ảnh"}), 400
+
+    try:
+        # Resolve CID từ name nếu chưa có
+        if not cid and name:
+            try:
+                cid_url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{_safe_quote(name)}/cids/JSON"
+                with urllib.request.urlopen(cid_url, timeout=6) as r:
+                    cid_data = _json.loads(r.read())
+                cid = str(cid_data["IdentifierList"]["CID"][0])
+            except Exception as e:
+                print(f"[AI] CID resolve failed for image lookup: {e}")
+
+        structure_images = _pubchem_structure_images(cid)
+
+        real_query = _normalize_compound_for_real_images(name, formula)
+        if not real_query:
+            real_query = formula
+        real_images = _wikimedia_real_images(real_query, limit=10)
+
+        # Bổ sung Wikipedia (ổn định hơn cho các chủ đề đời thực)
+        wiki_titles = []
+        rq_low = (real_query or "").strip().lower()
+        if rq_low == "caffeine":
+            wiki_titles = ["Coffee bean", "Coffee", "Caffeine"]
+        elif rq_low == "water":
+            wiki_titles = ["Water", "Drinking water"]
+        elif real_query:
+            wiki_titles = [real_query]
+
+        wiki_images = _wikipedia_page_images(wiki_titles, limit=6)
+
+        # ưu tiên ảnh wiki trước (thường là ảnh chụp đời thực), rồi đến Wikimedia
+        merged_real = []
+        seen_urls = set()
+        for item in (wiki_images + real_images):
+            u = item.get("url")
+            if not u or u in seen_urls:
+                continue
+            seen_urls.add(u)
+            merged_real.append(item)
+            if len(merged_real) >= 10:
+                break
+
+        real_images = merged_real
+        notice = None
+        if not real_images:
+            notice = f"Không tìm thấy ảnh thực tế rõ ràng cho {real_query or name or formula}."
+
+        return jsonify({
+            "name": name,
+            "formula": formula,
+            "cid": cid or None,
+            "real_images": real_images,
+            "structure_images": structure_images,
+            "notice": notice,
+        })
+    except Exception as e:
+        print(f"[API] /api/ai/molecule-images error: {e}")
+        return jsonify({"error": f"Lỗi lấy ảnh: {str(e)[:160]}"}), 500
+
+
 @app.route("/api/ai/chat", methods=["POST"])
 @rate_limit(limit=20, period=60)
 def api_ai_chat():
