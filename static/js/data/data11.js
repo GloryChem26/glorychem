@@ -934,7 +934,7 @@ pH + pOH = 14</div>`
           quiz: [
             { q: 'Công thức tổng quát của carboxylic acid no, đơn chức, mạch hở là:', opts: ['CₙH₂ₙ₊₁O₂', 'CₙH₂ₙ₊₂O₂', 'CₙH₂ₙ₋₂O₂', 'CₙH₂ₙ₊₁COOH'], ans: 3, explain: 'CₙH₂ₙ₊₁COOH với n≥0.' },
             { q: 'Dung dịch acetic acid phản ứng với Na₂CO₃ giải phóng khí:', opts: ['H₂', 'CO₂', 'SO₂', 'O₂'], ans: 1, explain: '2CH₃COOH + Na₂CO₃ → 2CH₃COONa + CO₂ + H₂O.' },
-            { q: 'Phản ứng ester hóa giữa acetic acid và ethanol tạo sản phẩm có mùi:', opts: ['Chuối chín', 'Dứa', 'Táo', 'Không mùi'], ans: 0, explain: 'Ethyl acetate có mùi chuối chín, táo tây.' },
+            { q: 'Phản ứng ester hóa giữa acetic acid và isoamyl alcohol tạo sản phẩm có mùi:', opts: ['Chuối chín', 'Dứa', 'Táo', 'Không mùi'], ans: 0, explain: 'Isoamyl acetate (isopentyl acetate) có mùi chuối chín đặc trưng.' },
             { q: 'Chất nào sau đây có tính acid mạnh nhất?', opts: ['CH₃OH', 'C₆H₅OH', 'CH₃COOH', 'C₂H₅OH'], ans: 2, explain: 'Acid acetic (pKa ≈ 4,76) mạnh hơn phenol (pKa ≈ 10) và alcohol.' },
             { q: 'Điều chế acetic acid trong công nghiệp bằng phương pháp nào sau đây?', opts: ['Oxi hóa butane', 'Lên men rượu vang', 'Hydrat hóa ethylene', 'Cracking alkane'], ans: 0, explain: 'Phương pháp oxi hóa alkane (butane) bằng O₂ xúc tác.' }
           ]

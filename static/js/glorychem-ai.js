@@ -1,4 +1,4 @@
-/* ═══ GloryChem AI — AI Chemistry Assistant + 3D Molecule Viewer ═══ */
+/* ═══ GloryChem Smart — AI Chemistry Assistant + 3D Molecule Viewer ═══ */
 'use strict';
 
 const GloryChemAI = (() => {
@@ -592,7 +592,7 @@ const GloryChemAI = (() => {
       chatHistory = [];
       elMessages.innerHTML = '';
       resetImageCarousel('Chưa có ảnh. Hãy hỏi AI về một chất để tải ảnh tự động.');
-      appendMsg('assistant', mdToHtml('🧪 Xin chào! Tôi là **GloryChem AI**, trợ lý Hóa học thông minh.\n\nHãy hỏi tôi bất kỳ điều gì về Hóa học — từ cấu trúc phân tử đến phản ứng hóa học. Nếu bạn muốn xem mô hình 3D của một chất, hãy yêu cầu tôi!'));
+      appendMsg('assistant', mdToHtml('🧪 Xin chào! Tôi là **GloryChem Smart**, trợ lý Hóa học thông minh.\n\nHãy hỏi tôi bất kỳ điều gì về Hóa học — từ cấu trúc phân tử đến phản ứng hóa học. Nếu bạn muốn xem mô hình 3D của một chất, hãy yêu cầu tôi!'));
     };
 
     // Expand logic
@@ -617,7 +617,7 @@ const GloryChemAI = (() => {
     }
 
     // Welcome message
-    appendMsg('assistant', mdToHtml('🧪 Xin chào! Tôi là **GloryChem AI**, trợ lý Hóa học thông minh.\n\nHãy hỏi tôi bất kỳ điều gì về Hóa học — từ cấu trúc phân tử đến phản ứng hóa học. Nếu bạn muốn xem **mô hình 3D** của một chất, hãy yêu cầu tôi!'));
+    appendMsg('assistant', mdToHtml('🧪 Xin chào! Tôi là **GloryChem Smart**, trợ lý Hóa học thông minh.\n\nHãy hỏi tôi bất kỳ điều gì về Hóa học — từ cấu trúc phân tử đến phản ứng hóa học. Nếu bạn muốn xem **mô hình 3D** của một chất, hãy yêu cầu tôi!'));
   }
 
   // ── Expose API ──

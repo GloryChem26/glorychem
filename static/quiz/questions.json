@@ -2595,7 +2595,7 @@
       },
       {
         "type": "mcq",
-        "q": "Phản ứng ester hóa giữa acetic acid và ethanol tạo sản phẩm có mùi:",
+        "q": "Phản ứng ester hóa giữa acetic acid và isoamyl alcohol tạo sản phẩm có mùi:",
         "opts": [
           "Chuối chín",
           "Dứa",
@@ -2603,7 +2603,7 @@
           "Không mùi"
         ],
         "correct": 0,
-        "exp": "Ethyl acetate có mùi chuối chín, táo tây."
+        "exp": "Isoamyl acetate (isopentyl acetate) có mùi chuối chín đặc trưng."
       },
       {
         "type": "mcq",

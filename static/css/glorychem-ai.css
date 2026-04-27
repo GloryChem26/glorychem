@@ -1,6 +1,6 @@
 /* ═══ GLORYCHEM AI — Dedicated Stylesheet ═══ */
 
-/* Discovery Card: GloryChem AI */
+/* Discovery Card: GloryChem Smart */
 .disc-card-ai .disc-card-icon { background: linear-gradient(135deg,rgba(99,102,241,.15),rgba(168,85,247,.15)); color:#818cf8; }
 .disc-card-ai .disc-card-glow { background: radial-gradient(circle at 30% 30%,rgba(99,102,241,.12),transparent 50%); }
 .disc-card-ai:hover .disc-card-icon { background: linear-gradient(135deg,#6366f1,#a855f7); color:#fff; }
